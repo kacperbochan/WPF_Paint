@@ -424,7 +424,6 @@ namespace WPF_Paint
                     break;
             }
         }
-
         /// <summary>
         /// Za pomocą inputów ze strzałek przesuwa figurę
         /// </summary>
@@ -450,6 +449,8 @@ namespace WPF_Paint
                     _startPosition.X += value;
                     _endPosition.X += value;
                     break;
+
+ 
             }
         }
     }

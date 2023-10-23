@@ -14,7 +14,9 @@
     <Grid>
         <Grid.ColumnDefinitions>
             <ColumnDefinition Width="Auto"/>
-            <ColumnDefinition Width="*"/>
+
+            <ColumnDefinition Width="90px"/>
+
         </Grid.ColumnDefinitions>
 
         <!-- Toolbar on the left -->

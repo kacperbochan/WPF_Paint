@@ -131,12 +131,12 @@ namespace WPF_Paint
                     //w góre ograniczamy rozmiar do zera
                     case Key.Up:
                         if (rectangle.Height > 0)
-                            rectangle.Height -= (control)?1:5;
+                            rectangle.Height -= (control) ? 1 : (rectangle.Height > 5) ? 5: rectangle.Height;
                         break;
                     //w lewo ograniczamy rozmiar do zera
                     case Key.Left:
                         if (rectangle.Width > 0)
-                            rectangle.Width -= (control) ? 1 : 5;
+                            rectangle.Width -= (control) ? 1 : (rectangle.Width > 5) ? 5 : rectangle.Width;
                         break;
                     case Key.Down:
                         rectangle.Height += (control) ? 1 : 5;

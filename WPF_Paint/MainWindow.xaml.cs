@@ -27,11 +27,14 @@ namespace WPF_Paint
             None,
             Rectangle,
             Draw,
+            Text,
             // Dodaj inne tryby rysowania, jeśli są potrzebne
         }
 
         private Point _startPosition, _endPosition;
         private DrawingMode _currentDrawingMode = DrawingMode.None;
+        private TextBox? activeTextBox;
+
 
         public MainWindow()
         {
@@ -49,7 +52,20 @@ namespace WPF_Paint
                     // Obsługa rysowania linii
                     StartDrawing(sender, e);
                     break;
-                    // Dodaj inne przypadki dla innych trybów rysowania
+                case DrawingMode.Text:
+                    // Obsługa dodawania tekstu
+                    if (activeTextBox != null)
+                    {
+                        // Zamień TextBox na TextBlock
+                        ReplaceTextBoxWithTextBlock(activeTextBox);
+                        activeTextBox = null;
+                    }
+                    else
+                    {
+                        // Dodaj nowy TextBox
+                        AddTextBox(e.GetPosition(MainCanvas));
+                    }
+                    break;
             }
         }
 
@@ -94,14 +110,32 @@ namespace WPF_Paint
             }
         }
 
+        private void ChangeDrawingMode(DrawingMode newMode)
+        {
+            // gdy użytkownik zmienia tryb rysowania
+            // poprzez kliknięcie w przycisk zmiany trybu
+            if (_currentDrawingMode == DrawingMode.Text && activeTextBox != null)
+            {
+                // Zamień TextBox na TextBlock
+                ReplaceTextBoxWithTextBlock(activeTextBox);
+                activeTextBox = null;
+            }
+
+            _currentDrawingMode = newMode;
+        }
+
         private void DrawButton_Click(object sender, RoutedEventArgs e)
         {
-            _currentDrawingMode = DrawingMode.Draw;
+            ChangeDrawingMode(DrawingMode.Draw);
         }
 
         private void RectangleButton_Click(object sender, RoutedEventArgs e)
         {
-            _currentDrawingMode = DrawingMode.Rectangle;
+            ChangeDrawingMode(DrawingMode.Rectangle);
+        }
+        private void TextButton_Click(object sender, RoutedEventArgs e)
+        {
+            ChangeDrawingMode(DrawingMode.Text);
         }
 
 
@@ -278,6 +312,62 @@ namespace WPF_Paint
 
                 _startPosition = e.GetPosition(MainCanvas);
             }
+        }
+
+        private void AddTextBox(Point position)
+        {
+            TextBox textBox = new TextBox
+            {
+                Width = 200,
+                Height = 50,
+                Foreground = Brushes.Black,
+                BorderBrush = Brushes.Black,
+                BorderThickness = new Thickness(1),
+                FontSize = 12,
+                AcceptsReturn= true,
+            };
+
+            // Ustaw pozycję tekstu
+            textBox.SetValue(Canvas.LeftProperty, position.X);
+            textBox.SetValue(Canvas.TopProperty, position.Y);
+
+            // Dodaj TextBox do Canvas
+            MainCanvas.Children.Add(textBox);
+
+            // Ustaw focus na dodanym TextBox, aby można było od razu wprowadzać tekst
+            textBox.Focus();
+
+            // Przypisz zdarzenie LostFocus do obsługi zamiany TextBox na TextBlock
+            textBox.LostFocus += TextBox_LostFocus;
+
+            // Przypisz pole tekstowe do aktywnego TextBox, aby można było później je zamienić na TextBlock
+            activeTextBox = textBox;
+        }
+
+        private void TextBox_LostFocus(object sender, RoutedEventArgs e)
+        {
+            // Zamień TextBox na TextBlock
+            ReplaceTextBoxWithTextBlock((TextBox)sender);
+        }
+
+        private void ReplaceTextBoxWithTextBlock(TextBox textBox)
+        {
+            TextBlock textBlock = new TextBlock
+            {
+                Width = textBox.Width,
+                Height = textBox.Height,
+                Foreground = Brushes.Black,
+                FontSize = 12,
+                Text = textBox.Text
+            };
+
+            // Ustaw pozycję tekstu
+            textBlock.SetValue(Canvas.LeftProperty, Canvas.GetLeft(textBox));
+            textBlock.SetValue(Canvas.TopProperty, Canvas.GetTop(textBox));
+
+            // Usuń TextBox i dodaj TextBlock
+            MainCanvas.Children.Remove(textBox);
+            MainCanvas.Children.Add(textBlock);
         }
     }
 }

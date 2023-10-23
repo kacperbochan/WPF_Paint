@@ -24,7 +24,7 @@ namespace WPF_Paint
 
         public static System.Windows.Shapes.Path CreateRectangle() => CreateShape<System.Windows.Shapes.Path>();
 
-        public static Ellipse CreateEllipse() => CreateShape<Ellipse>();
+        public static System.Windows.Shapes.Path CreateEllipse() => CreateShape<System.Windows.Shapes.Path>();
 
         public static System.Windows.Shapes.Path CreateTriangle() => CreateShape<System.Windows.Shapes.Path>();
 

@@ -332,34 +332,44 @@ namespace WPF_Paint
         /// <param name="shape"></param>
         private void UpdateShape(Shape shape)
         {
-            if (_currentShapeType == ShapeType.Line || _currentShapeType == ShapeType.Triangle || _currentShapeType == ShapeType.Rectangle)
-            {
-                StreamGeometry geometry = new StreamGeometry();
-                geometry.FillRule = FillRule.EvenOdd;
+            StreamGeometry geometry = new StreamGeometry();
+            geometry.FillRule = FillRule.EvenOdd;
 
-                using (StreamGeometryContext ctx = geometry.Open())
+            using (StreamGeometryContext ctx = geometry.Open())
+            {
+                if (_currentShapeType == ShapeType.Ellipse)
+                {
+                    // Liczymy środek i promienie elipsy
+                    Point center = new Point((_startPosition.X + _endPosition.X) / 2, (_startPosition.Y + _endPosition.Y) / 2);
+                    double radiusX = Math.Abs(_endPosition.X - _startPosition.X) / 2;
+                    double radiusY = Math.Abs(_endPosition.Y - _startPosition.Y) / 2;
+
+                    // Zaczynamy rysować od najbardziej lewego krańca elipsy
+                    ctx.BeginFigure(new Point(center.X - radiusX, center.Y), true /* is filled */, true /* is closed */);
+
+                    // Rysuje górny łuk elipsy
+                    ctx.ArcTo(new Point(center.X + radiusX, center.Y), new Size(radiusX, radiusY), 0, false, SweepDirection.Clockwise, true, false);
+
+                    // Rysuje dolny łuk elipsy
+                    ctx.ArcTo(new Point(center.X - radiusX, center.Y), new Size(radiusX, radiusY), 0, false, SweepDirection.Clockwise, true, false);
+                }
+                else
                 {
                     ctx.BeginFigure(new Point(_startPosition.X, _startPosition.Y), true /* Wypełniony */, true /* zamknięty */);
 
                     if (_currentShapeType != ShapeType.Line)
                         ctx.LineTo(new Point(_startPosition.X, _endPosition.Y), true /* Widać linię */, false /* łagodne połączenie*/);
-                    
+
                     ctx.LineTo(new Point(_endPosition.X, _endPosition.Y), true /* Widać linię */, true /* łagodne połączenie */);
 
                     if (_currentShapeType == ShapeType.Rectangle)
                         ctx.LineTo(new Point(_endPosition.X, _startPosition.Y), true /* Widać linię */, false /* łagodne połączenie*/);
-                }
-                geometry.Freeze();
 
-                ((System.Windows.Shapes.Path)shape).Data = geometry;
+                }
             }
-            else
-            {
-                shape.Width = Math.Abs(_endPosition.X - _startPosition.X);
-                shape.Height = Math.Abs(_endPosition.Y - _startPosition.Y);
-                shape.SetValue(Canvas.LeftProperty, Math.Min(_startPosition.X, _endPosition.X));
-                shape.SetValue(Canvas.TopProperty, Math.Min(_startPosition.Y, _endPosition.Y));
-            }
+            geometry.Freeze();
+
+            ((System.Windows.Shapes.Path)shape).Data = geometry;    
         }
 
         /// <summary>

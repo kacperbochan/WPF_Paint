@@ -151,6 +151,7 @@ namespace WPF_Paint
         {
             ChangeDrawingMode(DrawingMode.Text);
         }
+
         private void SafeButton_Click(object sender, RoutedEventArgs e)
         {
             ChangeDrawingMode(DrawingMode.None);

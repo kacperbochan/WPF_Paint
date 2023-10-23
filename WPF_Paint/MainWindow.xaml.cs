@@ -193,8 +193,8 @@ namespace WPF_Paint
         {
             TextBox textBox = new TextBox
             {
-                Width = 200,
-                Height = 50,
+                Width = 700,
+                Height = 300,
                 Foreground = Brushes.Black,
                 BorderBrush = Brushes.Black,
                 BorderThickness = new Thickness(1),

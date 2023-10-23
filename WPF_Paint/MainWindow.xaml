@@ -17,6 +17,9 @@
             <ColumnDefinition Width="*"/>
         </Grid.ColumnDefinitions>
 
+        <!-- Canvas on the right -->
+        <Canvas Name="MainCanvas" Grid.Column="1"/>
+        
         <!-- Toolbar on the left -->
         <ToolBarTray Grid.Column="0">
             <ToolBar>
@@ -31,9 +34,6 @@
                 </StackPanel>
             </ToolBar>
         </ToolBarTray>
-
-        <!-- Canvas on the right -->
-        <Canvas Name="MainCanvas" Grid.Column="1"/>
     </Grid>
 
 </Window>

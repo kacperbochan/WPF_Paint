@@ -35,6 +35,7 @@ namespace WPF_Paint
         private DrawingMode _currentDrawingMode = DrawingMode.None;
         private TextBox? activeTextBox;
         private ShapeType _currentShapeType, _nextShapeType = ShapeType.Ellipse;
+        private bool _isDrawingStarted = false;
 
 
         public MainWindow()
@@ -163,8 +164,9 @@ namespace WPF_Paint
         //pobiera lokalizacje punkpo naciśnieciu lewego przycisku myszy
         private void StartDrawing(object sender, MouseButtonEventArgs e)
         {
-            _currentDrawingMode = DrawingMode.Draw;
             _startPosition = e.GetPosition(MainCanvas);
+            _isDrawingStarted = true;
+            Mouse.Capture(MainCanvas);
         }
 
         //MouseMove
@@ -172,7 +174,7 @@ namespace WPF_Paint
         //przed puszczeniem jej lewego przycisku
         private void ContinueDrawing(object sender, MouseEventArgs e)
         {
-            if (e.LeftButton == MouseButtonState.Pressed)
+            if (e.LeftButton == MouseButtonState.Pressed && _isDrawingStarted)
             {
                 Line line = new Line
                 {
@@ -184,8 +186,12 @@ namespace WPF_Paint
                 };
 
                 MainCanvas.Children.Add(line);
-
                 _startPosition = e.GetPosition(MainCanvas);
+            }
+            else
+            {
+                _isDrawingStarted = false;
+                Mouse.Capture(null);
             }
         }
 

@@ -6,13 +6,34 @@
         xmlns:local="clr-namespace:WPF_Paint"
         mc:Ignorable="d"
         Title="Paint Premium" Height="450" Width="800"
-            MouseLeftButtonDown="StartRectangle"
-            MouseLeftButtonUp="EndRectangle"
-            MouseMove="DrawRectangle"
-            KeyDown="KeyUpdate"
-        >
+        MouseLeftButtonDown="Canvas_MouseLeftButtonDown"
+        MouseLeftButtonUp="Canvas_MouseLeftButtonUp"
+        MouseMove="Canvas_MouseMove"
+        KeyDown="Canvas_KeyDown">
 
-        <Canvas 
-            Name="MainCanvas"/>
+    <Grid>
+        <Grid.ColumnDefinitions>
+            <ColumnDefinition Width="Auto"/>
+            <ColumnDefinition Width="*"/>
+        </Grid.ColumnDefinitions>
+
+        <!-- Toolbar on the left -->
+        <ToolBarTray Grid.Column="0">
+            <ToolBar>
+                <StackPanel>
+                    <Button Margin="0,5,0,0" Click="RectangleButton_Click">Kwadrat</Button>
+                    <Button Margin="0,5,0,0">Trójkąt</Button>
+                    <Button Margin="0,5,0,0">Elipsa</Button>
+                    <Button Margin="0,5,0,0">Linia</Button>
+                    <Button Margin="0,5,0,0" Click="DrawButton_Click">Rysowanie</Button>
+                    <Button Margin="0,5,0,0">Tekst</Button>
+                    <Button Margin="0,5,0,0">Zapisz</Button>
+                </StackPanel>
+            </ToolBar>
+        </ToolBarTray>
+
+        <!-- Canvas on the right -->
+        <Canvas Name="MainCanvas" Grid.Column="1"/>
+    </Grid>
 
 </Window>

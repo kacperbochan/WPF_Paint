@@ -9,6 +9,7 @@ using System.Windows.Data;
 using System.Windows.Documents;
 using System.Windows.Input;
 using System.Windows.Media;
+using System.Windows.Media.Animation;
 using System.Windows.Media.Imaging;
 using System.Windows.Navigation;
 using System.Windows.Shapes;
@@ -20,12 +21,89 @@ namespace WPF_Paint
     /// </summary>
     public partial class MainWindow : Window
     {
+
+        private enum DrawingMode
+        {
+            None,
+            Rectangle,
+            Draw,
+            // Dodaj inne tryby rysowania, jeśli są potrzebne
+        }
+
         private Point _startPosition, _endPosition;
+        private DrawingMode _currentDrawingMode = DrawingMode.None;
 
         public MainWindow()
         {
             InitializeComponent();
         }
+        private void Canvas_MouseLeftButtonDown(object sender, MouseButtonEventArgs e)
+        {
+            switch (_currentDrawingMode)
+            {
+                case DrawingMode.Rectangle:
+                    // Obsługa rysowania prostokątów
+                    StartRectangle(sender, e);
+                    break;
+                case DrawingMode.Draw:
+                    // Obsługa rysowania linii
+                    StartDrawing(sender, e);
+                    break;
+                    // Dodaj inne przypadki dla innych trybów rysowania
+            }
+        }
+
+        private void Canvas_MouseLeftButtonUp(object sender, MouseButtonEventArgs e)
+        {
+            switch (_currentDrawingMode)
+            {
+                case DrawingMode.Rectangle:
+                    // Obsługa zakończenia rysowania prostokątów
+                    EndRectangle(sender, e);
+                    break;
+                    // Dodaj inne przypadki dla innych trybów rysowania
+            }
+        }
+
+        private void Canvas_MouseMove(object sender, MouseEventArgs e)
+        {
+            switch (_currentDrawingMode)
+            {
+                case DrawingMode.Rectangle:
+                    // Obsługa rysowania prostokątów
+                    DrawRectangle(sender, e);
+                    break;
+                case DrawingMode.Draw:
+                    // Obsługa rysowania linii
+                    ContinueDrawing(sender, e);
+                    break;
+                    // Dodaj inne przypadki dla innych trybów rysowania
+            }
+        }
+
+        private void Canvas_KeyDown(object sender, KeyEventArgs e)
+        {
+            // Obsługa zmiany trybu rysowania
+            switch (_currentDrawingMode)
+            {
+                case DrawingMode.Rectangle:
+                    KeyUpdate(sender, e);
+                    break;
+
+             // Dodaj inne przypadki dla innych trybów rysowania
+            }
+        }
+
+        private void DrawButton_Click(object sender, RoutedEventArgs e)
+        {
+            _currentDrawingMode = DrawingMode.Draw;
+        }
+
+        private void RectangleButton_Click(object sender, RoutedEventArgs e)
+        {
+            _currentDrawingMode = DrawingMode.Rectangle;
+        }
+
 
         //MouseLeftButtonDown
         //tworzy prostokąt przy przyciśnięciu lewego przycisku myszy
@@ -171,6 +249,35 @@ namespace WPF_Paint
             MainCanvas.Children[lastIndex] = rectangle;
 
         }
+        
+        //MouseLeftButtonDown
+        //pobiera lokalizacje punkpo naciśnieciu lewego przycisku myszy
+        private void StartDrawing(object sender, MouseButtonEventArgs e)
+        {
+            _currentDrawingMode = DrawingMode.Draw;
+            _startPosition = e.GetPosition(MainCanvas);
+        }
 
+        //MouseMove
+        //aktualizuje linię przy poruszaniu myszą,
+        //przed puszczeniem jej lewego przycisku
+        private void ContinueDrawing(object sender, MouseEventArgs e)
+        {
+            if (e.LeftButton == MouseButtonState.Pressed)
+            {
+                Line line = new Line
+                {
+                    Stroke = Brushes.Black,
+                    X1 = _startPosition.X,
+                    Y1 = _startPosition.Y,
+                    X2 = e.GetPosition(MainCanvas).X,
+                    Y2 = e.GetPosition(MainCanvas).Y
+                };
+
+                MainCanvas.Children.Add(line);
+
+                _startPosition = e.GetPosition(MainCanvas);
+            }
+        }
     }
 }

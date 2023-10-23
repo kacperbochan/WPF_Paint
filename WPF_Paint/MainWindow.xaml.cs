@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.IO;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
@@ -39,6 +40,7 @@ namespace WPF_Paint
         public MainWindow()
         {
             InitializeComponent();
+            MainCanvas.Background = Brushes.White;
         }
         private void Canvas_MouseLeftButtonDown(object sender, MouseButtonEventArgs e)
         {
@@ -137,6 +139,12 @@ namespace WPF_Paint
         {
             ChangeDrawingMode(DrawingMode.Text);
         }
+        private void SafeButton_Click(object sender, RoutedEventArgs e)
+        {
+            ChangeDrawingMode(DrawingMode.None);
+            SaveCanvasToJpg();
+        }
+
 
 
         //MouseLeftButtonDown
@@ -368,6 +376,31 @@ namespace WPF_Paint
             // Usuń TextBox i dodaj TextBlock
             MainCanvas.Children.Remove(textBox);
             MainCanvas.Children.Add(textBlock);
+        }
+
+        private void SaveCanvasToJpg()
+        {
+            Rect rect = new Rect(0, 0, MainCanvas.ActualWidth, MainCanvas.ActualHeight);
+            RenderTargetBitmap rtb = new RenderTargetBitmap((int)rect.Right, (int)rect.Bottom, 96d, 96d, System.Windows.Media.PixelFormats.Default);
+            rtb.Render(MainCanvas);
+
+            BitmapEncoder jpgEncoder = new JpegBitmapEncoder();
+            jpgEncoder.Frames.Add(BitmapFrame.Create(rtb));
+
+            // Wybierz ścieżkę i nazwę pliku do zapisania
+            Microsoft.Win32.SaveFileDialog dlg = new Microsoft.Win32.SaveFileDialog();
+            dlg.FileName = "PaintImage"; // Nazwa domyślna
+            dlg.DefaultExt = ".jpg"; // Rozszerzenie domyślne
+            dlg.Filter = "JPEG files (.jpg)|*.jpg"; // Filtry rozszerzeń
+
+            // Wyświetl okno dialogowe i zapisz plik, jeśli użytkownik kliknie "Zapisz"
+            if (dlg.ShowDialog() == true)
+            {
+                using (FileStream fs = File.Open(dlg.FileName, FileMode.Create))
+                {
+                    jpgEncoder.Save(fs);
+                }
+            }
         }
     }
 }

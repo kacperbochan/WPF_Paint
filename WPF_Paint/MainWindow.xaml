@@ -27,7 +27,7 @@
                     <Button Margin="0,5,0,0">Linia</Button>
                     <Button Margin="0,5,0,0" Click="DrawButton_Click">Rysowanie</Button>
                     <Button Margin="0,5,0,0" Click="TextButton_Click">Tekst</Button>
-                    <Button Margin="0,5,0,0">Zapisz</Button>
+                    <Button Margin="0,5,0,0" Click="SafeButton_Click">Zapisz</Button>
                 </StackPanel>
             </ToolBar>
         </ToolBarTray>

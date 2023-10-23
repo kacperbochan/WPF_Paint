@@ -27,6 +27,8 @@ namespace WPF_Paint
         public static Ellipse CreateEllipse() => CreateShape<Ellipse>();
 
         public static System.Windows.Shapes.Path CreateTriangle() => CreateShape<System.Windows.Shapes.Path>();
+
+        public static Line CreateLine() => CreateShape<Line>();
         #endregion
 
         #region Keys

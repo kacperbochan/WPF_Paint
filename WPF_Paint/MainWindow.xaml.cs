@@ -28,7 +28,7 @@ namespace WPF_Paint
             // Dodaj inne tryby rysowania, jeśli są potrzebne
         }
 
-        private enum ShapeType { Triangle, Rectangle, Ellipse }
+        private enum ShapeType { Triangle, Rectangle, Ellipse, Line }
 
         private Shape _currentShape;
         private Point _startPosition, _endPosition;
@@ -141,6 +141,8 @@ namespace WPF_Paint
                         _nextShapeType = ShapeType.Rectangle;
                     else if (number == 2)
                         _nextShapeType = ShapeType.Ellipse;
+                    else if (number == 3)
+                        _nextShapeType = ShapeType.Line;
                 }
             }
 
@@ -289,6 +291,9 @@ namespace WPF_Paint
                 case ShapeType.Ellipse:
                     _currentShape = CreateEllipse();
                     break;
+                case ShapeType.Line:
+                    _currentShape = CreateLine();
+                    break;
             }
 
             _currentShapeType = _nextShapeType;
@@ -327,7 +332,7 @@ namespace WPF_Paint
         /// <param name="shape"></param>
         private void UpdateShape(Shape shape)
         {
-            if (_currentShapeType == ShapeType.Triangle)
+            if (_currentShapeType == ShapeType.Line || _currentShapeType == ShapeType.Triangle)
             {
                 StreamGeometry geometry = new StreamGeometry();
                 geometry.FillRule = FillRule.EvenOdd;
@@ -338,7 +343,8 @@ namespace WPF_Paint
 
                     ctx.LineTo(new Point(_startPosition.X, _endPosition.Y), true /* Widać linię */, false /* łagodne połączenie*/);
 
-                    ctx.LineTo(new Point(_endPosition.X, _endPosition.Y), true /* Widać linię */, true /* łagodne połączenie */);
+                    if(_currentShapeType == ShapeType.Triangle)
+                        ctx.LineTo(new Point(_endPosition.X, _endPosition.Y), true /* Widać linię */, true /* łagodne połączenie */);
                 }
                 geometry.Freeze();
 
@@ -359,7 +365,7 @@ namespace WPF_Paint
         /// </summary>
         private void KeyUpdate(object sender, KeyEventArgs e)
         {
-            UpdateNextShapeType(e);
+            //UpdateNextShapeType(e);
 
             if (MainCanvas.Children.Count == 0) return;
 
@@ -398,6 +404,10 @@ namespace WPF_Paint
                 case Key.E:
                     _nextShapeType = ShapeType.Ellipse;
                     break;
+                case Key.L:
+                    _nextShapeType = ShapeType.Line;
+                    break;
+
             }
         }
 

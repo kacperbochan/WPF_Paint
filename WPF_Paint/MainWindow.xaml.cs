@@ -172,5 +172,70 @@ namespace WPF_Paint
 
         }
 
+            // Przypisz zdarzenie LostFocus do obsługi zamiany TextBox na TextBlock
+            textBox.LostFocus += TextBox_LostFocus;
+
+            // Przypisz pole tekstowe do aktywnego TextBox, aby można było później je zamienić na TextBlock
+            activeTextBox = textBox;
+        }
+
+        private void TextBox_LostFocus(object sender, RoutedEventArgs e)
+        {
+            // Zamień TextBox na TextBlock
+            ReplaceTextBoxWithTextBlock((TextBox)sender);
+        }
+
+        private void ReplaceTextBoxWithTextBlock(TextBox textBox)
+        {
+            TextBlock textBlock = new TextBlock
+            {
+                Width = textBox.Width,
+                Height = textBox.Height,
+                Foreground = Brushes.Black,
+                FontSize = 12,
+                Text = textBox.Text
+            };
+
+            // Ustaw pozycję tekstu
+            textBlock.SetValue(Canvas.LeftProperty, Canvas.GetLeft(textBox));
+            textBlock.SetValue(Canvas.TopProperty, Canvas.GetTop(textBox));
+
+            // Usuń TextBox i dodaj TextBlock
+            MainCanvas.Children.Remove(textBox);
+            MainCanvas.Children.Add(textBlock);
+        }
+
+        private void SaveCanvasToJpg()
+        {
+            Rect rect = new Rect(90, 0, MainCanvas.ActualWidth, MainCanvas.ActualHeight);
+            RenderTargetBitmap rtb = new RenderTargetBitmap((int)rect.Right, (int)rect.Bottom, 96d, 96d, System.Windows.Media.PixelFormats.Default);
+            rtb.Render(MainCanvas);
+
+            // Określ prostokąt, który chcesz zachować (x, y, width, height)
+            Int32Rect cropRect = new Int32Rect(90, 0, (int)(rtb.PixelWidth - 90), (int)rtb.PixelHeight);
+
+            // Utwórz CroppedBitmap na podstawie RenderTargetBitmap i prostokąta
+            CroppedBitmap croppedBitmap = new CroppedBitmap(rtb, cropRect);
+
+            // Kod zapisywania pliku pozostaje bez zmian
+
+            BitmapEncoder jpgEncoder = new JpegBitmapEncoder();
+            jpgEncoder.Frames.Add(BitmapFrame.Create(croppedBitmap));
+
+            // Wybierz ścieżkę i nazwę pliku do zapisania
+            Microsoft.Win32.SaveFileDialog dlg = new Microsoft.Win32.SaveFileDialog();
+            dlg.FileName = "PaintImage"; // Nazwa domyślna
+            dlg.DefaultExt = ".jpg"; // Rozszerzenie domyślne
+            dlg.Filter = "JPEG files (.jpg)|*.jpg"; // Filtry rozszerzeń
+
+            // Wyświetl okno dialogowe i zapisz plik, jeśli użytkownik kliknie "Zapisz"
+            if (dlg.ShowDialog() == true)
+            {
+                using (FileStream fs = File.Open(dlg.FileName, FileMode.Create))
+                {
+                    jpgEncoder.Save(fs);
+                }
+            }
+        }
     }
 }

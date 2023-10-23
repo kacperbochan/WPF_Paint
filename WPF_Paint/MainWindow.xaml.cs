@@ -332,7 +332,7 @@ namespace WPF_Paint
         /// <param name="shape"></param>
         private void UpdateShape(Shape shape)
         {
-            if (_currentShapeType == ShapeType.Line || _currentShapeType == ShapeType.Triangle)
+            if (_currentShapeType == ShapeType.Line || _currentShapeType == ShapeType.Triangle || _currentShapeType == ShapeType.Rectangle)
             {
                 StreamGeometry geometry = new StreamGeometry();
                 geometry.FillRule = FillRule.EvenOdd;
@@ -341,10 +341,13 @@ namespace WPF_Paint
                 {
                     ctx.BeginFigure(new Point(_startPosition.X, _startPosition.Y), true /* Wypełniony */, true /* zamknięty */);
 
-                    ctx.LineTo(new Point(_startPosition.X, _endPosition.Y), true /* Widać linię */, false /* łagodne połączenie*/);
+                    if (_currentShapeType != ShapeType.Line)
+                        ctx.LineTo(new Point(_startPosition.X, _endPosition.Y), true /* Widać linię */, false /* łagodne połączenie*/);
+                    
+                    ctx.LineTo(new Point(_endPosition.X, _endPosition.Y), true /* Widać linię */, true /* łagodne połączenie */);
 
-                    if(_currentShapeType == ShapeType.Triangle)
-                        ctx.LineTo(new Point(_endPosition.X, _endPosition.Y), true /* Widać linię */, true /* łagodne połączenie */);
+                    if (_currentShapeType == ShapeType.Rectangle)
+                        ctx.LineTo(new Point(_endPosition.X, _startPosition.Y), true /* Widać linię */, false /* łagodne połączenie*/);
                 }
                 geometry.Freeze();
 

@@ -247,12 +247,21 @@ namespace WPF_Paint
 
         private void SaveCanvasToJpg()
         {
-            Rect rect = new Rect(0, 0, MainCanvas.ActualWidth, MainCanvas.ActualHeight);
+            Rect rect = new Rect(90, 0, MainCanvas.ActualWidth, MainCanvas.ActualHeight);
             RenderTargetBitmap rtb = new RenderTargetBitmap((int)rect.Right, (int)rect.Bottom, 96d, 96d, System.Windows.Media.PixelFormats.Default);
             rtb.Render(MainCanvas);
 
+            // Określ prostokąt, który chcesz zachować (x, y, width, height)
+            Int32Rect cropRect = new Int32Rect(90, 0, (int)(rtb.PixelWidth - 90), (int)rtb.PixelHeight);
+
+            // Utwórz CroppedBitmap na podstawie RenderTargetBitmap i prostokąta
+            CroppedBitmap croppedBitmap = new CroppedBitmap(rtb, cropRect);
+
+            // Kod zapisywania pliku pozostaje bez zmian
+
             BitmapEncoder jpgEncoder = new JpegBitmapEncoder();
-            jpgEncoder.Frames.Add(BitmapFrame.Create(rtb));
+            jpgEncoder.Frames.Add(BitmapFrame.Create(croppedBitmap));
+
 
             // Wybierz ścieżkę i nazwę pliku do zapisania
             Microsoft.Win32.SaveFileDialog dlg = new Microsoft.Win32.SaveFileDialog();

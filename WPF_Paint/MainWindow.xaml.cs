@@ -1,175 +1,208 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 using System.Windows;
 using System.Windows.Controls;
-using System.Windows.Data;
-using System.Windows.Documents;
 using System.Windows.Input;
 using System.Windows.Media;
-using System.Windows.Media.Imaging;
-using System.Windows.Navigation;
 using System.Windows.Shapes;
+using static WPF_Paint.HelperMethods;
 
 namespace WPF_Paint
 {
-    /// <summary>
-    /// Interaction logic for MainWindow.xaml
-    /// </summary>
     public partial class MainWindow : Window
     {
+        private enum ShapeType { Triangle, Rectangle, Ellipse }
+
+        private Shape _currentShape;
         private Point _startPosition, _endPosition;
+        private ShapeType _currentShapeType, _nextShapeType = ShapeType.Ellipse;
 
         public MainWindow()
         {
             InitializeComponent();
         }
 
-        //MouseLeftButtonDown
-        //tworzy prostokąt przy przyciśnięciu lewego przycisku myszy
-        private void StartRectangle(object sender, MouseButtonEventArgs e)
+        /// <summary>
+        /// Uruchamiana przy przyciśnięciu lewego przycisku myszy
+        /// Rozpoczyna rysowanie kształtu
+        /// </summary>
+        private void StartDrawing(object sender, MouseButtonEventArgs e)
         {
-            //pobieramy pozycję myszy, jako początek prostokąta
             _startPosition = e.GetPosition(MainCanvas);
+            _endPosition = _startPosition;
 
-            //tworzymy podstawowy kwadrat, jeszcze bez wymiarów, jedynie z kolorami
-            Rectangle rectangle = new Rectangle
+            switch (_nextShapeType)
             {
-                Width = 0,
-                Height = 0,
-                Fill = Brushes.LightBlue,
-                Stroke = Brushes.Blue,
-                StrokeThickness = 2
-            };
+                case ShapeType.Triangle:
+                    _currentShape = CreateTriangle();
+                    break;
+                case ShapeType.Rectangle:
+                    _currentShape = CreateRectangle();
+                    break;
+                case ShapeType.Ellipse:
+                    _currentShape = CreateEllipse();
+                    break;
+            }
 
-            //przypinamy stworzony prostokąt do miejsca kliknięcia myszy
-            rectangle.SetValue(Canvas.TopProperty, _startPosition.Y);
-            rectangle.SetValue(Canvas.LeftProperty, _startPosition.X);
+            _currentShapeType = _nextShapeType;
             
-            //dodajemy obecny prostokąt do dzieci canvasu
-            MainCanvas.Children.Add(rectangle);
-            
-            //każemy programowi śledzić mysz, nawet jeśli wyszła poza obrys okna
-            Mouse.Capture(MainCanvas); 
-            //okazuje się, że trzeba było dać to na końcu,
-            //ponieważ od razu przekazywał do MouseMove (DrawRectangle)
-            //który oczekiwał najnowszego kwadrata
+            MainCanvas.Children.Add(_currentShape);
+            Mouse.Capture(MainCanvas);
         }
 
-        //MouseLeftButtonUp
-        //kończy rysowanie prostokąta przy puszczeniu lewego przycisku myszy
-        private void EndRectangle(object sender, MouseButtonEventArgs e)
+        /// <summary>
+        /// Uruchamiana przy podniesieniu lewego przycisku myszy
+        /// Kończy rysowanie kształtu
+        /// </summary>
+        private void EndDrawing(object sender, MouseButtonEventArgs e)
         {
-            //pozyskujemy końcową pozycję myszy 
             _endPosition = e.GetPosition(MainCanvas);
-
-            //nanosimy poprawki z pozycją końcową myszy
-            updateRectangleByMouse();
-
-            //program nie śledzi już myszy
+            UpdateShape(_currentShape);
             Mouse.Capture(null);
         }
 
-        //MouseMove
-        //aktualizuje obraz prostokąta przy poruszaniu myszą,
-        //przed puszczeniem jej lewego przycisku
-        private void DrawRectangle(object sender, MouseEventArgs e)
+        /// <summary>
+        /// Uruchamiana gdy lewy przycisk myszy jest przyciśnięty, a mysz się przesunęła
+        /// Rysuje kształt
+        /// </summary>
+        private void DragShape(object sender, MouseEventArgs e)
         {
-            //jeśli uwaga jest na naszym oknie i lewy przycisk jest wciśnięty
             if (Mouse.Captured == MainCanvas && e.LeftButton == MouseButtonState.Pressed)
             {
-                //pozyskujemy nową pozycję myszy
                 _endPosition = e.GetPosition(MainCanvas);
-
-                //nanosimy poprawki z nową pozycją myszy
-                updateRectangleByMouse();
+                UpdateShape(_currentShape);
             }
         }
 
-        //nanoszenie poprawek do najnowszego prostokąta z nową pozycją myszy
-        private void updateRectangleByMouse()
+        /// <summary>
+        /// Nanosi nowo wprowadzone zmiany na rysowany kształt
+        /// </summary>
+        /// <param name="shape"></param>
+        private void UpdateShape(Shape shape)
         {
-            //dla skrócenia zapamiętujemy index najnowszego prostokąta i pobieramy jego kopię
-            int lastIndex = MainCanvas.Children.Count - 1;
-            Rectangle rectangle = (Rectangle)MainCanvas.Children[lastIndex];
-
-            //dla kopii aktualizujemy wielkość na bazie absolutnej różnicy między punktem początkowym a obecnym myszy
-            rectangle.Width = Math.Abs(_endPosition.X - _startPosition.X);
-            rectangle.Height = Math.Abs(_endPosition.Y - _startPosition.Y);
-
-            //zapisujemy najbardziej lewy punkt prostokąta jako jego początek
-            rectangle.SetValue(Canvas.LeftProperty, Math.Min(_startPosition.X, _endPosition.X));
-            rectangle.SetValue(Canvas.TopProperty, Math.Min(_startPosition.Y, _endPosition.Y));
-
-            //aktualizujemy najnowszy prostokąt i ostatnie dziecko canvasu
-            MainCanvas.Children[lastIndex] = rectangle;
-        }
-
-        //KeyDown
-        //aktualizowanie stworzonego prostokąta po użyciu strzałek lub strzałek z shiftem
-        private void KeyUpdate(object sender, KeyEventArgs e) 
-        {
-
-            //musimy mieć co przesuwać
-            if(MainCanvas.Children.Count == 0) return;
-
-            //dla skrócenia zapamiętujemy index najnowszego prostokąta i pobieramy jego kopię
-            int lastIndex = MainCanvas.Children.Count - 1;
-            Rectangle rectangle = (Rectangle)MainCanvas.Children[lastIndex];
-
-            //będzie określać prędkość zmian (wolniej)
-            bool control = ((Keyboard.Modifiers & ModifierKeys.Control) == ModifierKeys.Control);
-
-            //sprawdzamy czy użytkownik wcisnął shift
-            if ((e.KeyboardDevice.Modifiers & ModifierKeys.Shift) == ModifierKeys.Shift)
+            if (_currentShapeType == ShapeType.Triangle)
             {
-                //jeśli tak, to zależnie od strzałki zmieniamy wielkość prostokąta
-                switch (e.Key)
+                StreamGeometry geometry = new StreamGeometry();
+                geometry.FillRule = FillRule.EvenOdd;
+
+                using (StreamGeometryContext ctx = geometry.Open())
                 {
-                    //w góre ograniczamy rozmiar do zera
-                    case Key.Up:
-                        if (rectangle.Height > 0)
-                            rectangle.Height -= (control) ? 1 : (rectangle.Height > 5) ? 5: rectangle.Height;
-                        break;
-                    //w lewo ograniczamy rozmiar do zera
-                    case Key.Left:
-                        if (rectangle.Width > 0)
-                            rectangle.Width -= (control) ? 1 : (rectangle.Width > 5) ? 5 : rectangle.Width;
-                        break;
-                    case Key.Down:
-                        rectangle.Height += (control) ? 1 : 5;
-                        break;
-                    case Key.Right:
-                        rectangle.Width += (control) ? 1 : 5;
-                        break;
+                    ctx.BeginFigure(new Point(_startPosition.X, _startPosition.Y), true /* Wypełniony */, true /* zamknięty */);
+
+                    ctx.LineTo(new Point(_startPosition.X, _endPosition.Y), true /* Widać linię */, false /* łagodne połączenie*/);
+
+                    ctx.LineTo(new Point(_endPosition.X, _endPosition.Y), true /* Widać linię */, true /* łagodne połączenie */);
                 }
+                geometry.Freeze();
+
+                ((System.Windows.Shapes.Path)shape).Data = geometry;
             }
             else
             {
-                //jeśli nie, to zależnie od strzałki zmieniamy położenie prostokąta
-                switch (e.Key)
-                {
-                    //wszystkie działają podobnie, aktualizujemy obecną wartość początku, podając mu obecną ze zmianą wynikającą z klawisza
-                    case Key.Up:
-                        rectangle.SetValue(Canvas.TopProperty, (double)rectangle.GetValue(Canvas.TopProperty) - ((control) ? 1 : 5));
-                        break;
-                    case Key.Down:
-                        rectangle.SetCurrentValue(Canvas.TopProperty, (double)rectangle.GetValue(Canvas.TopProperty) + ((control) ? 1 : 5));
-                        break;
-                    case Key.Right:
-                        rectangle.SetCurrentValue(Canvas.LeftProperty, (double)rectangle.GetValue(Canvas.LeftProperty) + ((control) ? 1 : 5));
-                        break;
-                    case Key.Left:
-                        rectangle.SetCurrentValue(Canvas.LeftProperty, (double)rectangle.GetValue(Canvas.LeftProperty) - ((control) ? 1 : 5));
-                        break;
-                }
+                shape.Width = Math.Abs(_endPosition.X - _startPosition.X);
+                shape.Height = Math.Abs(_endPosition.Y - _startPosition.Y);
+                shape.SetValue(Canvas.LeftProperty, Math.Min(_startPosition.X, _endPosition.X));
+                shape.SetValue(Canvas.TopProperty, Math.Min(_startPosition.Y, _endPosition.Y));
             }
+        }
 
-            //aktualizujemy obecny
-            MainCanvas.Children[lastIndex] = rectangle;
+        /// <summary>
+        /// Uruchamiana gdy urzytkownik naciśnie klawisz klawiatury
+        /// Służy do wybierania kszrałtu, skalowania figury, poruszania figury
+        /// </summary>
+        private void KeyUpdate(object sender, KeyEventArgs e)
+        {
+            UpdateNextShapeType(e);
 
+            if (MainCanvas.Children.Count == 0) return;
+
+            if (IsArrowKey(e.Key))
+            {
+                int value = IsControlPressed() ? 1 : 5;
+
+                if (IsShiftPressed())
+                {
+                    AdjustShapeSize(e.Key, value);
+                }
+                else
+                {
+                    MoveShape(e.Key, value);
+                }
+
+                UpdateShape(_currentShape);
+                MainCanvas.Children[MainCanvas.Children.Count - 1] = _currentShape;
+            }
+        }
+
+        /// <summary>
+        /// Jeśli to konieczne zmienia kształt następnej figury
+        /// </summary>
+        /// <param name="e"></param>
+        private void UpdateNextShapeType(KeyEventArgs e)
+        {
+            switch (e.Key)
+            {
+                case Key.T:
+                    _nextShapeType = ShapeType.Triangle;
+                    break;
+                case Key.R:
+                    _nextShapeType = ShapeType.Rectangle;
+                    break;
+                case Key.E:
+                    _nextShapeType = ShapeType.Ellipse;
+                    break;
+            }
+        }
+
+        /// <summary>
+        /// Za pomocą inputów ze strzałek skaluje figurę
+        /// </summary>
+        /// <param name="key"></param>
+        /// <param name="value"></param>
+        private void AdjustShapeSize(Key key, int value)
+        {
+            switch (key)
+            {
+                case Key.Up:
+                    _endPosition.Y -= value;
+                    break;
+                case Key.Left:
+                    _endPosition.X -= value;
+                    break;
+                case Key.Down:
+                    _endPosition.Y += value;
+                    break;
+                case Key.Right:
+                    _endPosition.X += value;
+                    break;
+            }
+        }
+
+        /// <summary>
+        /// Za pomocą inputów ze strzałek przesuwa figurę
+        /// </summary>
+        /// <param name="key"></param>
+        /// <param name="value"></param>
+        private void MoveShape(Key key, int value)
+        {
+            switch (key)
+            {
+                case Key.Up:
+                    _startPosition.Y -= value;
+                    _endPosition.Y -= value;
+                    break;
+                case Key.Left:
+                    _startPosition.X -= value;
+                    _endPosition.X -= value;
+                    break;
+                case Key.Down:
+                    _startPosition.Y += value;
+                    _endPosition.Y += value;
+                    break;
+                case Key.Right:
+                    _startPosition.X += value;
+                    _endPosition.X += value;
+                    break;
+            }
         }
 
     }

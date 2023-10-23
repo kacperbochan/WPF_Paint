@@ -6,9 +6,9 @@
         xmlns:local="clr-namespace:WPF_Paint"
         mc:Ignorable="d"
         Title="Paint Premium" Height="450" Width="800"
-            MouseLeftButtonDown="StartRectangle"
-            MouseLeftButtonUp="EndRectangle"
-            MouseMove="DrawRectangle"
+            MouseLeftButtonDown="StartDrawing"
+            MouseLeftButtonUp="EndDrawing"
+            MouseMove="DragShape"
             KeyDown="KeyUpdate"
         >
 

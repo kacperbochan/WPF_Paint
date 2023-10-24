@@ -3,13 +3,10 @@
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+        xmlns:i="http://schemas.microsoft.com/expression/2010/interactivity"
         xmlns:local="clr-namespace:WPF_Paint"
         mc:Ignorable="d"
-        Title="Paint Premium" Height="450" Width="800"
-        MouseLeftButtonDown="Canvas_MouseLeftButtonDown"
-        MouseLeftButtonUp="Canvas_MouseLeftButtonUp"
-        MouseMove="Canvas_MouseMove"
-        KeyDown="Canvas_KeyDown">
+        Title="Paint Premium" Height="450" Width="800">
 
     <Grid>
         <Grid.ColumnDefinitions>
@@ -18,19 +15,23 @@
         </Grid.ColumnDefinitions>
 
         <!-- Canvas on the right -->
-        <Canvas Name="MainCanvas" Grid.Column="1"/>
-        
+        <Canvas x:Name="MainCanvas" DataContext="{Binding MainCanvas, Mode=TwoWay}" 
+                MouseLeftButtonDown="{Binding MouseDownCommand, Converter={StaticResource ParameterConverter}}"
+                MouseLeftButtonUp="{Binding MouseUpCommand, Converter={StaticResource ParameterConverter}}"
+                MouseMove="{Binding MouseMoveCommand, Converter={StaticResource ParameterConverter}}"
+                Grid.Column="1"/>
+
         <!-- Toolbar on the left -->
         <ToolBarTray Grid.Column="0">
             <ToolBar>
                 <StackPanel>
-                    <Button Margin="0,5,0,0" Click="ShapeButton_Click" Tag="1">Kwadrat</Button>
-                    <Button Margin="0,5,0,0" Click="ShapeButton_Click" Tag="0">Trójkąt</Button>
-                    <Button Margin="0,5,0,0" Click="ShapeButton_Click" Tag="2">Elipsa</Button>
-                    <Button Margin="0,5,0,0" Click="ShapeButton_Click" Tag="3">Linia</Button>
-                    <Button Margin="0,5,0,0" Click="DrawButton_Click">Rysowanie</Button>
-                    <Button Margin="0,5,0,0" Click="TextButton_Click">Tekst</Button>
-                    <Button Margin="0,5,0,0" Click="SafeButton_Click">Zapisz</Button>
+                    <Button Margin="0,5,0,0" Command="{Binding RectangleCommand}">Prostokąt</Button>
+                    <Button Margin="0,5,0,0" Command="{Binding TriangleCommand}">Trójkąt</Button>
+                    <Button Margin="0,5,0,0" Command="{Binding EllipseCommand}">Elipsa</Button>
+                    <Button Margin="0,5,0,0" Command="{Binding LineCommand}">Linia</Button>
+                    <Button Margin="0,5,0,0" Command="{Binding DrawCommand}">Rysowanie</Button>
+                    <Button Margin="0,5,0,0" Command="{Binding TextCommand}">Tekst</Button>
+                    <Button Command="{Binding SaveCommand}" CommandParameter="{Binding ElementName=MainCanvas}" Content="Zapisz"/>
                 </StackPanel>
             </ToolBar>
         </ToolBarTray>

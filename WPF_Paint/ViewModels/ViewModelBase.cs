@@ -1,0 +1,551 @@
+﻿using System;
+using System.Collections.Generic;
+using System.ComponentModel;
+using System.IO;
+using System.Linq;
+using System.Reflection;
+using System.Text;
+using System.Threading.Tasks;
+using System.Windows;
+using System.Windows.Controls;
+using System.Windows.Input;
+using System.Windows.Media;
+using System.Windows.Media.Imaging;
+using System.Windows.Shapes;
+using static WPF_Paint.HelperMethods;
+
+namespace WPF_Paint.ViewModels
+{
+    internal class ViewModelBase : INotifyPropertyChanged
+    {
+
+        private Canvas _mainCanvas;
+
+        public Canvas MainCanvas
+        {
+            get { return _mainCanvas; }
+            set
+            {
+                _mainCanvas = value;
+                OnPropertyChanged(nameof(MainCanvas));
+            }
+        }
+        private enum DrawingMode
+        {
+            None,
+            Shape,
+            Draw,
+            Text,
+            // Dodaj inne tryby rysowania, jeśli są potrzebne
+        }
+
+        private enum ShapeType { Triangle, Rectangle, Ellipse, Line }
+
+        private Shape _currentShape;
+        private Point _startPosition, _endPosition;
+        private DrawingMode _currentDrawingMode = DrawingMode.None;
+        private TextBox? activeTextBox;
+        private ShapeType _currentShapeType, _nextShapeType = ShapeType.Ellipse;
+        private bool _isDrawingStarted = false;
+
+
+        public ICommand MouseDownCommand { get; }
+        public ICommand MouseUpCommand { get; }
+        public ICommand MouseMoveCommand { get; }
+        public ICommand KeyDownCommand { get; }
+
+        public ICommand RectangleCommand { get; }
+        public ICommand TriangleCommand { get; }
+        public ICommand EllipseCommand { get; }
+        public ICommand LineCommand { get; }
+
+        public ICommand DrawCommand { get; }
+
+        public ICommand TextCommand { get; }
+
+        public ICommand SaveCommand { get; }
+
+        private void ExecuteSaveCommand(object obj)
+        {
+            SaveCanvasToJpg();
+        }
+
+        public event PropertyChangedEventHandler? PropertyChanged;
+
+
+        public ViewModelBase()
+        {
+            MouseDownCommand = new RelayCommand(param => Canvas_MouseLeftButtonDown((Tuple<object, MouseButtonEventArgs>)param)); 
+            MouseUpCommand = new RelayCommand(param => Canvas_MouseLeftButtonUp((Tuple<object, MouseButtonEventArgs>)param));
+            MouseMoveCommand = new RelayCommand(param => Canvas_MouseMove((Tuple<object, MouseButtonEventArgs>)param));
+            KeyDownCommand = new RelayCommand(param => Canvas_KeyDown((Tuple<object, KeyEventArgs>)param));
+
+            RectangleCommand = new RelayCommand(param => ShapeButton_Click(1));
+            TriangleCommand = new RelayCommand(param => ShapeButton_Click(0));
+            EllipseCommand = new RelayCommand(param => ShapeButton_Click(2));
+            LineCommand = new RelayCommand(param => ShapeButton_Click(4));
+            DrawCommand = new RelayCommand(DrawButton_Click);
+            TextCommand = new RelayCommand(TextButton_Click);
+
+            SaveCommand = new RelayCommand(ExecuteSaveCommand);
+        }
+        
+        private void Canvas_MouseLeftButtonDown(Tuple<object, MouseButtonEventArgs> parameters)
+        {
+            var sender = parameters.Item1 as Canvas;
+            var e = parameters.Item2;
+
+            switch (_currentDrawingMode)
+            {
+                case DrawingMode.Shape:
+                    // Obsługa rysowania kształtów
+                    StartDrawingShape(sender, e);
+                    break;
+                case DrawingMode.Draw:
+                    // Obsługa rysowania linii
+                    StartDrawing(sender, e);
+                    break;
+                case DrawingMode.Text:
+                    // Obsługa dodawania tekstu
+                    if (activeTextBox != null)
+                    {
+                        // Zamień TextBox na TextBlock
+                        ReplaceTextBoxWithTextBlock(activeTextBox);
+                        activeTextBox = null;
+                    }
+                    else
+                    {
+                        // Dodaj nowy TextBox
+                        AddTextBox(e.GetPosition(MainCanvas));
+                    }
+                    break;
+            }
+        }
+
+        private void Canvas_MouseLeftButtonUp(Tuple<object, MouseButtonEventArgs> parameters)
+        {
+            var sender = parameters.Item1 as Canvas;
+            var e = parameters.Item2;
+
+            if (_currentDrawingMode == DrawingMode.Shape)
+            {
+                EndDrawingShape(sender, e);
+            }
+        }
+
+        private void Canvas_MouseMove(Tuple<object, MouseButtonEventArgs> parameters)
+        {
+            var sender = parameters.Item1 as Canvas;
+            var e = parameters.Item2;
+
+            switch (_currentDrawingMode)
+            {
+                case DrawingMode.Shape:
+                    // Obsługa rysowania prostokątów
+                    DragShape(sender, e);
+                    break;
+                case DrawingMode.Draw:
+                    // Obsługa rysowania linii
+                    ContinueDrawing(sender, e);
+                    break;
+                    // Dodaj inne przypadki dla innych trybów rysowania
+            }
+        }
+
+        private void Canvas_KeyDown(Tuple<object, KeyEventArgs> parameters)
+        {
+            var sender = parameters.Item1 as Canvas;
+            var e = parameters.Item2; 
+
+            // Obsługa zmiany trybu rysowania
+            switch (_currentDrawingMode)
+            {
+                case DrawingMode.Shape:
+                    KeyUpdate(e);
+                    break;
+
+                    // Dodaj inne przypadki dla innych trybów rysowania
+            }
+        }
+
+        private void ReplaceTextBoxWithTextBlock(TextBox textBox)
+        {
+            TextBlock textBlock = new TextBlock
+            {
+                Width = textBox.Width,
+                Height = textBox.Height,
+                Foreground = Brushes.Black,
+                FontSize = 12,
+                Text = textBox.Text
+            };
+
+            // Ustaw pozycję tekstu
+            textBlock.SetValue(Canvas.LeftProperty, Canvas.GetLeft(textBox));
+            textBlock.SetValue(Canvas.TopProperty, Canvas.GetTop(textBox));
+
+            // Usuń TextBox i dodaj TextBlock
+            MainCanvas.Children.Remove(textBox);
+            MainCanvas.Children.Add(textBlock);
+        }
+
+        protected void OnPropertyChanged(string propertyName)
+        {
+            PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(propertyName));
+        }
+
+        private void ChangeDrawingMode(DrawingMode newMode)
+        {
+            // gdy użytkownik zmienia tryb rysowania
+            // poprzez kliknięcie w przycisk zmiany trybu
+            if (_currentDrawingMode == DrawingMode.Text && activeTextBox != null)
+            {
+                // Zamień TextBox na TextBlock
+                ReplaceTextBoxWithTextBlock(activeTextBox);
+                activeTextBox = null;
+            }
+
+            _currentDrawingMode = newMode;
+        }
+
+        private void DrawButton_Click(Object obj)
+        {
+            ChangeDrawingMode(DrawingMode.Draw);
+        }
+
+        private void ShapeButton_Click(int number)
+        {
+            if (number == 0)
+                _nextShapeType = ShapeType.Triangle;
+            else if (number == 1)
+                _nextShapeType = ShapeType.Rectangle;
+            else if (number == 2)
+                _nextShapeType = ShapeType.Ellipse;
+            else if (number == 3)
+                _nextShapeType = ShapeType.Line;
+         
+
+            ChangeDrawingMode(DrawingMode.Shape);
+        }
+
+        private void TextButton_Click(Object obj)
+        {
+            ChangeDrawingMode(DrawingMode.Text);
+        }
+        private void SafeButton_Click(object sender, RoutedEventArgs e)
+        {
+            ChangeDrawingMode(DrawingMode.None);
+            SaveCanvasToJpg();
+        }
+
+        //MouseLeftButtonDown
+        //pobiera lokalizacje punkpo naciśnieciu lewego przycisku myszy
+        private void StartDrawing(object sender, MouseButtonEventArgs e)
+        {
+            _startPosition = e.GetPosition(MainCanvas);
+            _isDrawingStarted = true;
+            Mouse.Capture(MainCanvas);
+        }
+
+        //MouseMove
+        //aktualizuje linię przy poruszaniu myszą,
+        //przed puszczeniem jej lewego przycisku
+        private void ContinueDrawing(object sender, MouseEventArgs e)
+        {
+            if (e.LeftButton == MouseButtonState.Pressed && _isDrawingStarted)
+            {
+                Line line = new Line
+                {
+                    Stroke = Brushes.Black,
+                    X1 = _startPosition.X,
+                    Y1 = _startPosition.Y,
+                    X2 = e.GetPosition(MainCanvas).X,
+                    Y2 = e.GetPosition(MainCanvas).Y
+                };
+
+                MainCanvas.Children.Add(line);
+                _startPosition = e.GetPosition(MainCanvas);
+            }
+            else
+            {
+                _isDrawingStarted = false;
+                Mouse.Capture(null);
+            }
+        }
+
+        private void AddTextBox(Point position)
+        {
+            TextBox textBox = new TextBox
+            {
+                Width = 700,
+                Height = 300,
+                Foreground = Brushes.Black,
+                BorderBrush = Brushes.Black,
+                BorderThickness = new Thickness(1),
+                FontSize = 12,
+                AcceptsReturn = true,
+            };
+
+            // Ustaw pozycję tekstu
+            textBox.SetValue(Canvas.LeftProperty, position.X);
+            textBox.SetValue(Canvas.TopProperty, position.Y);
+
+            // Dodaj TextBox do Canvas
+            MainCanvas.Children.Add(textBox);
+
+            // Ustaw focus na dodanym TextBox, aby można było od razu wprowadzać tekst
+            textBox.Focus();
+
+            // Przypisz zdarzenie LostFocus do obsługi zamiany TextBox na TextBlock
+            textBox.LostFocus += TextBox_LostFocus;
+
+            // Przypisz pole tekstowe do aktywnego TextBox, aby można było później je zamienić na TextBlock
+            activeTextBox = textBox;
+        }
+
+        private void TextBox_LostFocus(object sender, RoutedEventArgs e)
+        {
+            // Zamień TextBox na TextBlock
+            ReplaceTextBoxWithTextBlock((TextBox)sender);
+        }
+
+        private void SaveCanvasToJpg()
+        {
+            Rect rect = new Rect(90, 0, MainCanvas.ActualWidth, MainCanvas.ActualHeight);
+            RenderTargetBitmap rtb = new RenderTargetBitmap((int)rect.Right, (int)rect.Bottom, 96d, 96d, System.Windows.Media.PixelFormats.Default);
+            rtb.Render(MainCanvas);
+
+            // Określ prostokąt, który chcesz zachować (x, y, width, height)
+            Int32Rect cropRect = new Int32Rect(90, 0, (int)(rtb.PixelWidth - 90), (int)rtb.PixelHeight);
+
+            // Utwórz CroppedBitmap na podstawie RenderTargetBitmap i prostokąta
+            CroppedBitmap croppedBitmap = new CroppedBitmap(rtb, cropRect);
+
+            // Kod zapisywania pliku pozostaje bez zmian
+
+            BitmapEncoder jpgEncoder = new JpegBitmapEncoder();
+            jpgEncoder.Frames.Add(BitmapFrame.Create(croppedBitmap));
+
+
+            // Wybierz ścieżkę i nazwę pliku do zapisania
+            Microsoft.Win32.SaveFileDialog dlg = new Microsoft.Win32.SaveFileDialog();
+            dlg.FileName = "PaintImage"; // Nazwa domyślna
+            dlg.DefaultExt = ".jpg"; // Rozszerzenie domyślne
+            dlg.Filter = "JPEG files (.jpg)|*.jpg"; // Filtry rozszerzeń
+
+            // Wyświetl okno dialogowe i zapisz plik, jeśli użytkownik kliknie "Zapisz"
+            if (dlg.ShowDialog() == true)
+            {
+                using (FileStream fs = File.Open(dlg.FileName, FileMode.Create))
+                {
+                    jpgEncoder.Save(fs);
+                }
+            }
+        }
+
+
+        /// <summary>
+        /// Uruchamiana przy przyciśnięciu lewego przycisku myszy
+        /// Rozpoczyna rysowanie kształtu
+        /// </summary>
+        private void StartDrawingShape(object sender, MouseButtonEventArgs e)
+        {
+            _startPosition = e.GetPosition(MainCanvas);
+            _endPosition = _startPosition;
+
+            switch (_nextShapeType)
+            {
+                case ShapeType.Triangle:
+                    _currentShape = CreateTriangle();
+                    break;
+                case ShapeType.Rectangle:
+                    _currentShape = CreateRectangle();
+                    break;
+                case ShapeType.Ellipse:
+                    _currentShape = CreateEllipse();
+                    break;
+                case ShapeType.Line:
+                    _currentShape = CreateLine();
+                    break;
+            }
+
+            _currentShapeType = _nextShapeType;
+
+            MainCanvas.Children.Add(_currentShape);
+            Mouse.Capture(MainCanvas);
+        }
+
+        /// <summary>
+        /// Uruchamiana przy podniesieniu lewego przycisku myszy
+        /// Kończy rysowanie kształtu
+        /// </summary>
+        private void EndDrawingShape(object sender, MouseButtonEventArgs e)
+        {
+            _endPosition = e.GetPosition(MainCanvas);
+            UpdateShape(_currentShape);
+            Mouse.Capture(null);
+        }
+
+        /// <summary>
+        /// Uruchamiana gdy lewy przycisk myszy jest przyciśnięty, a mysz się przesunęła
+        /// Rysuje kształt
+        /// </summary>
+        private void DragShape(object sender, MouseEventArgs e)
+        {
+            if (Mouse.Captured == MainCanvas && e.LeftButton == MouseButtonState.Pressed)
+            {
+                _endPosition = e.GetPosition(MainCanvas);
+                UpdateShape(_currentShape);
+            }
+        }
+
+        /// <summary>
+        /// Nanosi nowo wprowadzone zmiany na rysowany kształt
+        /// </summary>
+        /// <param name="shape"></param>
+        private void UpdateShape(Shape shape)
+        {
+            StreamGeometry geometry = new StreamGeometry();
+            geometry.FillRule = FillRule.EvenOdd;
+
+            using (StreamGeometryContext ctx = geometry.Open())
+            {
+                if (_currentShapeType == ShapeType.Ellipse)
+                {
+                    // Liczymy środek i promienie elipsy
+                    Point center = new Point((_startPosition.X + _endPosition.X) / 2, (_startPosition.Y + _endPosition.Y) / 2);
+                    double radiusX = Math.Abs(_endPosition.X - _startPosition.X) / 2;
+                    double radiusY = Math.Abs(_endPosition.Y - _startPosition.Y) / 2;
+
+                    // Zaczynamy rysować od najbardziej lewego krańca elipsy
+                    ctx.BeginFigure(new Point(center.X - radiusX, center.Y), true /* is filled */, true /* is closed */);
+
+                    // Rysuje górny łuk elipsy
+                    ctx.ArcTo(new Point(center.X + radiusX, center.Y), new Size(radiusX, radiusY), 0, false, SweepDirection.Clockwise, true, false);
+
+                    // Rysuje dolny łuk elipsy
+                    ctx.ArcTo(new Point(center.X - radiusX, center.Y), new Size(radiusX, radiusY), 0, false, SweepDirection.Clockwise, true, false);
+                }
+                else
+                {
+                    ctx.BeginFigure(new Point(_startPosition.X, _startPosition.Y), true /* Wypełniony */, true /* zamknięty */);
+
+                    if (_currentShapeType != ShapeType.Line)
+                        ctx.LineTo(new Point(_startPosition.X, _endPosition.Y), true /* Widać linię */, false /* łagodne połączenie*/);
+
+                    ctx.LineTo(new Point(_endPosition.X, _endPosition.Y), true /* Widać linię */, true /* łagodne połączenie */);
+
+                    if (_currentShapeType == ShapeType.Rectangle)
+                        ctx.LineTo(new Point(_endPosition.X, _startPosition.Y), true /* Widać linię */, false /* łagodne połączenie*/);
+
+                }
+            }
+            geometry.Freeze();
+
+            ((System.Windows.Shapes.Path)shape).Data = geometry;
+        }
+
+        /// <summary>
+        /// Uruchamiana gdy urzytkownik naciśnie klawisz klawiatury
+        /// Służy do wybierania kszrałtu, skalowania figury, poruszania figury
+        /// </summary>
+        private void KeyUpdate( KeyEventArgs e)
+        {
+            //UpdateNextShapeType(e);
+
+            if (MainCanvas.Children.Count == 0) return;
+
+            if (IsArrowKey(e.Key))
+            {
+                int value = IsControlPressed() ? 1 : 5;
+
+                if (IsShiftPressed())
+                {
+                    AdjustShapeSize(e.Key, value);
+                }
+                else
+                {
+                    MoveShape(e.Key, value);
+                }
+
+                UpdateShape(_currentShape);
+                MainCanvas.Children[MainCanvas.Children.Count - 1] = _currentShape;
+            }
+        }
+
+        /// <summary>
+        /// Jeśli to konieczne zmienia kształt następnej figury
+        /// </summary>
+        /// <param name="e"></param>
+        private void UpdateNextShapeType(KeyEventArgs e)
+        {
+            switch (e.Key)
+            {
+                case Key.T:
+                    _nextShapeType = ShapeType.Triangle;
+                    break;
+                case Key.R:
+                    _nextShapeType = ShapeType.Rectangle;
+                    break;
+                case Key.E:
+                    _nextShapeType = ShapeType.Ellipse;
+                    break;
+                case Key.L:
+                    _nextShapeType = ShapeType.Line;
+                    break;
+
+            }
+        }
+
+        /// <summary>
+        /// Za pomocą inputów ze strzałek skaluje figurę
+        /// </summary>
+        /// <param name="key"></param>
+        /// <param name="value"></param>
+        private void AdjustShapeSize(Key key, int value)
+        {
+            switch (key)
+            {
+                case Key.Up:
+                    _endPosition.Y -= value;
+                    break;
+                case Key.Left:
+                    _endPosition.X -= value;
+                    break;
+                case Key.Down:
+                    _endPosition.Y += value;
+                    break;
+                case Key.Right:
+                    _endPosition.X += value;
+                    break;
+            }
+        }
+
+        /// <summary>
+        /// Za pomocą inputów ze strzałek przesuwa figurę
+        /// </summary>
+        /// <param name="key"></param>
+        /// <param name="value"></param>
+        private void MoveShape(Key key, int value)
+        {
+            switch (key)
+            {
+                case Key.Up:
+                    _startPosition.Y -= value;
+                    _endPosition.Y -= value;
+                    break;
+                case Key.Left:
+                    _startPosition.X -= value;
+                    _endPosition.X -= value;
+                    break;
+                case Key.Down:
+                    _startPosition.Y += value;
+                    _endPosition.Y += value;
+                    break;
+                case Key.Right:
+                    _startPosition.X += value;
+                    _endPosition.X += value;
+                    break;
+            }
+        }
+    }
+}

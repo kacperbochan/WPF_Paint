@@ -123,7 +123,7 @@ namespace WPF_Paint.ViewModels
             }
         }
 
-        private string _blackValue = "0";
+        private string _blackValue = "100";
         public string BlackValue
         {
             get { return _blackValue; }
@@ -148,15 +148,15 @@ namespace WPF_Paint.ViewModels
                 // Convert RGB to HSV
                 RgbToHsv(r, g, b, out double h, out double s, out double v);
                 HueValue = h.ToString();
-                SaturationValue = s.ToString();
-                ValueColor = v.ToString();
+                SaturationValue = (s * 100).ToString();
+                ValueColor = (v * 100).ToString();
 
                 // Convert RGB to CMYK
                 RgbToCmyk(r, g, b, out double c, out double m, out double y, out double k);
-                CyanValue = c.ToString();
-                MagentaValue = m.ToString();
-                YellowValue = y.ToString();
-                BlackValue = k.ToString();
+                CyanValue = (c * 100).ToString();
+                MagentaValue = (m * 100).ToString();
+                YellowValue = (y * 100).ToString();
+                BlackValue = (k * 100).ToString();
             }
 
             _isUpdatingColorSpaces = false; // zwolnij blokadę
@@ -171,7 +171,7 @@ namespace WPF_Paint.ViewModels
             if (double.TryParse(_hueValue, out double h) && double.TryParse(_saturationValue, out double s) && double.TryParse(_valueColor, out double v))
             {
                 // Convert HSV to RGB
-                HsvToRgb(h, s, v, out int r, out int g, out int b);
+                HsvToRgb(h, s / 100, v / 100, out int r, out int g, out int b);
                 RedValue = r.ToString();
                 GreenValue = g.ToString();
                 BlueValue = b.ToString();
@@ -179,10 +179,10 @@ namespace WPF_Paint.ViewModels
 
                 // Convert RGB to CMYK
                 RgbToCmyk(r, g, b, out double c, out double m, out double y, out double k);
-                CyanValue = c.ToString();
-                MagentaValue = m.ToString();
-                YellowValue = y.ToString();
-                BlackValue = k.ToString();
+                CyanValue = (c * 100).ToString();
+                MagentaValue = (m * 100).ToString();
+                YellowValue = (y * 100).ToString();
+                BlackValue = (k * 100).ToString();
             }
 
             _isUpdatingColorSpaces = false; // zwolnij blokadę
@@ -197,7 +197,7 @@ namespace WPF_Paint.ViewModels
             if (double.TryParse(_redValue, out double c) && double.TryParse(_greenValue, out double m) && double.TryParse(_blueValue, out double y) && double.TryParse(_blueValue, out double k))
             {
                 // Convert CMYK to RGB
-                CmykToRgb(c, m, y, k, out int r, out int g, out int b);
+                CmykToRgb(c / 100, m / 100, y / 100, k / 100, out int r, out int g, out int b);
                 RedValue = r.ToString();
                 GreenValue = g.ToString();
                 BlueValue = b.ToString();
@@ -206,8 +206,8 @@ namespace WPF_Paint.ViewModels
                 // Convert RGB to HSV
                 RgbToHsv(r, g, b, out double h, out double s, out double v);
                 HueValue = h.ToString();
-                SaturationValue = s.ToString();
-                ValueColor = v.ToString();
+                SaturationValue = (s * 100).ToString();
+                ValueColor = (v * 100).ToString();
             }
 
             _isUpdatingColorSpaces = false; // zwolnij blokadę

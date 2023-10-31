@@ -10,7 +10,6 @@
         <Style x:Key="ColorButtonStyle" TargetType="Button">
             <Setter Property="Width" Value="20"/>
             <Setter Property="Height" Value="20"/>
-            <Setter Property="Background" Value="White"/>
             <Setter Property="BorderThickness" Value="1"/>
             <Setter Property="BorderBrush" Value="Black"/>
         </Style>
@@ -35,44 +34,22 @@
                     <RowDefinition Height="150"></RowDefinition>
                 </Grid.RowDefinitions>
                 <Grid Margin="0,20,0,0">
-                    <Grid.RowDefinitions>
-                        <RowDefinition Height="30"></RowDefinition>
-                        <RowDefinition Height="30"></RowDefinition>
-                    </Grid.RowDefinitions>
-                    <Grid.ColumnDefinitions>
-                        <ColumnDefinition Width="30"/>
-                        <ColumnDefinition Width="30"/>
-                        <ColumnDefinition Width="30"/>
-                        <ColumnDefinition Width="30"/>
-                        <ColumnDefinition Width="30"/>
-                        <ColumnDefinition Width="30"/>
-                        <ColumnDefinition Width="30"/>
-                        <ColumnDefinition Width="30"/>
-                        <ColumnDefinition Width="30"/>
-                        <ColumnDefinition Width="30"/>
-                        <ColumnDefinition Width="30"/>
-                    </Grid.ColumnDefinitions>
-                    <Button Grid.Row="0" Grid.Column="0" Margin="0,0,0,0" Style="{StaticResource ColorButtonStyle}" Background="Black" Command="{Binding BorderColorCommand}" />
-                    <Button Grid.Row="0" Grid.Column="1" Margin="0,0,0,0" Style="{StaticResource ColorButtonStyle}" Background="Gray" Command="{Binding BorderColorCommand}" />
-                    <Button Grid.Row="0" Grid.Column="2" Margin="0,0,0,0" Style="{StaticResource ColorButtonStyle}" Background="DarkRed" Command="{Binding BorderColorCommand}" />
-                    <Button Grid.Row="0" Grid.Column="3" Margin="0,0,0,0" Style="{StaticResource ColorButtonStyle}" Background="Red" Command="{Binding BorderColorCommand}" />
-                    <Button Grid.Row="0" Grid.Column="4" Margin="0,0,0,0" Style="{StaticResource ColorButtonStyle}" Background="DarkOrange" Command="{Binding BorderColorCommand}" />
-                    <Button Grid.Row="0" Grid.Column="5" Margin="0,0,0,0" Style="{StaticResource ColorButtonStyle}" Background="Yellow" Command="{Binding BorderColorCommand}" />
-                    <Button Grid.Row="0" Grid.Column="6" Margin="0,0,0,0" Style="{StaticResource ColorButtonStyle}" Background="Green" Command="{Binding BorderColorCommand}" />
-                    <Button Grid.Row="0" Grid.Column="7" Margin="0,0,0,0" Style="{StaticResource ColorButtonStyle}" Background="Blue" Command="{Binding BorderColorCommand}" />
-                    <Button Grid.Row="0" Grid.Column="8" Margin="0,0,0,0" Style="{StaticResource ColorButtonStyle}" Background="DarkBlue" Command="{Binding BorderColorCommand}" />
-                    <Button Grid.Row="0" Grid.Column="9" Margin="0,0,0,0" Style="{StaticResource ColorButtonStyle}" Background="Purple" Command="{Binding BorderColorCommand}" />
-
-                    <Button Grid.Row="1" Grid.Column="0" Margin="0,0,0,0" Style="{StaticResource ColorButtonStyle}" Background="White" Command="{Binding BorderColorCommand}" />
-                    <Button Grid.Row="1" Grid.Column="1" Margin="0,0,0,0" Style="{StaticResource ColorButtonStyle}" Background="LightGray" Command="{Binding BorderColorCommand}" />
-                    <Button Grid.Row="1" Grid.Column="2" Margin="0,0,0,0" Style="{StaticResource ColorButtonStyle}" Background="SaddleBrown" Command="{Binding BorderColorCommand}" />
-                    <Button Grid.Row="1" Grid.Column="3" Margin="0,0,0,0" Style="{StaticResource ColorButtonStyle}" Background="Pink" Command="{Binding BorderColorCommand}" />
-                    <Button Grid.Row="1" Grid.Column="4" Margin="0,0,0,0" Style="{StaticResource ColorButtonStyle}" Background="Orange" Command="{Binding BorderColorCommand}" />
-                    <Button Grid.Row="1" Grid.Column="5" Margin="0,0,0,0" Style="{StaticResource ColorButtonStyle}" Background="Black" Command="{Binding BorderColorCommand}" />
-                    <Button Grid.Row="1" Grid.Column="6" Margin="0,0,0,0" Style="{StaticResource ColorButtonStyle}" Background="Lime" Command="{Binding BorderColorCommand}" />
-                    <Button Grid.Row="1" Grid.Column="7" Margin="0,0,0,0" Style="{StaticResource ColorButtonStyle}" Background="LightBlue" Command="{Binding BorderColorCommand}" />
-                    <Button Grid.Row="1" Grid.Column="8" Margin="0,0,0,0" Style="{StaticResource ColorButtonStyle}" Background="Cyan" Command="{Binding BorderColorCommand}" />
-                    <Button Grid.Row="1" Grid.Column="9" Margin="0,0,0,0" Style="{StaticResource ColorButtonStyle}" Background="Lavender" Command="{Binding BorderColorCommand}" />
+                    <ItemsControl ItemsSource="{Binding ColorOptions}">
+                        <ItemsControl.ItemsPanel>
+                            <ItemsPanelTemplate>
+                                <UniformGrid Rows="2" Columns="10"/>
+                            </ItemsPanelTemplate>
+                        </ItemsControl.ItemsPanel>
+                        <ItemsControl.ItemTemplate>
+                            <DataTemplate>
+                                <Button
+                                    Style="{StaticResource ColorButtonStyle}"
+                                    Command="{Binding ColorCommand}" 
+                                    CommandParameter="{Binding ButtonColor}" 
+                                    Background="{Binding ButtonColor}" />
+                            </DataTemplate>
+                        </ItemsControl.ItemTemplate>
+                    </ItemsControl>
                 </Grid>
                 <Grid Grid.Row="1" Margin="0,20,0,0">
                     <Grid.ColumnDefinitions>

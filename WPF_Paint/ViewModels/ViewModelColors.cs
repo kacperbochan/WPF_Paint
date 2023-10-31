@@ -1,10 +1,13 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Collections.ObjectModel;
 using System.ComponentModel;
 using System.Drawing;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using System.Windows.Input;
+using System.Windows.Media;
 using static WPF_Paint.ColorConverter;
 
 namespace WPF_Paint.ViewModels
@@ -13,6 +16,15 @@ namespace WPF_Paint.ViewModels
     {
         #region Inputs
         private bool _isUpdatingColorSpaces = false;
+
+        public class ColorOption
+        {
+            public System.Windows.Media.Color ButtonColor { get; set; }
+            public ICommand ColorCommand { get; set; }
+        }
+
+        public ObservableCollection<ColorOption> ColorOptions { get; set; } = new ObservableCollection<ColorOption>();
+
 
 
         private string _redValue = "0";
@@ -214,6 +226,46 @@ namespace WPF_Paint.ViewModels
         }
 
         #endregion
+        public ICommand NewColorCommand { get; }
+
+
+        public ViewModelColors()
+        {
+            NewColorCommand = new RelayCommandA(param => SetNewColor(param));
+            ColorOptions.Add(new ColorOption { ButtonColor = Colors.Black, ColorCommand = NewColorCommand });
+            ColorOptions.Add(new ColorOption { ButtonColor = Colors.Gray, ColorCommand = NewColorCommand });
+            ColorOptions.Add(new ColorOption { ButtonColor = Colors.DarkRed, ColorCommand = NewColorCommand });
+            ColorOptions.Add(new ColorOption { ButtonColor = Colors.Red, ColorCommand = NewColorCommand });
+            ColorOptions.Add(new ColorOption { ButtonColor = Colors.DarkOrange, ColorCommand = NewColorCommand });
+            ColorOptions.Add(new ColorOption { ButtonColor = Colors.Yellow, ColorCommand = NewColorCommand });
+            ColorOptions.Add(new ColorOption { ButtonColor = Colors.Green, ColorCommand = NewColorCommand });
+            ColorOptions.Add(new ColorOption { ButtonColor = Colors.Blue, ColorCommand = NewColorCommand });
+            ColorOptions.Add(new ColorOption { ButtonColor = Colors.DarkBlue, ColorCommand = NewColorCommand });
+            ColorOptions.Add(new ColorOption { ButtonColor = Colors.Purple, ColorCommand = NewColorCommand });
+
+            ColorOptions.Add(new ColorOption { ButtonColor = Colors.White, ColorCommand = NewColorCommand });
+            ColorOptions.Add(new ColorOption { ButtonColor = Colors.LightGray, ColorCommand = NewColorCommand });
+            ColorOptions.Add(new ColorOption { ButtonColor = Colors.SaddleBrown, ColorCommand = NewColorCommand });
+            ColorOptions.Add(new ColorOption { ButtonColor = Colors.Pink, ColorCommand = NewColorCommand });
+            ColorOptions.Add(new ColorOption { ButtonColor = Colors.Orange, ColorCommand = NewColorCommand });
+            ColorOptions.Add(new ColorOption { ButtonColor = Colors.LightYellow, ColorCommand = NewColorCommand });
+            ColorOptions.Add(new ColorOption { ButtonColor = Colors.Lime, ColorCommand = NewColorCommand });
+            ColorOptions.Add(new ColorOption { ButtonColor = Colors.LightBlue, ColorCommand = NewColorCommand });
+            ColorOptions.Add(new ColorOption { ButtonColor = Colors.Cyan, ColorCommand = NewColorCommand });
+            ColorOptions.Add(new ColorOption { ButtonColor = Colors.Lavender, ColorCommand = NewColorCommand });
+
+        }
+
+        private void SetNewColor(object param)
+        {
+            if (param is System.Windows.Media.Color color)
+            {
+                // Set RGB values
+                RedValue = color.R.ToString();
+                GreenValue = color.G.ToString();
+                BlueValue = color.B.ToString();
+            }
+        }
 
         public delegate void ColorSelectedHandler(System.Windows.Media.Color color);
 

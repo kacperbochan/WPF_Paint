@@ -20,12 +20,20 @@ namespace WPF_Paint.ViewModels
         public class ColorOption
         {
             public System.Windows.Media.Color ButtonColor { get; set; }
+            public string BackgroundColor { get; set; }
             public ICommand ColorCommand { get; set; }
         }
 
         public ObservableCollection<ColorOption> ColorOptions { get; set; } = new ObservableCollection<ColorOption>();
 
-
+        private System.Windows.Media.Color _currentRGBColor;
+        public System.Windows.Media.Color CurrentRGBColor {
+            get { return _currentRGBColor; } 
+            set {
+                _currentRGBColor = value;
+                OnPropertyChanged(nameof(CurrentRGBColor));
+            } 
+        }
 
         private string _redValue = "0";
         public string RedValue
@@ -62,6 +70,18 @@ namespace WPF_Paint.ViewModels
                 UpdateOtherColorSpacesRGB();
             }
         }
+
+        private string _hexValue = "000000";
+        public string HexValue {
+            get { return _hexValue; }
+            set
+            {
+                _hexValue = value;
+                OnPropertyChanged(nameof(HexValue));
+                UpdateOtherColorSpacesHEX();
+            }
+        }
+
 
         private string _hueValue = "0";
         public string HueValue
@@ -159,16 +179,21 @@ namespace WPF_Paint.ViewModels
             {
                 // Convert RGB to HSV
                 RgbToHsv(r, g, b, out double h, out double s, out double v);
-                HueValue = h.ToString();
-                SaturationValue = (s * 100).ToString();
-                ValueColor = (v * 100).ToString();
+                HueValue = h.ToString("F0");
+                SaturationValue = (s * 100).ToString("F0");
+                ValueColor = (v * 100).ToString("F0");
+
+                // Update HEX Value
+                HexValue = RgbToHex(r, g, b);
 
                 // Convert RGB to CMYK
                 RgbToCmyk(r, g, b, out double c, out double m, out double y, out double k);
-                CyanValue = (c * 100).ToString();
-                MagentaValue = (m * 100).ToString();
-                YellowValue = (y * 100).ToString();
-                BlackValue = (k * 100).ToString();
+                CyanValue = Math.Round(c * 100,0).ToString("F0");
+                MagentaValue = Math.Round(m * 100, 0).ToString("F0");
+                YellowValue = Math.Round(y * 100, 0).ToString("F0");
+                BlackValue = Math.Round(k * 100, 0).ToString("F0");
+
+                CurrentRGBColor = System.Windows.Media.Color.FromRgb((byte)r, (byte)g, (byte)b);
             }
 
             _isUpdatingColorSpaces = false; // zwolnij blokadę
@@ -184,17 +209,21 @@ namespace WPF_Paint.ViewModels
             {
                 // Convert HSV to RGB
                 HsvToRgb(h, s / 100, v / 100, out int r, out int g, out int b);
-                RedValue = r.ToString();
-                GreenValue = g.ToString();
-                BlueValue = b.ToString();
+                RedValue = r.ToString("F0");
+                GreenValue = g.ToString("F0");
+                BlueValue = b.ToString("F0");
 
+                // Update HEX Value
+                HexValue = RgbToHex(r, g, b);
 
                 // Convert RGB to CMYK
                 RgbToCmyk(r, g, b, out double c, out double m, out double y, out double k);
-                CyanValue = (c * 100).ToString();
-                MagentaValue = (m * 100).ToString();
-                YellowValue = (y * 100).ToString();
-                BlackValue = (k * 100).ToString();
+                CyanValue = Math.Round(c * 100, 0).ToString("F0");
+                MagentaValue = Math.Round(m * 100, 0).ToString("F0");
+                YellowValue = Math.Round(y * 100, 0).ToString("F0");
+                BlackValue = Math.Round(k * 100, 0).ToString("F0");
+
+                CurrentRGBColor = System.Windows.Media.Color.FromRgb((byte)r, (byte)g, (byte)b);
             }
 
             _isUpdatingColorSpaces = false; // zwolnij blokadę
@@ -206,24 +235,58 @@ namespace WPF_Paint.ViewModels
 
             _isUpdatingColorSpaces = true; // ustaw blokadę
 
-            if (double.TryParse(_redValue, out double c) && double.TryParse(_greenValue, out double m) && double.TryParse(_blueValue, out double y) && double.TryParse(_blueValue, out double k))
+            if (double.TryParse(_cyanValue, out double c) && double.TryParse(_magentaValue, out double m) && double.TryParse(_yellowValue, out double y) && double.TryParse(_blackValue, out double k))
             {
                 // Convert CMYK to RGB
                 CmykToRgb(c / 100, m / 100, y / 100, k / 100, out int r, out int g, out int b);
-                RedValue = r.ToString();
-                GreenValue = g.ToString();
-                BlueValue = b.ToString();
+                RedValue = r.ToString("F0");
+                GreenValue = g.ToString("F0");
+                BlueValue = b.ToString("F0");
 
+                // Update HEX Value
+                HexValue = RgbToHex(r, g, b);
 
                 // Convert RGB to HSV
                 RgbToHsv(r, g, b, out double h, out double s, out double v);
-                HueValue = h.ToString();
-                SaturationValue = (s * 100).ToString();
-                ValueColor = (v * 100).ToString();
+                HueValue = Math.Round(h, 0).ToString("F0");
+                SaturationValue = Math.Round(s * 100, 0).ToString("F0");
+                ValueColor = Math.Round(v * 100, 0).ToString("F0");
+
+                CurrentRGBColor = System.Windows.Media.Color.FromRgb((byte)r, (byte)g, (byte)b);
             }
 
             _isUpdatingColorSpaces = false; // zwolnij blokadę
         }
+
+        private void UpdateOtherColorSpacesHEX()
+        {
+            if (_isUpdatingColorSpaces) return; // If updating lock is active, don't update color spaces
+
+            _isUpdatingColorSpaces = true; // Set the lock
+
+            HexToRgb(_hexValue, out int r, out int g, out int b);
+            RedValue = r.ToString();
+            GreenValue = g.ToString();
+            BlueValue = b.ToString();
+
+            // Convert RGB to HSV
+            RgbToHsv(r, g, b, out double h, out double s, out double v);
+            HueValue = h.ToString("F0");
+            SaturationValue = (s * 100).ToString("F0");
+            ValueColor = (v * 100).ToString("F0");
+
+            // Convert RGB to CMYK
+            RgbToCmyk(r, g, b, out double c, out double m, out double y, out double k);
+            CyanValue = Math.Round(c * 100).ToString("F0");
+            MagentaValue = Math.Round(m * 100).ToString("F0");
+            YellowValue = Math.Round(y * 100).ToString("F0");
+            BlackValue = Math.Round(k * 100).ToString("F0");
+
+            CurrentRGBColor = System.Windows.Media.Color.FromRgb((byte)r, (byte)g, (byte)b);
+
+            _isUpdatingColorSpaces = false; // Release the lock
+        }
+
 
         #endregion
         public ICommand NewColorCommand { get; }
@@ -232,28 +295,28 @@ namespace WPF_Paint.ViewModels
         public ViewModelColors()
         {
             NewColorCommand = new RelayCommandA(param => SetNewColor(param));
-            ColorOptions.Add(new ColorOption { ButtonColor = Colors.Black, ColorCommand = NewColorCommand });
-            ColorOptions.Add(new ColorOption { ButtonColor = Colors.Gray, ColorCommand = NewColorCommand });
-            ColorOptions.Add(new ColorOption { ButtonColor = Colors.DarkRed, ColorCommand = NewColorCommand });
-            ColorOptions.Add(new ColorOption { ButtonColor = Colors.Red, ColorCommand = NewColorCommand });
-            ColorOptions.Add(new ColorOption { ButtonColor = Colors.DarkOrange, ColorCommand = NewColorCommand });
-            ColorOptions.Add(new ColorOption { ButtonColor = Colors.Yellow, ColorCommand = NewColorCommand });
-            ColorOptions.Add(new ColorOption { ButtonColor = Colors.Green, ColorCommand = NewColorCommand });
-            ColorOptions.Add(new ColorOption { ButtonColor = Colors.Blue, ColorCommand = NewColorCommand });
-            ColorOptions.Add(new ColorOption { ButtonColor = Colors.DarkBlue, ColorCommand = NewColorCommand });
-            ColorOptions.Add(new ColorOption { ButtonColor = Colors.Purple, ColorCommand = NewColorCommand });
+            ColorOptions.Add(new ColorOption { ButtonColor = Colors.Black, BackgroundColor = "Black", ColorCommand = NewColorCommand });
+            ColorOptions.Add(new ColorOption { ButtonColor = Colors.Gray, BackgroundColor = "Gray", ColorCommand = NewColorCommand });
+            ColorOptions.Add(new ColorOption { ButtonColor = Colors.DarkRed, BackgroundColor = "DarkRed", ColorCommand = NewColorCommand });
+            ColorOptions.Add(new ColorOption { ButtonColor = Colors.Red, BackgroundColor = "Red", ColorCommand = NewColorCommand });
+            ColorOptions.Add(new ColorOption { ButtonColor = Colors.DarkOrange, BackgroundColor = "DarkOrange", ColorCommand = NewColorCommand });
+            ColorOptions.Add(new ColorOption { ButtonColor = Colors.Yellow, BackgroundColor = "Yellow", ColorCommand = NewColorCommand });
+            ColorOptions.Add(new ColorOption { ButtonColor = Colors.Green, BackgroundColor = "Green", ColorCommand = NewColorCommand });
+            ColorOptions.Add(new ColorOption { ButtonColor = Colors.Blue, BackgroundColor = "Blue", ColorCommand = NewColorCommand });
+            ColorOptions.Add(new ColorOption { ButtonColor = Colors.DarkBlue, BackgroundColor = "DarkBlue", ColorCommand = NewColorCommand });
+            ColorOptions.Add(new ColorOption { ButtonColor = Colors.Purple, BackgroundColor = "Purple", ColorCommand = NewColorCommand });
 
-            ColorOptions.Add(new ColorOption { ButtonColor = Colors.White, ColorCommand = NewColorCommand });
-            ColorOptions.Add(new ColorOption { ButtonColor = Colors.LightGray, ColorCommand = NewColorCommand });
-            ColorOptions.Add(new ColorOption { ButtonColor = Colors.SaddleBrown, ColorCommand = NewColorCommand });
-            ColorOptions.Add(new ColorOption { ButtonColor = Colors.Pink, ColorCommand = NewColorCommand });
-            ColorOptions.Add(new ColorOption { ButtonColor = Colors.Orange, ColorCommand = NewColorCommand });
-            ColorOptions.Add(new ColorOption { ButtonColor = Colors.LightYellow, ColorCommand = NewColorCommand });
-            ColorOptions.Add(new ColorOption { ButtonColor = Colors.Lime, ColorCommand = NewColorCommand });
-            ColorOptions.Add(new ColorOption { ButtonColor = Colors.LightBlue, ColorCommand = NewColorCommand });
-            ColorOptions.Add(new ColorOption { ButtonColor = Colors.Cyan, ColorCommand = NewColorCommand });
-            ColorOptions.Add(new ColorOption { ButtonColor = Colors.Lavender, ColorCommand = NewColorCommand });
-
+            ColorOptions.Add(new ColorOption { ButtonColor = Colors.White, BackgroundColor = "White", ColorCommand = NewColorCommand });
+            ColorOptions.Add(new ColorOption { ButtonColor = Colors.LightGray, BackgroundColor = "LightGray", ColorCommand = NewColorCommand });
+            ColorOptions.Add(new ColorOption { ButtonColor = Colors.SaddleBrown, BackgroundColor = "SaddleBrown", ColorCommand = NewColorCommand });
+            ColorOptions.Add(new ColorOption { ButtonColor = Colors.Pink, BackgroundColor = "Pink", ColorCommand = NewColorCommand });
+            ColorOptions.Add(new ColorOption { ButtonColor = Colors.Orange, BackgroundColor = "Orange", ColorCommand = NewColorCommand });
+            ColorOptions.Add(new ColorOption { ButtonColor = Colors.LightYellow, BackgroundColor = "LightYellow", ColorCommand = NewColorCommand });
+            ColorOptions.Add(new ColorOption { ButtonColor = Colors.Lime, BackgroundColor = "Lime", ColorCommand = NewColorCommand });
+            ColorOptions.Add(new ColorOption { ButtonColor = Colors.LightBlue, BackgroundColor = "LightBlue",ColorCommand = NewColorCommand });
+            ColorOptions.Add(new ColorOption { ButtonColor = Colors.Cyan, BackgroundColor = "Cyan", ColorCommand = NewColorCommand });
+            ColorOptions.Add(new ColorOption { ButtonColor = Colors.Lavender, BackgroundColor = "Lavender", ColorCommand = NewColorCommand });
+            UpdateOtherColorSpacesRGB();
         }
 
         private void SetNewColor(object param)

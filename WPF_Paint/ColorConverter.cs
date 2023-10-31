@@ -107,6 +107,22 @@ namespace WPF_Paint
             b = (int)((1 - y) * (1 - k) * 255.0);
         }
 
+        public static string RgbToHex(int r, int g, int b)
+        {
+            return $"{r:X2}{g:X2}{b:X2}";
+        }
+
+        public static void HexToRgb(string hex, out int r, out int g, out int b)
+        {
+            // Remove the hash at the start if it's there
+            hex = hex.TrimStart('#');
+
+            // Convert each set of 2 characters into an integer
+            r = int.Parse(hex.Substring(0, 2), System.Globalization.NumberStyles.HexNumber);
+            g = int.Parse(hex.Substring(2, 2), System.Globalization.NumberStyles.HexNumber);
+            b = int.Parse(hex.Substring(4, 2), System.Globalization.NumberStyles.HexNumber);
+        }
 
     }
+
 }

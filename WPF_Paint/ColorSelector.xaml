@@ -7,6 +7,7 @@
         mc:Ignorable="d"
         Title="ColorSelector" Height="450" Width="800">
     <Window.Resources>
+        <local:RGBToSolidColorBrushConverter x:Key="RGBToBrushConverter"/>
         <Style x:Key="ColorButtonStyle" TargetType="Button">
             <Setter Property="Width" Value="20"/>
             <Setter Property="Height" Value="20"/>
@@ -23,9 +24,7 @@
         <Grid Grid.Row="0" >
             <Grid.ColumnDefinitions>
                 <ColumnDefinition Width="*"></ColumnDefinition>
-                <ColumnDefinition Width="150"></ColumnDefinition>
-                <ColumnDefinition Width="150"></ColumnDefinition>
-                <ColumnDefinition Width="150"></ColumnDefinition>
+                <ColumnDefinition Width="450"></ColumnDefinition>
             </Grid.ColumnDefinitions>
 
             <Grid Grid.Row="0">
@@ -46,7 +45,7 @@
                                     Style="{StaticResource ColorButtonStyle}"
                                     Command="{Binding ColorCommand}" 
                                     CommandParameter="{Binding ButtonColor}" 
-                                    Background="{Binding ButtonColor}" />
+                                    Background="{Binding BackgroundColor}" />
                             </DataTemplate>
                         </ItemsControl.ItemTemplate>
                     </ItemsControl>
@@ -57,47 +56,75 @@
                         <ColumnDefinition Width="*"/>
                     </Grid.ColumnDefinitions>
 
-                    <Button Grid.Column="0" Margin="0,0,0,0" Style="{StaticResource ColorButtonStyle}" Background="Black" Width="75" Height="75" Command="{Binding FillColorCommand}" />
-                    <Button Grid.Column="1" Margin="0,0,0,0" Style="{StaticResource ColorButtonStyle}" Background="White" Width="75" Height="75" Command="{Binding BorderColorCommand}" />
+                    <Button Grid.Column="0" Style="{StaticResource ColorButtonStyle}" Background="{Binding CurrentRGBColor, Converter={StaticResource RGBToBrushConverter}}" Width="75" Height="75" />
+                    <Button Grid.Column="1" Style="{StaticResource ColorButtonStyle}" Background="White" Width="75" Height="75" />
                 </Grid>
 
             </Grid>
 
             <Grid Grid.Column="1">
-                <Label Margin="50,10,0,0" >HSV</Label>
-                <StackPanel Margin="10,20,0,0">
-                    <Label Margin="0,10,0,0">Hue (0°-360°)</Label>
-                    <TextBox Margin="10,0,90,0" x:Name="HueTextBox" Text="{Binding HueValue}"/>
-                    <Label Margin="0,10,0,0">Saturation (0-100%)</Label>
-                    <TextBox Margin="10,0,90,0" x:Name="SaturationTextBox" Text="{Binding SaturationValue}"/>
-                    <Label Margin="0,10,0,0">Value (0-100%)</Label>
-                    <TextBox Margin="10,0,90,0" x:Name="ValueTextBox" Text="{Binding ValueColor}"/>
-                </StackPanel>
+                <Grid.RowDefinitions>
+                    <RowDefinition Height="250"></RowDefinition>
+                    <RowDefinition Height="*"></RowDefinition>
+                </Grid.RowDefinitions>
+                <Grid Grid.Row="0">
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="150"/>
+                        <ColumnDefinition Width="150"/>
+                        <ColumnDefinition Width="150"/>
+                    </Grid.ColumnDefinitions>
+                    <Grid Grid.Column="0">
+                        <Label Margin="50,10,0,0" >HSV</Label>
+                        <StackPanel Margin="10,20,0,0">
+                            <Label Margin="0,10,0,0">Hue (0°-360°)</Label>
+                            <TextBox Margin="10,0,90,0" x:Name="HueTextBox" Text="{Binding HueValue}"/>
+                            <Label Margin="0,10,0,0">Saturation (0-100%)</Label>
+                            <TextBox Margin="10,0,90,0" x:Name="SaturationTextBox" Text="{Binding SaturationValue}"/>
+                            <Label Margin="0,10,0,0">Value (0-100%)</Label>
+                            <TextBox Margin="10,0,90,0" x:Name="ValueTextBox" Text="{Binding ValueColor}"/>
+                        </StackPanel>
+                    </Grid>
+                    <Grid Grid.Column="1">
+                        <Label Margin="50,10,0,0" >RGB</Label>
+                        <StackPanel Margin="10,20,0,0">
+                            <Label Margin="0,10,0,0">Red (0-255)</Label>
+                            <TextBox Margin="10,0,90,0" x:Name="RedTextBox" Text="{Binding RedValue}"/>
+                            <Label Margin="0,10,0,0">Green (0-255)</Label>
+                            <TextBox Margin="10,0,90,0" x:Name="GreenTextBox" Text="{Binding GreenValue}"/>
+                            <Label Margin="0,10,0,0">Blue (0-255)</Label>
+                            <TextBox Margin="10,0,90,0" x:Name="BlueTextBox" Text="{Binding BlueValue}"/>
+                        </StackPanel>
+                    </Grid>
+                    <Grid Grid.Column="2">
+                        <Label Margin="50,10,0,0">CMYK</Label>
+                        <StackPanel Margin="10,20,0,0">
+                            <Label Margin="0,10,0,0">Cyan (0-255)</Label>
+                            <TextBox Margin="10,0,90,0" x:Name="CyanTextBox" Text="{Binding CyanValue}"/>
+                            <Label Margin="0,10,0,0">Magenta (0-255)</Label>
+                            <TextBox Margin="10,0,90,0" x:Name="MagentaTextBox" Text="{Binding MagentaValue}"/>
+                            <Label Margin="0,10,0,0">Yellow (0-255)</Label>
+                            <TextBox Margin="10,0,90,0" x:Name="YellowTextBox" Text="{Binding YellowValue}"/>
+                            <Label Margin="0,10,0,0">Black (0-255)</Label>
+                            <TextBox Margin="10,0,90,0" x:Name="BlackTextBox" Text="{Binding BlackValue}"/>
+                        </StackPanel>
+                    </Grid>
+                </Grid>
+                <Grid Grid.Row="1">
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="20"></ColumnDefinition>
+                        <ColumnDefinition Width="200"></ColumnDefinition>
+                        <ColumnDefinition Width="*"></ColumnDefinition>
+                    </Grid.ColumnDefinitions>
+                    <Grid.RowDefinitions>
+                        <RowDefinition Height="30"></RowDefinition>
+                        <RowDefinition Height="20"></RowDefinition>
+                        <RowDefinition Height="*"></RowDefinition>
+                    </Grid.RowDefinitions>
+                    <Label Grid.Row="0" Grid.Column="0" >#</Label>
+                    <TextBox Grid.Row="0" Grid.Column="1"  Margin="0,5,90,5" Width="100"  x:Name="HexTextBox" Text="{Binding HexValue}"/>
+                </Grid>
             </Grid>
-            <Grid Grid.Column="2">
-                <Label Margin="50,10,0,0" >RGB</Label>
-                <StackPanel Margin="10,20,0,0">
-                    <Label Margin="0,10,0,0">Red (0-255)</Label>
-                    <TextBox Margin="10,0,90,0" x:Name="RedTextBox" Text="{Binding RedValue}"/>
-                    <Label Margin="0,10,0,0">Green (0-255)</Label>
-                    <TextBox Margin="10,0,90,0" x:Name="GreenTextBox" Text="{Binding GreenValue}"/>
-                    <Label Margin="0,10,0,0">Blue (0-255)</Label>
-                    <TextBox Margin="10,0,90,0" x:Name="BlueTextBox" Text="{Binding BlueValue}"/>
-                </StackPanel>
-            </Grid>
-            <Grid Grid.Column="3">
-                <Label Margin="50,10,0,0">CMYK</Label>
-                <StackPanel Margin="10,20,0,0">
-                    <Label Margin="0,10,0,0">Cyan (0-255)</Label>
-                    <TextBox Margin="10,0,90,0" x:Name="CyanTextBox" Text="{Binding CyanValue}"/>
-                    <Label Margin="0,10,0,0">Magenta (0-255)</Label>
-                    <TextBox Margin="10,0,90,0" x:Name="MagentaTextBox" Text="{Binding MagentaValue}"/>
-                    <Label Margin="0,10,0,0">Yellow (0-255)</Label>
-                    <TextBox Margin="10,0,90,0" x:Name="YellowTextBox" Text="{Binding YellowValue}"/>
-                    <Label Margin="0,10,0,0">Black (0-255)</Label>
-                    <TextBox Margin="10,0,90,0" x:Name="BlackTextBox" Text="{Binding BlackValue}"/>
-                </StackPanel>
-            </Grid>
+            
         </Grid>
         
         <Grid Grid.Row="1" >

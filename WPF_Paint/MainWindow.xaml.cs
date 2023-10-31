@@ -19,6 +19,8 @@ namespace WPF_Paint
 {
     public partial class MainWindow : Window
     {
+
+
         public MainWindow()
         {
             InitializeComponent();
@@ -31,5 +33,27 @@ namespace WPF_Paint
                 viewModel.MainCanvas = MainCanvas;
             }
         }
+
+        private ViewModelColors ViewModel
+        {
+            get { return DataContext as ViewModelColors; }
+        }
+
+
+        private void OpenColorSelector()
+        {
+            ColorSelector colorSelectorWindow = new ColorSelector();
+            colorSelectorWindow.ViewModel.ColorSelected += SelectedColorChanged; // Subskrybuj zdarzenie
+            colorSelectorWindow.Show();
+        }
+
+        private void SelectedColorChanged(System.Windows.Media.Color selectedColor)
+        {
+            // Zaktualizuj wartości kolorów w głównym oknie na podstawie wybranego koloru
+            // Na przykład:
+            // this.ViewModel.SelectedColor = selectedColor;
+        }
+
+
     }
 }

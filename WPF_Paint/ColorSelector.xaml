@@ -90,35 +90,35 @@
                 <Label Margin="50,10,0,0" >HSV</Label>
                 <StackPanel Margin="10,20,0,0">
                     <Label Margin="0,10,0,0">Hue (0-255)</Label>
-                    <TextBox Margin="10,0,90,0" x:Name="HueTextBox"/>
+                    <TextBox Margin="10,0,90,0" x:Name="HueTextBox" Text="{Binding HueValue}"/>
                     <Label Margin="0,10,0,0">Saturation (0-255)</Label>
-                    <TextBox Margin="10,0,90,0" x:Name="SaturationTextBox" />
+                    <TextBox Margin="10,0,90,0" x:Name="SaturationTextBox" Text="{Binding SaturationValue}"/>
                     <Label Margin="0,10,0,0">Value (0-255)</Label>
-                    <TextBox Margin="10,0,90,0" x:Name="ValueTextBox"/>
+                    <TextBox Margin="10,0,90,0" x:Name="ValueTextBox" Text="{Binding ValueColor}"/>
                 </StackPanel>
             </Grid>
             <Grid Grid.Column="2">
                 <Label Margin="50,10,0,0" >RGB</Label>
                 <StackPanel Margin="10,20,0,0">
                     <Label Margin="0,10,0,0">Red (0-255)</Label>
-                    <TextBox Margin="10,0,90,0" x:Name="RedTextBox"/>
+                    <TextBox Margin="10,0,90,0" x:Name="RedTextBox" Text="{Binding RedValue}"/>
                     <Label Margin="0,10,0,0">Green (0-255)</Label>
-                    <TextBox Margin="10,0,90,0" x:Name="GreenTextBox" />
+                    <TextBox Margin="10,0,90,0" x:Name="GreenTextBox" Text="{Binding GreenValue}"/>
                     <Label Margin="0,10,0,0">Blue (0-255)</Label>
-                    <TextBox Margin="10,0,90,0" x:Name="BlueTextBox"/>
+                    <TextBox Margin="10,0,90,0" x:Name="BlueTextBox" Text="{Binding BlueValue}"/>
                 </StackPanel>
             </Grid>
             <Grid Grid.Column="3">
                 <Label Margin="50,10,0,0">CMYK</Label>
                 <StackPanel Margin="10,20,0,0">
                     <Label Margin="0,10,0,0">Cyan (0-255)</Label>
-                    <TextBox Margin="10,0,90,0" x:Name="CyanTextBox"/>
+                    <TextBox Margin="10,0,90,0" x:Name="CyanTextBox" Text="{Binding CyanValue}"/>
                     <Label Margin="0,10,0,0">Magenta (0-255)</Label>
-                    <TextBox Margin="10,0,90,0" x:Name="MagentaTextBox" />
+                    <TextBox Margin="10,0,90,0" x:Name="MagentaTextBox" Text="{Binding MagentaValue}"/>
                     <Label Margin="0,10,0,0">Yellow (0-255)</Label>
-                    <TextBox Margin="10,0,90,0" x:Name="YellowTextBox"/>
+                    <TextBox Margin="10,0,90,0" x:Name="YellowTextBox" Text="{Binding YellowValue}"/>
                     <Label Margin="0,10,0,0">Black (0-255)</Label>
-                    <TextBox Margin="10,0,90,0" x:Name="BlackTextBox"/>
+                    <TextBox Margin="10,0,90,0" x:Name="BlackTextBox" Text="{Binding BlackValue}"/>
                 </StackPanel>
             </Grid>
         </Grid>

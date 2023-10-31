@@ -79,6 +79,7 @@ namespace WPF_Paint.ViewModels
         public ICommand FillColorCommand { get; }
         public ICommand BorderColorCommand { get; }
 
+        public ICommand OpenColorSelectorCommand { get; }
 
         private void ExecuteSaveCommand()
         {
@@ -106,11 +107,18 @@ namespace WPF_Paint.ViewModels
 
             FillColorCommand = new RelayCommand(ExecuteSaveCommand);
             BorderColorCommand = new RelayCommand(ExecuteSaveCommand);
+            OpenColorSelectorCommand = new RelayCommand(OpenColorSelector);
         }
         
         protected void OnPropertyChanged(string propertyName)
         {
             PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(propertyName));
+        }
+
+        private void OpenColorSelector()
+        {
+            ColorSelector colorSelectorWindow = new ColorSelector();
+            colorSelectorWindow.Show();
         }
 
 

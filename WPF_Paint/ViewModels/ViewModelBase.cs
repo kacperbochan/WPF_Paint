@@ -20,6 +20,7 @@ namespace WPF_Paint.ViewModels
     {
 
         private Canvas _mainCanvas;
+        
 
         public Canvas MainCanvas
         {
@@ -30,26 +31,34 @@ namespace WPF_Paint.ViewModels
                 OnPropertyChanged(nameof(MainCanvas));
             }
         }
+
         private enum DrawingMode
         {
             None,
             Shape,
             Draw,
-            Text,
-            // Dodaj inne tryby rysowania, jeśli są potrzebne
+            Text
+        }
+        private enum ShapeType 
+        { 
+            Triangle, 
+            Rectangle, 
+            Ellipse, 
+            Line 
         }
 
-        private enum ShapeType { Triangle, Rectangle, Ellipse, Line }
-
-        private Shape _currentShape;
+        private System.Windows.Shapes.Path _currentShape;
         private Point _startPosition, _endPosition;
         private DrawingMode _currentDrawingMode = DrawingMode.None;
         private TextBox? activeTextBox;
         private ShapeType _currentShapeType, _nextShapeType = ShapeType.Ellipse;
-        private bool _isDrawingStarted = false;
+        private bool _isMousePressed = false;
+        private Color _innerColor = Color.FromScRgb(0.5f, 0, 0, 255);
+        private Color _borderColor = Color.FromRgb(0, 0, 0);
 
+        private Point _currentPoint;
 
-        public ICommand MouseDownCommand { get; }
+        public ICommand MouseLeftDownCommand  { get; }
         public ICommand MouseUpCommand { get; }
         public ICommand MouseMoveCommand { get; }
         public ICommand KeyDownCommand { get; }
@@ -64,46 +73,61 @@ namespace WPF_Paint.ViewModels
         public ICommand TextCommand { get; }
 
         public ICommand SaveCommand { get; }
+        public ICommand KeyUpCommand { get; }
 
-        private void ExecuteSaveCommand(object obj)
+
+        private void ExecuteSaveCommand()
         {
             SaveCanvasToJpg();
         }
 
         public event PropertyChangedEventHandler? PropertyChanged;
 
-
         public ViewModelBase()
         {
-            MouseDownCommand = new RelayCommand(param => Canvas_MouseLeftButtonDown((Tuple<object, MouseButtonEventArgs>)param)); 
-            MouseUpCommand = new RelayCommand(param => Canvas_MouseLeftButtonUp((Tuple<object, MouseButtonEventArgs>)param));
-            MouseMoveCommand = new RelayCommand(param => Canvas_MouseMove((Tuple<object, MouseButtonEventArgs>)param));
-            KeyDownCommand = new RelayCommand(param => Canvas_KeyDown((Tuple<object, KeyEventArgs>)param));
+            MouseLeftDownCommand = new RelayCommand<Point>(Canvas_MouseLeftButtonDown); 
+            MouseUpCommand = new RelayCommand<Point>(Canvas_MouseLeftButtonUp);
+            MouseMoveCommand = new RelayCommand<Point>(Canvas_MouseMove);
+            KeyDownCommand = new RelayCommand<KeyEventArgs>(Canvas_KeyDown);
+            KeyUpCommand = new RelayCommand<KeyEventArgs>(Canvas_KeyUp);
 
-            RectangleCommand = new RelayCommand(param => ShapeButton_Click(1));
-            TriangleCommand = new RelayCommand(param => ShapeButton_Click(0));
-            EllipseCommand = new RelayCommand(param => ShapeButton_Click(2));
-            LineCommand = new RelayCommand(param => ShapeButton_Click(4));
+            RectangleCommand = new RelayCommand(() => ChooseShape(1));
+            TriangleCommand = new RelayCommand(() => ChooseShape(0));
+            EllipseCommand = new RelayCommand(() => ChooseShape(2));
+            LineCommand = new RelayCommand(() => ChooseShape(3));
             DrawCommand = new RelayCommand(DrawButton_Click);
             TextCommand = new RelayCommand(TextButton_Click);
 
             SaveCommand = new RelayCommand(ExecuteSaveCommand);
         }
         
-        private void Canvas_MouseLeftButtonDown(Tuple<object, MouseButtonEventArgs> parameters)
+        protected void OnPropertyChanged(string propertyName)
         {
-            var sender = parameters.Item1 as Canvas;
-            var e = parameters.Item2;
+            PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(propertyName));
+        }
+
+
+        /// <summary>
+        /// Wywoływane gdy urzytkownik przyciśnie klawisz myszy nad Canvas
+        /// </summary>
+        /// <param name="point"></param>
+        private void Canvas_MouseLeftButtonDown(Point point)
+        {
+            _isMousePressed = true;
+
+            _currentPoint = point;
+            _startPosition = point;
+            _endPosition = point;
 
             switch (_currentDrawingMode)
             {
                 case DrawingMode.Shape:
                     // Obsługa rysowania kształtów
-                    StartDrawingShape(sender, e);
-                    break;
+                    StartDrawingShape();
+                    break;    
                 case DrawingMode.Draw:
                     // Obsługa rysowania linii
-                    StartDrawing(sender, e);
+                    Mouse.Capture(MainCanvas);
                     break;
                 case DrawingMode.Text:
                     // Obsługa dodawania tekstu
@@ -116,57 +140,56 @@ namespace WPF_Paint.ViewModels
                     else
                     {
                         // Dodaj nowy TextBox
-                        AddTextBox(e.GetPosition(MainCanvas));
+                        AddTextBox();
                     }
                     break;
             }
         }
 
-        private void Canvas_MouseLeftButtonUp(Tuple<object, MouseButtonEventArgs> parameters)
+        private void Canvas_MouseLeftButtonUp(Point point)
         {
-            var sender = parameters.Item1 as Canvas;
-            var e = parameters.Item2;
+            _isMousePressed = false;
+
+            _currentPoint = point;
 
             if (_currentDrawingMode == DrawingMode.Shape)
             {
-                EndDrawingShape(sender, e);
+                UpdateShape();
             }
+
+            Mouse.Capture(null);
         }
 
-        private void Canvas_MouseMove(Tuple<object, MouseButtonEventArgs> parameters)
+        private void Canvas_MouseMove(Point point)
         {
-            var sender = parameters.Item1 as Canvas;
-            var e = parameters.Item2;
-
-            switch (_currentDrawingMode)
+            if (_isMousePressed)
             {
-                case DrawingMode.Shape:
-                    // Obsługa rysowania prostokątów
-                    DragShape(sender, e);
-                    break;
-                case DrawingMode.Draw:
-                    // Obsługa rysowania linii
-                    ContinueDrawing(sender, e);
-                    break;
-                    // Dodaj inne przypadki dla innych trybów rysowania
+                _currentPoint = point;
+                _endPosition = point;
+                switch (_currentDrawingMode)
+                {
+                    case DrawingMode.Shape:
+                        // Obsługa rysowania prostokątów
+                        UpdateShape();
+                        break;
+                    case DrawingMode.Draw:
+                        // Obsługa rysowania linii
+                        ContinueDrawing();
+                        break;
+                        // Dodaj inne przypadki dla innych trybów rysowania
+                }
             }
         }
 
-        private void Canvas_KeyDown(Tuple<object, KeyEventArgs> parameters)
+        private void Canvas_KeyDown(KeyEventArgs e)
         {
-            var sender = parameters.Item1 as Canvas;
-            var e = parameters.Item2; 
-
-            // Obsługa zmiany trybu rysowania
-            switch (_currentDrawingMode)
+            if (_currentDrawingMode == DrawingMode.Shape && MainCanvas.Children.Count != 0)
             {
-                case DrawingMode.Shape:
-                    KeyUpdate(e);
-                    break;
-
-                    // Dodaj inne przypadki dla innych trybów rysowania
+                KeyUpdate(e);
             }
         }
+
+        private void Canvas_KeyUp(KeyEventArgs e) { }
 
         private void ReplaceTextBoxWithTextBlock(TextBox textBox)
         {
@@ -188,11 +211,6 @@ namespace WPF_Paint.ViewModels
             MainCanvas.Children.Add(textBlock);
         }
 
-        protected void OnPropertyChanged(string propertyName)
-        {
-            PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(propertyName));
-        }
-
         private void ChangeDrawingMode(DrawingMode newMode)
         {
             // gdy użytkownik zmienia tryb rysowania
@@ -207,27 +225,33 @@ namespace WPF_Paint.ViewModels
             _currentDrawingMode = newMode;
         }
 
-        private void DrawButton_Click(Object obj)
+        private void DrawButton_Click()
         {
             ChangeDrawingMode(DrawingMode.Draw);
         }
 
-        private void ShapeButton_Click(int number)
+        private void ChooseShape(int number)
         {
-            if (number == 0)
-                _nextShapeType = ShapeType.Triangle;
-            else if (number == 1)
-                _nextShapeType = ShapeType.Rectangle;
-            else if (number == 2)
-                _nextShapeType = ShapeType.Ellipse;
-            else if (number == 3)
-                _nextShapeType = ShapeType.Line;
-         
+         switch(number)
+            {
+                case 0:
+                    _nextShapeType = ShapeType.Triangle;
+                    break;
+                    case 1:
+                    _nextShapeType = ShapeType.Rectangle;
+                    break;
+                    case 2:
+                    _nextShapeType = ShapeType.Ellipse;
+                    break;
+                    case 3:
+                    _nextShapeType = ShapeType.Line;
+                    break;
+            }       
 
             ChangeDrawingMode(DrawingMode.Shape);
         }
 
-        private void TextButton_Click(Object obj)
+        private void TextButton_Click()
         {
             ChangeDrawingMode(DrawingMode.Text);
         }
@@ -237,42 +261,28 @@ namespace WPF_Paint.ViewModels
             SaveCanvasToJpg();
         }
 
-        //MouseLeftButtonDown
-        //pobiera lokalizacje punkpo naciśnieciu lewego przycisku myszy
-        private void StartDrawing(object sender, MouseButtonEventArgs e)
-        {
-            _startPosition = e.GetPosition(MainCanvas);
-            _isDrawingStarted = true;
-            Mouse.Capture(MainCanvas);
-        }
-
         //MouseMove
         //aktualizuje linię przy poruszaniu myszą,
         //przed puszczeniem jej lewego przycisku
-        private void ContinueDrawing(object sender, MouseEventArgs e)
+        private void ContinueDrawing()
         {
-            if (e.LeftButton == MouseButtonState.Pressed && _isDrawingStarted)
+            if (_isMousePressed)
             {
                 Line line = new Line
                 {
                     Stroke = Brushes.Black,
                     X1 = _startPosition.X,
                     Y1 = _startPosition.Y,
-                    X2 = e.GetPosition(MainCanvas).X,
-                    Y2 = e.GetPosition(MainCanvas).Y
+                    X2 = _currentPoint.X,
+                    Y2 = _currentPoint.Y
                 };
 
                 MainCanvas.Children.Add(line);
-                _startPosition = e.GetPosition(MainCanvas);
-            }
-            else
-            {
-                _isDrawingStarted = false;
-                Mouse.Capture(null);
+                _startPosition = _currentPoint;
             }
         }
 
-        private void AddTextBox(Point position)
+        private void AddTextBox()
         {
             TextBox textBox = new TextBox
             {
@@ -286,8 +296,8 @@ namespace WPF_Paint.ViewModels
             };
 
             // Ustaw pozycję tekstu
-            textBox.SetValue(Canvas.LeftProperty, position.X);
-            textBox.SetValue(Canvas.TopProperty, position.Y);
+            textBox.SetValue(Canvas.LeftProperty, _currentPoint.X);
+            textBox.SetValue(Canvas.TopProperty, _currentPoint.Y);
 
             // Dodaj TextBox do Canvas
             MainCanvas.Children.Add(textBox);
@@ -342,32 +352,19 @@ namespace WPF_Paint.ViewModels
             }
         }
 
-
         /// <summary>
         /// Uruchamiana przy przyciśnięciu lewego przycisku myszy
         /// Rozpoczyna rysowanie kształtu
         /// </summary>
-        private void StartDrawingShape(object sender, MouseButtonEventArgs e)
+        private void StartDrawingShape()
         {
-            _startPosition = e.GetPosition(MainCanvas);
-            _endPosition = _startPosition;
-
-            switch (_nextShapeType)
+            _currentShape = new System.Windows.Shapes.Path
             {
-                case ShapeType.Triangle:
-                    _currentShape = CreateTriangle();
-                    break;
-                case ShapeType.Rectangle:
-                    _currentShape = CreateRectangle();
-                    break;
-                case ShapeType.Ellipse:
-                    _currentShape = CreateEllipse();
-                    break;
-                case ShapeType.Line:
-                    _currentShape = CreateLine();
-                    break;
-            }
-
+                Fill = new SolidColorBrush(_innerColor),
+                Stroke = new SolidColorBrush(_borderColor),
+                StrokeThickness = 2
+            };
+            
             _currentShapeType = _nextShapeType;
 
             MainCanvas.Children.Add(_currentShape);
@@ -375,34 +372,10 @@ namespace WPF_Paint.ViewModels
         }
 
         /// <summary>
-        /// Uruchamiana przy podniesieniu lewego przycisku myszy
-        /// Kończy rysowanie kształtu
-        /// </summary>
-        private void EndDrawingShape(object sender, MouseButtonEventArgs e)
-        {
-            _endPosition = e.GetPosition(MainCanvas);
-            UpdateShape(_currentShape);
-            Mouse.Capture(null);
-        }
-
-        /// <summary>
-        /// Uruchamiana gdy lewy przycisk myszy jest przyciśnięty, a mysz się przesunęła
-        /// Rysuje kształt
-        /// </summary>
-        private void DragShape(object sender, MouseEventArgs e)
-        {
-            if (Mouse.Captured == MainCanvas && e.LeftButton == MouseButtonState.Pressed)
-            {
-                _endPosition = e.GetPosition(MainCanvas);
-                UpdateShape(_currentShape);
-            }
-        }
-
-        /// <summary>
         /// Nanosi nowo wprowadzone zmiany na rysowany kształt
         /// </summary>
         /// <param name="shape"></param>
-        private void UpdateShape(Shape shape)
+        private void UpdateShape()
         {
             StreamGeometry geometry = new StreamGeometry();
             geometry.FillRule = FillRule.EvenOdd;
@@ -441,7 +414,7 @@ namespace WPF_Paint.ViewModels
             }
             geometry.Freeze();
 
-            ((System.Windows.Shapes.Path)shape).Data = geometry;
+            _currentShape.Data = geometry;
         }
 
         /// <summary>
@@ -450,10 +423,6 @@ namespace WPF_Paint.ViewModels
         /// </summary>
         private void KeyUpdate( KeyEventArgs e)
         {
-            //UpdateNextShapeType(e);
-
-            if (MainCanvas.Children.Count == 0) return;
-
             if (IsArrowKey(e.Key))
             {
                 int value = IsControlPressed() ? 1 : 5;
@@ -467,32 +436,8 @@ namespace WPF_Paint.ViewModels
                     MoveShape(e.Key, value);
                 }
 
-                UpdateShape(_currentShape);
+                UpdateShape();
                 MainCanvas.Children[MainCanvas.Children.Count - 1] = _currentShape;
-            }
-        }
-
-        /// <summary>
-        /// Jeśli to konieczne zmienia kształt następnej figury
-        /// </summary>
-        /// <param name="e"></param>
-        private void UpdateNextShapeType(KeyEventArgs e)
-        {
-            switch (e.Key)
-            {
-                case Key.T:
-                    _nextShapeType = ShapeType.Triangle;
-                    break;
-                case Key.R:
-                    _nextShapeType = ShapeType.Rectangle;
-                    break;
-                case Key.E:
-                    _nextShapeType = ShapeType.Ellipse;
-                    break;
-                case Key.L:
-                    _nextShapeType = ShapeType.Line;
-                    break;
-
             }
         }
 

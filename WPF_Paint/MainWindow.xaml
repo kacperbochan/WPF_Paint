@@ -7,7 +7,12 @@
         xmlns:local="clr-namespace:WPF_Paint"
         mc:Ignorable="d"
         Title="Paint Premium" Height="450" Width="800">
-
+    <i:Interaction.Behaviors>
+        <!-- Zachowania klawiatury -->
+        <local:KeyboardBehaviour 
+                    KeyDownCommand="{Binding DataContext.KeyDownCommand, RelativeSource={RelativeSource AncestorType=Window}}"
+                    KeyUpCommand="{Binding DataContext.KeyUpCommand, RelativeSource={RelativeSource AncestorType=Window}}" />
+    </i:Interaction.Behaviors>
     <Grid>
         <Grid.ColumnDefinitions>
             <ColumnDefinition Width="90"/>
@@ -15,12 +20,16 @@
         </Grid.ColumnDefinitions>
 
         <!-- Canvas on the right -->
-        <Canvas x:Name="MainCanvas" DataContext="{Binding MainCanvas, Mode=TwoWay}" 
-                MouseLeftButtonDown="{Binding MouseDownCommand, Converter={StaticResource ParameterConverter}}"
-                MouseLeftButtonUp="{Binding MouseUpCommand, Converter={StaticResource ParameterConverter}}"
-                MouseMove="{Binding MouseMoveCommand, Converter={StaticResource ParameterConverter}}"
-                Grid.Column="1"/>
-
+        <Canvas x:Name="MainCanvas" DataContext="{Binding MainCanvas, Mode=TwoWay}" Grid.Column="1">
+            <i:Interaction.Behaviors>
+                <!-- Zachowania myszy -->
+                <local:MouseBehaviour 
+                    MouseDownCommand="{Binding DataContext.MouseLeftDownCommand, RelativeSource={RelativeSource AncestorType=Window}}"
+                    MouseUpCommand="{Binding DataContext.MouseUpCommand, RelativeSource={RelativeSource AncestorType=Window}}"
+                    MouseMoveCommand="{Binding DataContext.MouseMoveCommand, RelativeSource={RelativeSource AncestorType=Window}}" />
+            </i:Interaction.Behaviors>
+        </Canvas>
+        
         <!-- Toolbar on the left -->
         <ToolBarTray Grid.Column="0">
             <ToolBar>
@@ -31,7 +40,7 @@
                     <Button Margin="0,5,0,0" Command="{Binding LineCommand}">Linia</Button>
                     <Button Margin="0,5,0,0" Command="{Binding DrawCommand}">Rysowanie</Button>
                     <Button Margin="0,5,0,0" Command="{Binding TextCommand}">Tekst</Button>
-                    <Button Command="{Binding SaveCommand}" CommandParameter="{Binding ElementName=MainCanvas}" Content="Zapisz"/>
+                    <Button Margin="0,5,0,0" Command="{Binding SaveCommand}" CommandParameter="{Binding ElementName=MainCanvas}" Content="Zapisz"/>
                 </StackPanel>
             </ToolBar>
         </ToolBarTray>

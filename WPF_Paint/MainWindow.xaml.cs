@@ -24,6 +24,12 @@ namespace WPF_Paint
             InitializeComponent();
             MainCanvas.Background = Brushes.White;
             DataContext = new ViewModelBase();
+
+            var viewModel = DataContext as ViewModelBase;
+            if (viewModel != null)
+            {
+                viewModel.MainCanvas = MainCanvas;
+            }
         }
     }
 }

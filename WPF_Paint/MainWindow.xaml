@@ -7,6 +7,16 @@
         xmlns:local="clr-namespace:WPF_Paint"
         mc:Ignorable="d"
         Title="Paint Premium" Height="450" Width="800">
+    <Window.Resources>
+        <Style x:Key="ColorButtonStyle" TargetType="Button">
+            <Setter Property="Width" Value="20"/>
+            <Setter Property="Height" Value="20"/>
+            <Setter Property="Background" Value="White"/>
+            <Setter Property="BorderThickness" Value="1"/>
+            <Setter Property="BorderBrush" Value="Black"/>
+        </Style>
+    </Window.Resources>
+
     <i:Interaction.Behaviors>
         <!-- Zachowania klawiatury -->
         <local:KeyboardBehaviour 
@@ -40,7 +50,17 @@
                     <Button Margin="0,5,0,0" Command="{Binding LineCommand}">Linia</Button>
                     <Button Margin="0,5,0,0" Command="{Binding DrawCommand}">Rysowanie</Button>
                     <Button Margin="0,5,0,0" Command="{Binding TextCommand}">Tekst</Button>
-                    <Button Margin="0,5,0,0" Command="{Binding SaveCommand}" CommandParameter="{Binding ElementName=MainCanvas}" Content="Zapisz"/>
+                    
+                    <Grid Margin="0,20,0,0">
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="*"/>
+                            <ColumnDefinition Width="*"/>
+                        </Grid.ColumnDefinitions>
+
+                        <Button  Grid.Column="0" Margin="0,0,0,0" Style="{StaticResource ColorButtonStyle}" Command="{Binding FillColorCommand}" />
+                        <Button  Grid.Column="1" Margin="0,0,0,0" Style="{StaticResource ColorButtonStyle}" Command="{Binding BorderColorCommand}" />
+                    </Grid>
+                    <Button Margin="0,50,0,0" Command="{Binding SaveCommand}" CommandParameter="{Binding ElementName=MainCanvas}" Content="Zapisz"/>
                 </StackPanel>
             </ToolBar>
         </ToolBarTray>

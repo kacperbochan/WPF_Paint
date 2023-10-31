@@ -61,7 +61,9 @@ namespace WPF_Paint.ViewModels
         public ICommand MouseLeftDownCommand  { get; }
         public ICommand MouseUpCommand { get; }
         public ICommand MouseMoveCommand { get; }
+        
         public ICommand KeyDownCommand { get; }
+        public ICommand KeyUpCommand { get; }
 
         public ICommand RectangleCommand { get; }
         public ICommand TriangleCommand { get; }
@@ -73,7 +75,9 @@ namespace WPF_Paint.ViewModels
         public ICommand TextCommand { get; }
 
         public ICommand SaveCommand { get; }
-        public ICommand KeyUpCommand { get; }
+        
+        public ICommand FillColorCommand { get; }
+        public ICommand BorderColorCommand { get; }
 
 
         private void ExecuteSaveCommand()
@@ -99,6 +103,9 @@ namespace WPF_Paint.ViewModels
             TextCommand = new RelayCommand(TextButton_Click);
 
             SaveCommand = new RelayCommand(ExecuteSaveCommand);
+
+            FillColorCommand = new RelayCommand(ExecuteSaveCommand);
+            BorderColorCommand = new RelayCommand(ExecuteSaveCommand);
         }
         
         protected void OnPropertyChanged(string propertyName)

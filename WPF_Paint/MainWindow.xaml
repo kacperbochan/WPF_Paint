@@ -8,12 +8,30 @@
         mc:Ignorable="d"
         Title="Paint Premium" Height="450" Width="800">
     <Window.Resources>
+        <local:RGBToSolidColorBrushConverter x:Key="RGBToBrushConverter"/>
         <Style x:Key="ColorButtonStyle" TargetType="Button">
             <Setter Property="Width" Value="20"/>
             <Setter Property="Height" Value="20"/>
             <Setter Property="Background" Value="White"/>
             <Setter Property="BorderThickness" Value="1"/>
             <Setter Property="BorderBrush" Value="Black"/>
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="Button">
+                        <Border Background="{TemplateBinding Background}"
+                        BorderBrush="{TemplateBinding BorderBrush}"
+                        BorderThickness="{TemplateBinding BorderThickness}">
+                            <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                        </Border>
+                        <ControlTemplate.Triggers>
+                            <Trigger Property="IsMouseOver" Value="True">
+                                <Setter Property="BorderBrush" Value="LightBlue"/>
+                                <Setter Property="BorderThickness" Value="2"/>
+                            </Trigger>
+                        </ControlTemplate.Triggers>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
         </Style>
     </Window.Resources>
 
@@ -57,9 +75,10 @@
                             <ColumnDefinition Width="*"/>
                         </Grid.ColumnDefinitions>
 
-                        <Button  Grid.Column="0" Margin="0,0,0,0" Style="{StaticResource ColorButtonStyle}" Command="{Binding OpenColorSelectorCommand}" />
+                        <Button  Grid.Column="0" Background="{Binding BorderColorProperty, Converter={StaticResource RGBToBrushConverter}}" Style="{StaticResource ColorButtonStyle}" Command="{Binding OpenBorderColorSelectorCommand}" />
 
-                        <Button  Grid.Column="1" Margin="0,0,0,0" Style="{StaticResource ColorButtonStyle}" Command="{Binding OpenColorSelectorCommand}" />
+                        <Button  Grid.Column="1" Background="{Binding FillColorProperty, Converter={StaticResource RGBToBrushConverter}}" Style="{StaticResource ColorButtonStyle}"  Command="{Binding OpenFillingColorSelectorCommand}" />
+                        
                     </Grid>
                     <Button Margin="0,50,0,0" Command="{Binding SaveCommand}" CommandParameter="{Binding ElementName=MainCanvas}" Content="Zapisz"/>
                 </StackPanel>

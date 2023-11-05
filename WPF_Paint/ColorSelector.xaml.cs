@@ -40,6 +40,10 @@ namespace WPF_Paint
 
             // Utwórz kolor na podstawie wartości RGB
             Color selectedColor = Color.FromRgb(redValue, greenValue, blueValue);
+            if (!ColorSettings.Border)
+                ColorSettings.FillColor = selectedColor;
+            else
+                ColorSettings.BorderColor = selectedColor;
 
             // Wywołaj zdarzenie z wybranym kolorem
             ViewModel.OnColorSelected(selectedColor);
@@ -48,5 +52,9 @@ namespace WPF_Paint
             this.Close();
         }
 
+        private void Button_Click(object sender, RoutedEventArgs e)
+        {
+
+        }
     }
 }

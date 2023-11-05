@@ -26,6 +26,16 @@ namespace WPF_Paint.ViewModels
 
         public ObservableCollection<ColorOption> ColorOptions { get; set; } = new ObservableCollection<ColorOption>();
 
+        private string _coloredPartName;
+        public string ColoredPartName {
+            get { return _coloredPartName; }
+            set
+            {
+                _coloredPartName = value;
+                OnPropertyChanged(nameof(ColoredPartName));
+            }
+        }
+
         private System.Windows.Media.Color _currentRGBColor;
         public System.Windows.Media.Color CurrentRGBColor {
             get { return _currentRGBColor; } 
@@ -33,6 +43,17 @@ namespace WPF_Paint.ViewModels
                 _currentRGBColor = value;
                 OnPropertyChanged(nameof(CurrentRGBColor));
             } 
+        }
+
+        private System.Windows.Media.Color _oldRGBColor;
+        public System.Windows.Media.Color OldRGBColor
+        {
+            get { return _oldRGBColor; }
+            set
+            {
+                _oldRGBColor = value;
+                OnPropertyChanged(nameof(OldRGBColor));
+            }
         }
 
         private string _redValue = "0";
@@ -290,11 +311,24 @@ namespace WPF_Paint.ViewModels
 
         #endregion
         public ICommand NewColorCommand { get; }
+        public ICommand ResetColor { get; }
 
 
         public ViewModelColors()
         {
+            if (ColorSettings.Border)
+            {
+                OldRGBColor = ColorSettings.BorderColor;
+                ColoredPartName = "Border";
+            }
+            else
+            {
+                OldRGBColor = ColorSettings.FillColor;
+                ColoredPartName = "Fill";
+            }
+            ResetColorCommand();
             NewColorCommand = new RelayCommandA(param => SetNewColor(param));
+            ResetColor = new RelayCommand(ResetColorCommand);
             ColorOptions.Add(new ColorOption { ButtonColor = Colors.Black, BackgroundColor = "Black", ColorCommand = NewColorCommand });
             ColorOptions.Add(new ColorOption { ButtonColor = Colors.Gray, BackgroundColor = "Gray", ColorCommand = NewColorCommand });
             ColorOptions.Add(new ColorOption { ButtonColor = Colors.DarkRed, BackgroundColor = "DarkRed", ColorCommand = NewColorCommand });
@@ -316,7 +350,16 @@ namespace WPF_Paint.ViewModels
             ColorOptions.Add(new ColorOption { ButtonColor = Colors.LightBlue, BackgroundColor = "LightBlue",ColorCommand = NewColorCommand });
             ColorOptions.Add(new ColorOption { ButtonColor = Colors.Cyan, BackgroundColor = "Cyan", ColorCommand = NewColorCommand });
             ColorOptions.Add(new ColorOption { ButtonColor = Colors.Lavender, BackgroundColor = "Lavender", ColorCommand = NewColorCommand });
+
             UpdateOtherColorSpacesRGB();
+        }
+
+        private void ResetColorCommand()
+        {
+            
+            RedValue = OldRGBColor.R.ToString();
+            GreenValue = OldRGBColor.G.ToString();
+            BlueValue = OldRGBColor.B.ToString();
         }
 
         private void SetNewColor(object param)

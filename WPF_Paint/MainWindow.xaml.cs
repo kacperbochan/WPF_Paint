@@ -40,7 +40,15 @@ namespace WPF_Paint
         }
 
 
-        private void OpenColorSelector()
+        private void OpenFillingColorSelector()
+        {
+
+            ColorSelector colorSelectorWindow = new ColorSelector();
+            colorSelectorWindow.ViewModel.ColorSelected += SelectedColorChanged; // Subskrybuj zdarzenie
+            colorSelectorWindow.Show();
+        }
+
+        private void OpenBorderColorSelector()
         {
             ColorSelector colorSelectorWindow = new ColorSelector();
             colorSelectorWindow.ViewModel.ColorSelected += SelectedColorChanged; // Subskrybuj zdarzenie

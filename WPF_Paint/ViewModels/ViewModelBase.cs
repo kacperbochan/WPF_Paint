@@ -53,8 +53,6 @@ namespace WPF_Paint.ViewModels
         private TextBox? activeTextBox;
         private ShapeType _currentShapeType, _nextShapeType = ShapeType.Ellipse;
         private bool _isMousePressed = false;
-        private Color _innerColor = Color.FromScRgb(0.5f, 0, 0, 255);
-        private Color _borderColor = Color.FromRgb(0, 0, 0);
 
         private Point _currentPoint;
 
@@ -79,7 +77,8 @@ namespace WPF_Paint.ViewModels
         public ICommand FillColorCommand { get; }
         public ICommand BorderColorCommand { get; }
 
-        public ICommand OpenColorSelectorCommand { get; }
+        public ICommand OpenFillingColorSelectorCommand { get; }
+        public ICommand OpenBorderColorSelectorCommand { get; }
 
         private void ExecuteSaveCommand()
         {
@@ -107,18 +106,60 @@ namespace WPF_Paint.ViewModels
 
             FillColorCommand = new RelayCommand(ExecuteSaveCommand);
             BorderColorCommand = new RelayCommand(ExecuteSaveCommand);
-            OpenColorSelectorCommand = new RelayCommand(OpenColorSelector);
+            OpenFillingColorSelectorCommand = new RelayCommand(() => OpenColorSelector(0));
+            OpenBorderColorSelectorCommand = new RelayCommand(() => OpenColorSelector(1));
+
+            ColorSettings.StaticPropertyChanged += ColorSettings_StaticPropertyChanged;
         }
-        
+
+        private void ColorSettings_StaticPropertyChanged(object sender, PropertyChangedEventArgs e)
+        {
+            // Check which property changed and react accordingly
+            if (e.PropertyName == nameof(ColorSettings.FillColor))
+            {
+                // Update the ViewModel's property that is bound to the view
+                OnPropertyChanged(nameof(FillColorProperty));
+            }
+            if (e.PropertyName == nameof(ColorSettings.BorderColor))
+            {
+                // Update the ViewModel's property that is bound to the view
+                OnPropertyChanged(nameof(FillColorProperty));
+            }
+            // Repeat for other properties...
+        }
+
+        // Example property that reflects the static property
+        public Color FillColorProperty
+        {
+            get => ColorSettings.FillColor;
+            set => ColorSettings.FillColor = value; // This will trigger the static property changed event
+        }
+
+        // Example property that reflects the static property
+        public Color BorderColorProperty
+        {
+            get => ColorSettings.BorderColor;
+            set => ColorSettings.BorderColor = value; // This will trigger the static property changed event
+        }
+
+        // Make sure to unsubscribe when the ViewModel is being destroyed
+        public void Dispose()
+        {
+            ColorSettings.StaticPropertyChanged -= ColorSettings_StaticPropertyChanged;
+        }
+
+
         protected void OnPropertyChanged(string propertyName)
         {
             PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(propertyName));
         }
 
-        private void OpenColorSelector()
+        private void OpenColorSelector(int border)
         {
+            ColorSettings.Border = border==1;
+            
             ColorSelector colorSelectorWindow = new ColorSelector();
-            colorSelectorWindow.Show();
+            colorSelectorWindow.ShowDialog();
         }
 
 
@@ -375,8 +416,8 @@ namespace WPF_Paint.ViewModels
         {
             _currentShape = new System.Windows.Shapes.Path
             {
-                Fill = new SolidColorBrush(_innerColor),
-                Stroke = new SolidColorBrush(_borderColor),
+                Fill = new SolidColorBrush(ColorSettings.FillColor),
+                Stroke = new SolidColorBrush(ColorSettings.BorderColor),
                 StrokeThickness = 2
             };
             

@@ -123,7 +123,7 @@ namespace WPF_Paint.ViewModels
             if (e.PropertyName == nameof(ColorSettings.BorderColor))
             {
                 // Update the ViewModel's property that is bound to the view
-                OnPropertyChanged(nameof(FillColorProperty));
+                OnPropertyChanged(nameof(BorderColorProperty));
             }
             // Repeat for other properties...
         }

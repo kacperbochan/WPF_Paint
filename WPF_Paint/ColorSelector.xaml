@@ -73,11 +73,11 @@
                         <ColumnDefinition Width="*"/>
                     </Grid.ColumnDefinitions>
                     <StackPanel Grid.Column="0" HorizontalAlignment="Center">
-                        <Button Style="{StaticResource ColorButtonStyle}" Background="{Binding CurrentRGBColor, Converter={StaticResource RGBToBrushConverter}}" Command="{Binding ResetColor}" Width="75" Height="75" />
+                        <Button Style="{StaticResource ColorButtonStyle}" Background="{Binding CurrentRGBColor, Converter={StaticResource RGBToBrushConverter}}" Width="75" Height="75" />
                         <TextBlock Text="new" HorizontalAlignment="Center" Margin="0,5,0,0" FontWeight="Bold" FontSize="14"/>
                     </StackPanel>
                     <StackPanel Grid.Column="1" HorizontalAlignment="Center">
-                        <Button Style="{StaticResource ColorButtonStyle}" Background="{Binding OldRGBColor, Converter={StaticResource RGBToBrushConverter}}" Width="75" Height="75" />
+                        <Button Style="{StaticResource ColorButtonStyle}" Background="{Binding OldRGBColor, Converter={StaticResource RGBToBrushConverter}}" Command="{Binding ResetColor}" Width="75" Height="75" />
                         <TextBlock Text="current" HorizontalAlignment="Center" Margin="0,5,0,0" FontWeight="Bold" FontSize="14"/>
                     </StackPanel>
                 </Grid>

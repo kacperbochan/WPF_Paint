@@ -1,12 +1,16 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.ComponentModel;
+using System.Diagnostics;
 using System.IO;
+using System.IO.Pipes;
 using System.Linq;
 using System.Reflection;
 using System.Text;
+using System.Text.RegularExpressions;
 using System.Threading.Tasks;
 using System.Windows;
+using System.Windows.Automation.Peers;
 using System.Windows.Controls;
 using System.Windows.Input;
 using System.Windows.Media;
@@ -72,6 +76,7 @@ namespace WPF_Paint.ViewModels
 
         public ICommand TextCommand { get; }
 
+        public ICommand OpenCommand { get; }
         public ICommand SaveCommand { get; }
         
         public ICommand FillColorCommand { get; }
@@ -79,11 +84,6 @@ namespace WPF_Paint.ViewModels
 
         public ICommand OpenFillingColorSelectorCommand { get; }
         public ICommand OpenBorderColorSelectorCommand { get; }
-
-        private void ExecuteSaveCommand()
-        {
-            SaveCanvasToJpg();
-        }
 
         public event PropertyChangedEventHandler? PropertyChanged;
 
@@ -102,10 +102,9 @@ namespace WPF_Paint.ViewModels
             DrawCommand = new RelayCommand(DrawButton_Click);
             TextCommand = new RelayCommand(TextButton_Click);
 
-            SaveCommand = new RelayCommand(ExecuteSaveCommand);
+            OpenCommand = new RelayCommand(OpenPicture);
+            SaveCommand = new RelayCommand(SaveCanvas);
 
-            FillColorCommand = new RelayCommand(ExecuteSaveCommand);
-            BorderColorCommand = new RelayCommand(ExecuteSaveCommand);
             OpenFillingColorSelectorCommand = new RelayCommand(() => OpenColorSelector(0));
             OpenBorderColorSelectorCommand = new RelayCommand(() => OpenColorSelector(1));
 
@@ -311,10 +310,493 @@ namespace WPF_Paint.ViewModels
         {
             ChangeDrawingMode(DrawingMode.Text);
         }
-        private void SafeButton_Click(object sender, RoutedEventArgs e)
+
+        private void OpenPicture()
         {
             ChangeDrawingMode(DrawingMode.None);
-            SaveCanvasToJpg();
+
+            string filePath = GetPicturePath();
+
+            string fileContent = "";
+
+            try
+            {
+                using (FileStream fileStream = new FileStream(filePath, FileMode.Open))
+                {
+                    using (StreamReader reader = new StreamReader(fileStream))
+                    {
+                        fileContent = reader.ReadToEnd();
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                // Handle exceptions (e.g., file is not an image)
+                MessageBox.Show("Error: Could not read file from disk. Original error: " + ex.Message);
+                return;
+            }
+
+            int Px = fileContent[1]-48;
+            BitmapSource bitmap;
+
+            if (Px < 4)
+            {
+                MainCanvas.Children.Clear();
+
+                // Create the BitmapSource based on the file content
+                bitmap = CreateBitmapSourceFromPixelData(fileContent, Px);
+
+            }
+            else
+            {
+                string pattern = @"#.*?(?=\n|$)";
+                fileContent = Regex.Replace(fileContent, pattern, "");
+                string[] values = Regex.Split(fileContent, @"\s+");
+
+                int width = int.Parse(values[1]);
+                int height = int.Parse(values[2]);
+
+                //if P4 it will just not ever be used;
+                int MaxValue = 255;
+                int.TryParse(values[3],out MaxValue);
+
+                MainCanvas.Children.Clear();
+
+                int headerLength = GetHeaderLength(filePath, (Px==4)?3:4) ;
+
+                using (FileStream fileStream = new FileStream(filePath, FileMode.Open))
+                {
+
+                    byte[] headerBytes = new byte[headerLength];
+                    fileStream.Read(headerBytes, 0, headerLength);
+
+                    if (Px == 4)
+                    {
+                        int bytesPerRow = (int)Math.Ceiling((decimal)width / 8);
+                        byte[] rowBuffer = new byte[bytesPerRow];
+                        byte[] pixels = new byte[width * height]; // One byte per pixel for the image
+
+                        for (int row = 0; row < height; row++)
+                        {
+                            fileStream.Read(rowBuffer, 0, bytesPerRow);
+
+                            for (int col = 0; col < width; col++)
+                            {
+                                int byteIndex = col / 8;
+                                int bitIndex = 7 - (col % 8); // From most significant to least significant bit
+                                byte mask = (byte)(1 << bitIndex);
+                                pixels[row * width + col] = (byte)((rowBuffer[byteIndex] & mask) != 0 ? 0 : 255); // 0 for black, 255 for white
+                            }
+                        }
+
+                        bitmap = BitmapSource.Create(width, height, 96, 96, PixelFormats.Gray8, null, pixels, width);
+                    }
+                    else if (Px == 5)
+                    {
+                        // Now read the image data
+                        byte[] pixels = new byte[width * height];
+                        fileStream.Read(pixels, 0, pixels.Length);
+
+                        // Check if normalization is needed
+                        if (MaxValue != 255)
+                        {
+                            for (int i = 0; i < pixels.Length; i++)
+                            {
+                                // Normalize the pixel value
+                                double normalizedValue = (pixels[i] / (double)MaxValue) * 255;
+                                pixels[i] = (byte)Math.Clamp(normalizedValue, 0, 255);
+                            }
+                        }
+
+                        bitmap = BitmapSource.Create(width, height, 96, 96, PixelFormats.Gray8, null, pixels, width);
+                    }
+                    else
+                    {
+
+                        // For P6, each pixel has three components (R, G, B)
+                        byte[] pixels = new byte[width * height * 3];
+                        fileStream.Read(pixels, 0, pixels.Length);
+
+                        // Check if normalization is needed
+                        if (MaxValue != 255)
+                        {
+                            for (int i = 0; i < pixels.Length; i++)
+                            {
+                                // Normalize each component of the pixel
+                                double normalizedValue = (pixels[i] / (double)MaxValue) * 255;
+                                pixels[i] = (byte)Math.Clamp(normalizedValue, 0, 255);
+                            }
+                        }
+
+                        int stride = width * 3; // Stride for Rgb24 format
+                        bitmap = BitmapSource.Create(width, height, 96, 96, PixelFormats.Rgb24, null, pixels, stride);
+                    }
+
+                }
+            }
+
+            // Create an Image control and set the BitmapSource as its source
+            Image image = new Image();
+            image.Source = bitmap;
+
+            // Add the Image control to the MainCanvas
+            MainCanvas.Children.Add(image);
+        }
+        private int GetHeaderLength(string filePath, int requiredHeaderParts)
+        {
+            using (FileStream fileStream = new FileStream(filePath, FileMode.Open))
+            {
+                int count = 0;
+                int sections = 0;
+                bool inSection = false;
+
+                while (true)
+                {
+
+                    int b = fileStream.ReadByte();
+                    if (b == -1) // End of file
+                        break;
+
+                    char c = (char)b;
+                    count++;
+
+                    if (char.IsWhiteSpace(c))
+                    {
+                        if (inSection)
+                        {
+                            sections++;
+                            inSection = false;
+
+                            if (sections == requiredHeaderParts) // Header ends after the forth section
+                            {
+                                break;
+                            }
+                        }
+                    }
+                    else
+                    {
+                        inSection = true;
+                    }
+
+                    if (c == '#')
+                    {
+                        while (true)
+                        {
+                            c = (char)fileStream.ReadByte();
+                            count++;
+                            if (c == '\n' || c == '\r') break;
+                        }
+                    }
+                }
+
+                return count;
+            }
+        }
+
+        private BitmapSource CreateBitmapSourceFromPixelData(string fileContent, int px)
+        {
+            //removing comments
+            string pattern = @"#.*?(?=\n|$)";
+            fileContent = Regex.Replace(fileContent, pattern, "");
+
+            string[] pixelData = Regex.Split(fileContent, @"\s+");
+
+            int width = int.Parse(pixelData[1]);
+            int height = int.Parse(pixelData[2]);
+
+            //If it is P1, we will just not use it
+            int MaxValue = int.Parse(pixelData[3]);
+
+            if (px == 1)
+            {
+                byte[] pixels = new byte[width * height];
+                for (int i = 3; i < pixelData.Length; i++)
+                {
+                    if (int.TryParse(pixelData[i], out int value))
+                    {   
+                        pixels[i - 3] = (byte)(value==1? 0: 255);
+                    }
+                }
+
+                return BitmapSource.Create(width, height, 96, 96, PixelFormats.Gray8, null, pixels, width);
+            }
+            else if (px == 2)
+            {
+                byte[] pixels = new byte[width * height];
+                for (int i = 4; i < pixelData.Length; i++)
+                {
+                    if (int.TryParse(pixelData[i], out int value))
+                    {
+                        // Normalize the pixel value to be within the 0-255 range
+                        double normalizedValue = (value / (double)MaxValue) * 255;
+                        pixels[i - 4] = (byte)Math.Clamp(normalizedValue, 0, 255);
+                    }
+                }
+                return BitmapSource.Create(width, height, 96, 96, PixelFormats.Gray8, null, pixels, width);
+            }
+            else if (px == 3)
+            {
+                byte[] pixels = new byte[width * height * 3];
+                int stride = width * 3; // Stride for Rgb24 format
+                double normalizationFactor = 255.0 / MaxValue;
+
+                Parallel.For(0, height, y =>
+                {
+                    int baseIndex = y * stride;
+                    for (int x = 0; x < width; x++)
+                    {
+                        int pixelDataIndex = 4 + (y * width + x) * 3;
+                        for (int j = 0; j < 3; j++)
+                        {
+                            if (int.TryParse(pixelData[pixelDataIndex + j], out int value))
+                            {
+                                double normalizedValue = value * normalizationFactor;
+                                pixels[baseIndex + x * 3 + j] = (byte)Math.Clamp(normalizedValue, 0, 255);
+                            }
+                        }
+                    }
+                });
+
+                return BitmapSource.Create(width, height, 96, 96, PixelFormats.Rgb24, null, pixels, stride);
+            }
+
+
+            return null;
+        }
+
+        private string GetPicturePath()
+        {
+            Microsoft.Win32.OpenFileDialog dlg = new Microsoft.Win32.OpenFileDialog();
+            dlg.Filter =
+                "any (*.*)|*.*|" +
+                "PBM (*.pbm)|*.pbm|" +
+                "PGM (*.pgm)|*.pgm|" +
+                "PPM (*.ppm)|*.ppm|" +
+                "PBN bin (*.pbm)|*.pbm|" +
+                "PGM bin (*.pgm)|*.pgm|" +
+                "PPM bin (*.ppm)|*.ppm";
+
+            return (dlg.ShowDialog() == true) ? (dlg.FileName) : ("");
+        }
+
+        private void SaveCanvas()
+        {
+            ChangeDrawingMode(DrawingMode.None);
+            CroppedBitmap canvasBitmap = GetCanvasBitmap();
+
+            (int fileType, string filePath) = GetFileNameAndExtension();
+            
+            if(fileType == 1)                
+                SaveToJPG(filePath, canvasBitmap);
+            else if(fileType < 8)
+                SaveToP(fileType, filePath, canvasBitmap);
+            else
+            {
+                SaveToJPG(filePath.Substring(0, filePath.Length - 3) + "jpg", canvasBitmap);
+                SaveToP(2, filePath.Substring(0, filePath.Length - 3) + "pbm", canvasBitmap);
+                SaveToP(3, filePath.Substring(0, filePath.Length - 3) + "pgm", canvasBitmap);
+                SaveToP(4, filePath.Substring(0, filePath.Length - 3) + "ppm", canvasBitmap);
+                SaveToP(5, filePath.Substring(0, filePath.Length - 4) + "bin.pbm", canvasBitmap);
+                SaveToP(6, filePath.Substring(0, filePath.Length - 4) + "bin.pgm", canvasBitmap);
+                SaveToP(7, filePath.Substring(0, filePath.Length - 4) + "bin.ppm", canvasBitmap);
+            }
+        }
+
+        private CroppedBitmap GetCanvasBitmap()
+        {
+            Rect rect = new Rect(90, 0, MainCanvas.ActualWidth, MainCanvas.ActualHeight);
+            RenderTargetBitmap rtb = new RenderTargetBitmap((int)rect.Right, (int)rect.Bottom, 96d, 96d, System.Windows.Media.PixelFormats.Default);
+            rtb.Render(MainCanvas);
+
+            // Określ prostokąt, który chcesz zachować (x, y, width, height)
+            Int32Rect cropRect = new Int32Rect(90, 0, (int)(rtb.PixelWidth - 90), (int)rtb.PixelHeight);
+
+            // Utwórz CroppedBitmap na podstawie RenderTargetBitmap i prostokąta
+            CroppedBitmap croppedBitmap = new CroppedBitmap(rtb, cropRect);
+
+            return croppedBitmap;
+        }
+
+        private (int, string) GetFileNameAndExtension()
+        {
+            // Wybierz ścieżkę i nazwę pliku do zapisania
+            Microsoft.Win32.SaveFileDialog dlg = new Microsoft.Win32.SaveFileDialog();
+            dlg.FileName = "PaintImage"; // Nazwa domyślna
+            dlg.DefaultExt = ".jpg"; // Rozszerzenie domyślne
+            // Filtry rozszerzeń
+            dlg.Filter =
+                "JPEG (*.jpg)|*.jpg|" +
+                "PBM (*.pbm)|*.pbm|" +
+                "PGM (*.pgm)|*.pgm|" +
+                "PPM (*.ppm)|*.ppm|" +
+                "PBN bin (*.pbm)|*.pbm|" +
+                "PGM bin (*.pgm)|*.pgm|" +
+                "PPM bin (*.ppm)|*.ppm|" +
+                "save in all (*.*)|*.";
+
+            // Wyświetl okno dialogowe i zapisz plik, jeśli użytkownik kliknie "Zapisz"
+            return (dlg.ShowDialog() == true) ? (dlg.FilterIndex, dlg.FileName) : (0,"");
+        }
+
+        private void SaveToJPG(string filePath, CroppedBitmap canvasBitmap)
+        {
+            using (FileStream fs = File.Open(filePath, FileMode.Create))
+            {
+                // Kod zapisywania pliku pozostaje bez zmian
+                BitmapEncoder jpgEncoder = new JpegBitmapEncoder();
+                jpgEncoder.Frames.Add(BitmapFrame.Create(canvasBitmap));
+                jpgEncoder.Save(fs);
+            }
+        }
+
+        //filetype
+        //2 = P1
+        //3 = P2
+        //4 = P3
+        //5 = P4
+        //6 = P5
+        //7 = P6
+        private void SaveToP(int fileType, string filePath, CroppedBitmap canvasBitmap)
+        {
+            int Px = fileType - 1;
+            int width = canvasBitmap.PixelWidth;
+            int height = canvasBitmap.PixelHeight;
+            PixelFormat format = canvasBitmap.Format;
+            int bytesPerPixel = format.BitsPerPixel / 8; //bytesPerPixel = 4, RGBA
+            int stride = width * bytesPerPixel; // szerokość w bajtach
+            byte[] pixelColors = new byte[height * stride]; //pixele jakno kolejne kolory kolejnych pixeli
+
+            canvasBitmap.CopyPixels(pixelColors, stride, 0);
+
+            bool isBW = (Px == 1 || Px == 4);
+            bool isGrayScale = (Px == 2 || Px == 5);
+            bool isColored = (Px == 3 || Px == 6);
+            bool isBinary = (Px >= 4 && Px <= 6);
+
+            //used for P4
+            int bytesPerRow = (int)Math.Ceiling((decimal)width / 8);
+
+            // The output values in bytes
+            int byteCount = isColored ? (height * width * 3) : 
+                            (Px == 4) ? (height * bytesPerRow) : 
+                            height * width;
+
+            byte[] imageContent = new byte[byteCount];
+            
+            byte currentByte = 0;
+            int bitIndex = 0;
+
+            // Process and write pixel data
+            for (int y = 0; y < height; y++)
+            {
+                for (int x = 0; x < width; x++)
+                {
+                    int pixelIndex = y * stride + x * bytesPerPixel;
+                    int byteIndex = (y * width + x) * ((isColored) ? 3: 1);
+
+                    // Extract the color components
+                    byte blue = pixelColors[pixelIndex];
+                    byte green = pixelColors[pixelIndex + 1];
+                    byte red = pixelColors[pixelIndex + 2];
+                    byte alpha = pixelColors[pixelIndex + 3];
+
+                    // If it is in color, there is no need for encoding
+                    if (isColored)
+                    {
+                        imageContent[byteIndex] = red;
+                        imageContent[byteIndex + 1] = green;
+                        imageContent[byteIndex + 2] = blue;
+                    }// If it is not in color (BW or grayscale) we need to encode it
+                    else if (isBW)
+                    {
+                        if (isBinary)
+                        {
+                            byte bwValue = Encode_BlackWhite(red, green, blue);
+                            
+                            currentByte |= (byte)((bwValue & 1) << (7 - bitIndex));
+                            
+                            bitIndex++;
+
+
+                            if (bitIndex == 8 || (y == height - 1 && x == width - 1) || x == width - 1) 
+                            {
+                                imageContent[y * bytesPerRow + x / 8] = currentByte;
+                                bitIndex = 0;
+                                currentByte = 0;
+                            }
+
+                        }
+                        else
+                        {
+                            imageContent[byteIndex] = Encode_BlackWhite(red, green, blue);
+                        }
+                    }
+                    else
+                    {
+                        imageContent[byteIndex] = Encode_Grayscale(red, green, blue);
+                    }
+                }
+            }
+
+
+            using (FileStream fileStream = new FileStream(filePath, FileMode.Create))
+                {
+                if (!isBinary)
+                {
+                    using (StreamWriter writer = new StreamWriter(fileStream))
+                    {
+                        // Write the Px header
+                        writer.WriteLine("P" + Px);
+                        writer.WriteLine($"{width} {height}");
+
+                        if (!isBW)
+                        {
+                            writer.WriteLine("255");
+                        }
+
+                        foreach (byte b in imageContent)
+                        {
+                            writer.WriteLine(b.ToString());
+                        }
+                    }
+                }
+                else
+                {
+                    using (BinaryWriter writer = new BinaryWriter(fileStream))
+                    {
+                        // Write ASCII header
+                        writer.Write(Encoding.ASCII.GetBytes($"P{Px}\n"));
+                        writer.Write(Encoding.ASCII.GetBytes($"{width} {height}\n"));
+                        if (!isBW) // P5 and P6 have a max value
+                        {
+                            writer.Write(Encoding.ASCII.GetBytes("255\n"));
+                        }
+                        writer.Write(imageContent);
+
+                    }
+                }
+            }
+        }
+        
+        private static byte Encode_BlackWhite(byte red, byte green, byte blue)
+        {
+            // Compute the weighted average for grayscale
+            // This formula takes into account the human eye's different sensitivities to these colors.
+            int grayscale = (int)(0.299 * red + 0.587 * green + 0.114 * blue);
+
+            // Convert to black and white using thresholding
+            int bwValue = grayscale < 180 ? 1 : 0;
+
+            return (byte)bwValue;
+        }
+
+        private static byte Encode_Grayscale(byte red, byte green, byte blue)
+        {
+            // Compute the weighted average for grayscale
+            // This formula takes into account the human eye's different sensitivities to these colors.
+            int grayscale = (int)(0.299 * red + 0.587 * green + 0.114 * blue);
+
+            return (byte)grayscale;
         }
 
         //MouseMove
@@ -374,39 +856,7 @@ namespace WPF_Paint.ViewModels
             ReplaceTextBoxWithTextBlock((TextBox)sender);
         }
 
-        private void SaveCanvasToJpg()
-        {
-            Rect rect = new Rect(90, 0, MainCanvas.ActualWidth, MainCanvas.ActualHeight);
-            RenderTargetBitmap rtb = new RenderTargetBitmap((int)rect.Right, (int)rect.Bottom, 96d, 96d, System.Windows.Media.PixelFormats.Default);
-            rtb.Render(MainCanvas);
-
-            // Określ prostokąt, który chcesz zachować (x, y, width, height)
-            Int32Rect cropRect = new Int32Rect(90, 0, (int)(rtb.PixelWidth - 90), (int)rtb.PixelHeight);
-
-            // Utwórz CroppedBitmap na podstawie RenderTargetBitmap i prostokąta
-            CroppedBitmap croppedBitmap = new CroppedBitmap(rtb, cropRect);
-
-            // Kod zapisywania pliku pozostaje bez zmian
-
-            BitmapEncoder jpgEncoder = new JpegBitmapEncoder();
-            jpgEncoder.Frames.Add(BitmapFrame.Create(croppedBitmap));
-
-
-            // Wybierz ścieżkę i nazwę pliku do zapisania
-            Microsoft.Win32.SaveFileDialog dlg = new Microsoft.Win32.SaveFileDialog();
-            dlg.FileName = "PaintImage"; // Nazwa domyślna
-            dlg.DefaultExt = ".jpg"; // Rozszerzenie domyślne
-            dlg.Filter = "JPEG files (.jpg)|*.jpg"; // Filtry rozszerzeń
-
-            // Wyświetl okno dialogowe i zapisz plik, jeśli użytkownik kliknie "Zapisz"
-            if (dlg.ShowDialog() == true)
-            {
-                using (FileStream fs = File.Open(dlg.FileName, FileMode.Create))
-                {
-                    jpgEncoder.Save(fs);
-                }
-            }
-        }
+        
 
         /// <summary>
         /// Uruchamiana przy przyciśnięciu lewego przycisku myszy

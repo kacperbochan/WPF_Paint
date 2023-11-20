@@ -336,102 +336,113 @@ namespace WPF_Paint.ViewModels
                 return;
             }
 
-            int Px = fileContent[1]-48;
             BitmapSource bitmap;
-
-            if (Px < 4)
+            if (System.IO.Path.GetExtension(filePath).Equals(".jpg", StringComparison.OrdinalIgnoreCase) ||
+                System.IO.Path.GetExtension(filePath).Equals(".jpeg", StringComparison.OrdinalIgnoreCase))
             {
-                MainCanvas.Children.Clear();
-
-                // Create the BitmapSource based on the file content
-                bitmap = CreateBitmapSourceFromPixelData(fileContent, Px);
-
+                // Load JPEG image
+                BitmapImage bitmapImage = new BitmapImage(new Uri(filePath));
+                bitmap = new WriteableBitmap(bitmapImage);
             }
+
             else
             {
-                string pattern = @"#.*?(?=\n|$)";
-                fileContent = Regex.Replace(fileContent, pattern, "");
-                string[] values = Regex.Split(fileContent, @"\s+");
+                int Px = fileContent[1] - 48;
 
-                int width = int.Parse(values[1]);
-                int height = int.Parse(values[2]);
-
-                //if P4 it will just not ever be used;
-                int MaxValue = 255;
-                int.TryParse(values[3],out MaxValue);
-
-                MainCanvas.Children.Clear();
-
-                int headerLength = GetHeaderLength(filePath, (Px==4)?3:4) ;
-
-                using (FileStream fileStream = new FileStream(filePath, FileMode.Open))
+                if (Px < 4)
                 {
+                    MainCanvas.Children.Clear();
 
-                    byte[] headerBytes = new byte[headerLength];
-                    fileStream.Read(headerBytes, 0, headerLength);
+                    // Create the BitmapSource based on the file content
+                    bitmap = CreateBitmapSourceFromPixelData(fileContent, Px);
 
-                    if (Px == 4)
-                    {
-                        int bytesPerRow = (int)Math.Ceiling((decimal)width / 8);
-                        byte[] rowBuffer = new byte[bytesPerRow];
-                        byte[] pixels = new byte[width * height]; // One byte per pixel for the image
+                }
+                else
+                {
+                    string pattern = @"#.*?(?=\n|$)";
+                    fileContent = Regex.Replace(fileContent, pattern, "");
+                    string[] values = Regex.Split(fileContent, @"\s+");
 
-                        for (int row = 0; row < height; row++)
-                        {
-                            fileStream.Read(rowBuffer, 0, bytesPerRow);
+                    int width = int.Parse(values[1]);
+                    int height = int.Parse(values[2]);
 
-                            for (int col = 0; col < width; col++)
-                            {
-                                int byteIndex = col / 8;
-                                int bitIndex = 7 - (col % 8); // From most significant to least significant bit
-                                byte mask = (byte)(1 << bitIndex);
-                                pixels[row * width + col] = (byte)((rowBuffer[byteIndex] & mask) != 0 ? 0 : 255); // 0 for black, 255 for white
-                            }
-                        }
+                    //if P4 it will just not ever be used;
+                    int MaxValue = 255;
+                    int.TryParse(values[3], out MaxValue);
 
-                        bitmap = BitmapSource.Create(width, height, 96, 96, PixelFormats.Gray8, null, pixels, width);
-                    }
-                    else if (Px == 5)
-                    {
-                        // Now read the image data
-                        byte[] pixels = new byte[width * height];
-                        fileStream.Read(pixels, 0, pixels.Length);
+                    MainCanvas.Children.Clear();
 
-                        // Check if normalization is needed
-                        if (MaxValue != 255)
-                        {
-                            for (int i = 0; i < pixels.Length; i++)
-                            {
-                                // Normalize the pixel value
-                                double normalizedValue = (pixels[i] / (double)MaxValue) * 255;
-                                pixels[i] = (byte)Math.Clamp(normalizedValue, 0, 255);
-                            }
-                        }
+                    int headerLength = GetHeaderLength(filePath, (Px == 4) ? 3 : 4);
 
-                        bitmap = BitmapSource.Create(width, height, 96, 96, PixelFormats.Gray8, null, pixels, width);
-                    }
-                    else
+                    using (FileStream fileStream = new FileStream(filePath, FileMode.Open))
                     {
 
-                        // For P6, each pixel has three components (R, G, B)
-                        byte[] pixels = new byte[width * height * 3];
-                        fileStream.Read(pixels, 0, pixels.Length);
+                        byte[] headerBytes = new byte[headerLength];
+                        fileStream.Read(headerBytes, 0, headerLength);
 
-                        // Check if normalization is needed
-                        if (MaxValue != 255)
+                        if (Px == 4)
                         {
-                            for (int i = 0; i < pixels.Length; i++)
+                            int bytesPerRow = (int)Math.Ceiling((decimal)width / 8);
+                            byte[] rowBuffer = new byte[bytesPerRow];
+                            byte[] pixels = new byte[width * height]; // One byte per pixel for the image
+
+                            for (int row = 0; row < height; row++)
                             {
-                                // Normalize each component of the pixel
-                                double normalizedValue = (pixels[i] / (double)MaxValue) * 255;
-                                pixels[i] = (byte)Math.Clamp(normalizedValue, 0, 255);
+                                fileStream.Read(rowBuffer, 0, bytesPerRow);
+
+                                for (int col = 0; col < width; col++)
+                                {
+                                    int byteIndex = col / 8;
+                                    int bitIndex = 7 - (col % 8); // From most significant to least significant bit
+                                    byte mask = (byte)(1 << bitIndex);
+                                    pixels[row * width + col] = (byte)((rowBuffer[byteIndex] & mask) != 0 ? 0 : 255); // 0 for black, 255 for white
+                                }
                             }
+
+                            bitmap = BitmapSource.Create(width, height, 96, 96, PixelFormats.Gray8, null, pixels, width);
+                        }
+                        else if (Px == 5)
+                        {
+                            // Now read the image data
+                            byte[] pixels = new byte[width * height];
+                            fileStream.Read(pixels, 0, pixels.Length);
+
+                            // Check if normalization is needed
+                            if (MaxValue != 255)
+                            {
+                                for (int i = 0; i < pixels.Length; i++)
+                                {
+                                    // Normalize the pixel value
+                                    double normalizedValue = (pixels[i] / (double)MaxValue) * 255;
+                                    pixels[i] = (byte)Math.Clamp(normalizedValue, 0, 255);
+                                }
+                            }
+
+                            bitmap = BitmapSource.Create(width, height, 96, 96, PixelFormats.Gray8, null, pixels, width);
+                        }
+                        else
+                        {
+
+                            // For P6, each pixel has three components (R, G, B)
+                            byte[] pixels = new byte[width * height * 3];
+                            fileStream.Read(pixels, 0, pixels.Length);
+
+                            // Check if normalization is needed
+                            if (MaxValue != 255)
+                            {
+                                for (int i = 0; i < pixels.Length; i++)
+                                {
+                                    // Normalize each component of the pixel
+                                    double normalizedValue = (pixels[i] / (double)MaxValue) * 255;
+                                    pixels[i] = (byte)Math.Clamp(normalizedValue, 0, 255);
+                                }
+                            }
+
+                            int stride = width * 3; // Stride for Rgb24 format
+                            bitmap = BitmapSource.Create(width, height, 96, 96, PixelFormats.Rgb24, null, pixels, stride);
                         }
 
-                        int stride = width * 3; // Stride for Rgb24 format
-                        bitmap = BitmapSource.Create(width, height, 96, 96, PixelFormats.Rgb24, null, pixels, stride);
                     }
-
                 }
             }
 

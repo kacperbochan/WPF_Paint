@@ -78,12 +78,14 @@ namespace WPF_Paint.ViewModels
 
         public ICommand OpenCommand { get; }
         public ICommand SaveCommand { get; }
-        
+
         public ICommand FillColorCommand { get; }
         public ICommand BorderColorCommand { get; }
 
         public ICommand OpenFillingColorSelectorCommand { get; }
         public ICommand OpenBorderColorSelectorCommand { get; }
+        public ICommand ApplyAverageFilterCommand { get; }
+
 
         public event PropertyChangedEventHandler? PropertyChanged;
 
@@ -107,6 +109,8 @@ namespace WPF_Paint.ViewModels
 
             OpenFillingColorSelectorCommand = new RelayCommand(() => OpenColorSelector(0));
             OpenBorderColorSelectorCommand = new RelayCommand(() => OpenColorSelector(1));
+            ApplyAverageFilterCommand = new RelayCommand(() => ApplyFilter(0));
+
 
             ColorSettings.StaticPropertyChanged += ColorSettings_StaticPropertyChanged;
         }
@@ -338,7 +342,8 @@ namespace WPF_Paint.ViewModels
 
             BitmapSource bitmap;
             if (System.IO.Path.GetExtension(filePath).Equals(".jpg", StringComparison.OrdinalIgnoreCase) ||
-                System.IO.Path.GetExtension(filePath).Equals(".jpeg", StringComparison.OrdinalIgnoreCase))
+                System.IO.Path.GetExtension(filePath).Equals(".jpeg", StringComparison.OrdinalIgnoreCase) ||
+                System.IO.Path.GetExtension(filePath).Equals(".png", StringComparison.OrdinalIgnoreCase))
             {
                 // Load JPEG image
                 BitmapImage bitmapImage = new BitmapImage(new Uri(filePath));
@@ -1009,5 +1014,91 @@ namespace WPF_Paint.ViewModels
                     break;
             }
         }
+
+        private void ApplyFilter(int filterType)
+        {
+            if (_mainCanvas != null)
+            {
+                BitmapSource source = (BitmapSource)_mainCanvas.Children[0].GetValue(Image.SourceProperty);
+
+                if (source != null)
+                {
+                    // Konwersja obrazu na format WriteableBitmap, aby móc modyfikować piksele
+                    WriteableBitmap writableBitmap = new WriteableBitmap(source);
+
+                    int width = writableBitmap.PixelWidth;
+                    int height = writableBitmap.PixelHeight;
+
+                    // Konwersja obrazu na format array pikseli
+                    int stride = width * 4; // 4 kanały (RGBA) na piksel
+                    byte[] pixels = new byte[height * stride];
+                    writableBitmap.CopyPixels(pixels, stride, 0);
+
+                    int radius = 1; // Promień filtra 
+
+                    for (int y = radius; y < height - radius; y++)
+                    {
+                        for (int x = radius; x < width - radius; x++)
+                        {
+                            switch (filterType)
+                            {
+                                case 0:
+                                    //Filtr uśredniający
+                                    ApplyAveragePixelFilter(x, y, radius, writableBitmap, pixels, stride);
+                                    break;
+                            }
+                            
+                        }
+                    }
+
+                    // Ustawienie zmodyfikowanych pikseli z powrotem do obrazu
+                    writableBitmap.WritePixels(new Int32Rect(0, 0, width, height), pixels, stride, 0);
+
+                    // Ustawienie zmodyfikowanego obrazu z powrotem na Canvas
+                    Image modifiedImage = new Image();
+                    modifiedImage.Source = writableBitmap;
+
+                    _mainCanvas.Children.Clear();
+                    _mainCanvas.Children.Add(modifiedImage);
+                }
+            }
+        }
+
+        private void ApplyAveragePixelFilter(int x, int y, int radius, WriteableBitmap writableBitmap, byte[] pixels, int stride)
+        {
+            int sumR = 0, sumG = 0, sumB = 0;
+
+            for (int i = -radius; i <= radius; i++)
+            {
+                for (int j = -radius; j <= radius; j++)
+                {
+                    int offsetX = x + i;
+                    int offsetY = y + j;
+
+                    // Pobierz składowe koloru piksela
+                    byte[] pixel = new byte[4];
+                    int pixelIndex = offsetY * stride + offsetX * 4;
+                    Array.Copy(pixels, pixelIndex, pixel, 0, 4);
+
+                    sumR += pixel[2]; // Red
+                    sumG += pixel[1]; // Green
+                    sumB += pixel[0]; // Blue
+                }
+            }
+
+            // Średnie wartości kolorów
+            byte averageR = (byte)(sumR / ((2 * radius + 1) * (2 * radius + 1)));
+            byte averageG = (byte)(sumG / ((2 * radius + 1) * (2 * radius + 1)));
+            byte averageB = (byte)(sumB / ((2 * radius + 1) * (2 * radius + 1)));
+
+            // Ustaw nowe wartości piksela
+            int currentIndex = y * stride + x * 4;
+            pixels[currentIndex + 2] = averageR; // Red
+            pixels[currentIndex + 1] = averageG; // Green
+            pixels[currentIndex] = averageB;     // Blue
+        }
+
+
+
     }
 }

@@ -16,6 +16,7 @@ using System.Windows.Input;
 using System.Windows.Media;
 using System.Windows.Media.Imaging;
 using System.Windows.Shapes;
+using WPF_Paint.Models;
 using static WPF_Paint.HelperMethods;
 
 namespace WPF_Paint.ViewModels
@@ -316,252 +317,22 @@ namespace WPF_Paint.ViewModels
             ChangeDrawingMode(DrawingMode.None);
 
             string filePath = GetPicturePath();
+            if (String.IsNullOrEmpty(filePath)) return;
 
-            string fileContent = "";
+            
 
-            try
-            {
-                using (FileStream fileStream = new FileStream(filePath, FileMode.Open))
-                {
-                    using (StreamReader reader = new StreamReader(fileStream))
-                    {
-                        fileContent = reader.ReadToEnd();
-                    }
-                }
-            }
-            catch (Exception ex)
-            {
-                // Handle exceptions (e.g., file is not an image)
-                MessageBox.Show("Error: Could not read file from disk. Original error: " + ex.Message);
-                return;
-            }
+            Netpbm netpbm = new Netpbm(filePath);
 
-            int Px = fileContent[1]-48;
             BitmapSource bitmap;
+            MainCanvas.Children.Clear();
 
-            if (Px < 4)
-            {
-                MainCanvas.Children.Clear();
-
-                // Create the BitmapSource based on the file content
-                bitmap = CreateBitmapSourceFromPixelData(fileContent, Px);
-
-            }
-            else
-            {
-                string pattern = @"#.*?(?=\n|$)";
-                fileContent = Regex.Replace(fileContent, pattern, "");
-                string[] values = Regex.Split(fileContent, @"\s+");
-
-                int width = int.Parse(values[1]);
-                int height = int.Parse(values[2]);
-
-                //if P4 it will just not ever be used;
-                int MaxValue = 255;
-                int.TryParse(values[3],out MaxValue);
-
-                MainCanvas.Children.Clear();
-
-                int headerLength = GetHeaderLength(filePath, (Px==4)?3:4) ;
-
-                using (FileStream fileStream = new FileStream(filePath, FileMode.Open))
-                {
-
-                    byte[] headerBytes = new byte[headerLength];
-                    fileStream.Read(headerBytes, 0, headerLength);
-
-                    if (Px == 4)
-                    {
-                        int bytesPerRow = (int)Math.Ceiling((decimal)width / 8);
-                        byte[] rowBuffer = new byte[bytesPerRow];
-                        byte[] pixels = new byte[width * height]; // One byte per pixel for the image
-
-                        for (int row = 0; row < height; row++)
-                        {
-                            fileStream.Read(rowBuffer, 0, bytesPerRow);
-
-                            for (int col = 0; col < width; col++)
-                            {
-                                int byteIndex = col / 8;
-                                int bitIndex = 7 - (col % 8); // From most significant to least significant bit
-                                byte mask = (byte)(1 << bitIndex);
-                                pixels[row * width + col] = (byte)((rowBuffer[byteIndex] & mask) != 0 ? 0 : 255); // 0 for black, 255 for white
-                            }
-                        }
-
-                        bitmap = BitmapSource.Create(width, height, 96, 96, PixelFormats.Gray8, null, pixels, width);
-                    }
-                    else if (Px == 5)
-                    {
-                        // Now read the image data
-                        byte[] pixels = new byte[width * height];
-                        fileStream.Read(pixels, 0, pixels.Length);
-
-                        // Check if normalization is needed
-                        if (MaxValue != 255)
-                        {
-                            for (int i = 0; i < pixels.Length; i++)
-                            {
-                                // Normalize the pixel value
-                                double normalizedValue = (pixels[i] / (double)MaxValue) * 255;
-                                pixels[i] = (byte)Math.Clamp(normalizedValue, 0, 255);
-                            }
-                        }
-
-                        bitmap = BitmapSource.Create(width, height, 96, 96, PixelFormats.Gray8, null, pixels, width);
-                    }
-                    else
-                    {
-
-                        // For P6, each pixel has three components (R, G, B)
-                        byte[] pixels = new byte[width * height * 3];
-                        fileStream.Read(pixels, 0, pixels.Length);
-
-                        // Check if normalization is needed
-                        if (MaxValue != 255)
-                        {
-                            for (int i = 0; i < pixels.Length; i++)
-                            {
-                                // Normalize each component of the pixel
-                                double normalizedValue = (pixels[i] / (double)MaxValue) * 255;
-                                pixels[i] = (byte)Math.Clamp(normalizedValue, 0, 255);
-                            }
-                        }
-
-                        int stride = width * 3; // Stride for Rgb24 format
-                        bitmap = BitmapSource.Create(width, height, 96, 96, PixelFormats.Rgb24, null, pixels, stride);
-                    }
-
-                }
-            }
 
             // Create an Image control and set the BitmapSource as its source
             Image image = new Image();
-            image.Source = bitmap;
+            image.Source = netpbm.Bitmap;
 
             // Add the Image control to the MainCanvas
             MainCanvas.Children.Add(image);
-        }
-        private int GetHeaderLength(string filePath, int requiredHeaderParts)
-        {
-            using (FileStream fileStream = new FileStream(filePath, FileMode.Open))
-            {
-                int count = 0;
-                int sections = 0;
-                bool inSection = false;
-
-                while (true)
-                {
-
-                    int b = fileStream.ReadByte();
-                    if (b == -1) // End of file
-                        break;
-
-                    char c = (char)b;
-                    count++;
-
-                    if (char.IsWhiteSpace(c))
-                    {
-                        if (inSection)
-                        {
-                            sections++;
-                            inSection = false;
-
-                            if (sections == requiredHeaderParts) // Header ends after the forth section
-                            {
-                                break;
-                            }
-                        }
-                    }
-                    else
-                    {
-                        inSection = true;
-                    }
-
-                    if (c == '#')
-                    {
-                        while (true)
-                        {
-                            c = (char)fileStream.ReadByte();
-                            count++;
-                            if (c == '\n' || c == '\r') break;
-                        }
-                    }
-                }
-
-                return count;
-            }
-        }
-
-        private BitmapSource CreateBitmapSourceFromPixelData(string fileContent, int px)
-        {
-            //removing comments
-            string pattern = @"#.*?(?=\n|$)";
-            fileContent = Regex.Replace(fileContent, pattern, "");
-
-            string[] pixelData = Regex.Split(fileContent, @"\s+");
-
-            int width = int.Parse(pixelData[1]);
-            int height = int.Parse(pixelData[2]);
-
-            //If it is P1, we will just not use it
-            int MaxValue = int.Parse(pixelData[3]);
-
-            if (px == 1)
-            {
-                byte[] pixels = new byte[width * height];
-                for (int i = 3; i < pixelData.Length; i++)
-                {
-                    if (int.TryParse(pixelData[i], out int value))
-                    {   
-                        pixels[i - 3] = (byte)(value==1? 0: 255);
-                    }
-                }
-
-                return BitmapSource.Create(width, height, 96, 96, PixelFormats.Gray8, null, pixels, width);
-            }
-            else if (px == 2)
-            {
-                byte[] pixels = new byte[width * height];
-                for (int i = 4; i < pixelData.Length; i++)
-                {
-                    if (int.TryParse(pixelData[i], out int value))
-                    {
-                        // Normalize the pixel value to be within the 0-255 range
-                        double normalizedValue = (value / (double)MaxValue) * 255;
-                        pixels[i - 4] = (byte)Math.Clamp(normalizedValue, 0, 255);
-                    }
-                }
-                return BitmapSource.Create(width, height, 96, 96, PixelFormats.Gray8, null, pixels, width);
-            }
-            else if (px == 3)
-            {
-                byte[] pixels = new byte[width * height * 3];
-                int stride = width * 3; // Stride for Rgb24 format
-                double normalizationFactor = 255.0 / MaxValue;
-
-                Parallel.For(0, height, y =>
-                {
-                    int baseIndex = y * stride;
-                    for (int x = 0; x < width; x++)
-                    {
-                        int pixelDataIndex = 4 + (y * width + x) * 3;
-                        for (int j = 0; j < 3; j++)
-                        {
-                            if (int.TryParse(pixelData[pixelDataIndex + j], out int value))
-                            {
-                                double normalizedValue = value * normalizationFactor;
-                                pixels[baseIndex + x * 3 + j] = (byte)Math.Clamp(normalizedValue, 0, 255);
-                            }
-                        }
-                    }
-                });
-
-                return BitmapSource.Create(width, height, 96, 96, PixelFormats.Rgb24, null, pixels, stride);
-            }
-
-
-            return null;
         }
 
         private string GetPicturePath()
@@ -585,7 +356,9 @@ namespace WPF_Paint.ViewModels
             CroppedBitmap canvasBitmap = GetCanvasBitmap();
 
             (int fileType, string filePath) = GetFileNameAndExtension();
-            
+
+            if (String.IsNullOrEmpty(filePath)) return;
+
             if(fileType == 1)                
                 SaveToJPG(filePath, canvasBitmap);
             else if(fileType < 8)

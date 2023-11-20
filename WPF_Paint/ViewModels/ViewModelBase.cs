@@ -85,8 +85,12 @@ namespace WPF_Paint.ViewModels
         public ICommand OpenFillingColorSelectorCommand { get; }
         public ICommand OpenBorderColorSelectorCommand { get; }
         public ICommand ApplyAverageFilterCommand { get; }
+        public ICommand ApplyMedianFilterCommand { get; }
+        public ICommand ApplySobelEdgeDetectionCommand { get; }
+        public ICommand ApplyHighPassFilterCommand { get; }
+        public ICommand ApplyGaussianBlurFilterCommand { get; }
 
-
+        
         public event PropertyChangedEventHandler? PropertyChanged;
 
         public ViewModelBase()
@@ -110,7 +114,10 @@ namespace WPF_Paint.ViewModels
             OpenFillingColorSelectorCommand = new RelayCommand(() => OpenColorSelector(0));
             OpenBorderColorSelectorCommand = new RelayCommand(() => OpenColorSelector(1));
             ApplyAverageFilterCommand = new RelayCommand(() => ApplyFilter(0));
-
+            ApplyMedianFilterCommand = new RelayCommand(() => ApplyFilter(1));
+            ApplySobelEdgeDetectionCommand = new RelayCommand(() => ApplyFilter(2));
+            ApplyHighPassFilterCommand = new RelayCommand(() => ApplyFilter(3));
+            ApplyGaussianBlurFilterCommand = new RelayCommand(() => ApplyFilter(4));
 
             ColorSettings.StaticPropertyChanged += ColorSettings_StaticPropertyChanged;
         }
@@ -1043,11 +1050,21 @@ namespace WPF_Paint.ViewModels
                             switch (filterType)
                             {
                                 case 0:
-                                    //Filtr uśredniający
                                     ApplyAveragePixelFilter(x, y, radius, writableBitmap, pixels, stride);
                                     break;
+                                case 1:
+                                    ApplyMedianPixelFilter(x, y, radius, writableBitmap, pixels, stride);
+                                    break;
+                                case 2:
+                                    ApplySobelEdgeDetection(x, y, writableBitmap, pixels, stride);
+                                    break;
+                                case 3:
+                                    ApplyHighPassFilter(x, y, writableBitmap, pixels, stride);
+                                    break;
+                                case 4:
+                                    ApplyGaussianBlurFilter(x, y, writableBitmap, pixels, stride);
+                                    break;
                             }
-                            
                         }
                     }
 
@@ -1096,6 +1113,189 @@ namespace WPF_Paint.ViewModels
             pixels[currentIndex + 2] = averageR; // Red
             pixels[currentIndex + 1] = averageG; // Green
             pixels[currentIndex] = averageB;     // Blue
+        }
+
+        private void ApplyMedianPixelFilter(int x, int y, int radius, WriteableBitmap writableBitmap, byte[] pixels, int stride)
+        {
+            List<byte> redValues = new List<byte>();
+            List<byte> greenValues = new List<byte>();
+            List<byte> blueValues = new List<byte>();
+
+            for (int i = -radius; i <= radius; i++)
+            {
+                for (int j = -radius; j <= radius; j++)
+                {
+                    int offsetX = x + i;
+                    int offsetY = y + j;
+
+                    // Pobierz składowe koloru piksela
+                    byte[] pixel = new byte[4];
+                    int pixelIndex = offsetY * stride + offsetX * 4;
+                    Array.Copy(pixels, pixelIndex, pixel, 0, 4);
+
+                    redValues.Add(pixel[2]); // Red
+                    greenValues.Add(pixel[1]); // Green
+                    blueValues.Add(pixel[0]); // Blue
+                }
+            }
+
+            // Posortuj listy wartości kolorów
+            redValues.Sort();
+            greenValues.Sort();
+            blueValues.Sort();
+
+            // Wybierz medianę z posortowanych wartości
+            byte medianR = redValues[redValues.Count / 2];
+            byte medianG = greenValues[greenValues.Count / 2];
+            byte medianB = blueValues[blueValues.Count / 2];
+
+            // Ustaw nowe wartości piksela
+            int currentIndex = y * stride + x * 4;
+            pixels[currentIndex + 2] = medianR; // Red
+            pixels[currentIndex + 1] = medianG; // Green
+            pixels[currentIndex] = medianB;     // Blue
+        }
+
+        private void ApplySobelEdgeDetection(int x, int y, WriteableBitmap writableBitmap, byte[] pixels, int stride)
+        {
+            int width = writableBitmap.PixelWidth;
+            int height = writableBitmap.PixelHeight;
+
+            // Macierze Sobela do detekcji krawędzi
+            int[,] sobelX = { { -1, 0, 1 }, { -2, 0, 2 }, { -1, 0, 1 } };
+            int[,] sobelY = { { -1, -2, -1 }, { 0, 0, 0 }, { 1, 2, 1 } };
+
+            int intensityX = 0;
+            int intensityY = 0;
+
+            for (int i = -1; i <= 1; i++)
+            {
+                for (int j = -1; j <= 1; j++)
+                {
+                    int offsetX = x + i;
+                    int offsetY = y + j;
+
+                    if (offsetX >= 0 && offsetX < width && offsetY >= 0 && offsetY < height)
+                    {
+                        int pixelIndex = offsetY * stride + offsetX * 4;
+                        byte intensity = (byte)(0.299 * pixels[pixelIndex + 2] + 0.587 * pixels[pixelIndex + 1] + 0.114 * pixels[pixelIndex]);
+
+                        intensityX += intensity * sobelX[i + 1, j + 1];
+                        intensityY += intensity * sobelY[i + 1, j + 1];
+                    }
+                }
+            }
+
+            // Oblicz kierunek gradientu
+            double gradientDirection = Math.Atan2(intensityY, intensityX);
+
+            // Oblicz moduł gradientu
+            int gradientMagnitude = (int)Math.Sqrt(intensityX * intensityX + intensityY * intensityY);
+
+            // Normalizuj moduł gradientu
+            int normalizedMagnitude = Math.Min(255, gradientMagnitude);
+
+            // Ustaw nową wartość piksela
+            int currentIndex = y * stride + x * 4;
+            pixels[currentIndex + 2] = (byte)normalizedMagnitude; // Red
+            pixels[currentIndex + 1] = (byte)normalizedMagnitude; // Green
+            pixels[currentIndex] = (byte)normalizedMagnitude;     // Blue
+        }
+
+        private void ApplyHighPassFilter(int x, int y, WriteableBitmap writableBitmap, byte[] pixels, int stride)
+        {
+            int[,] kernel = {
+                { -1, -1, -1 },
+                { -1,  9, -1 },
+                { -1, -1, -1 }
+            };
+
+            int width = writableBitmap.PixelWidth;
+            int height = writableBitmap.PixelHeight;
+
+            int radius = kernel.GetLength(0) / 2;
+
+            int sumR = 0, sumG = 0, sumB = 0;
+
+            for (int i = -radius; i <= radius; i++)
+            {
+                for (int j = -radius; j <= radius; j++)
+                {
+                    int offsetX = x + i;
+                    int offsetY = y + j;
+
+                    if (offsetX >= 0 && offsetX < width && offsetY >= 0 && offsetY < height)
+                    {
+                        int pixelIndex = offsetY * stride + offsetX * 4;
+                        byte[] pixel = new byte[4];
+                        Array.Copy(pixels, pixelIndex, pixel, 0, 4);
+
+                        sumR += pixel[2] * kernel[i + radius, j + radius]; // Red
+                        sumG += pixel[1] * kernel[i + radius, j + radius]; // Green
+                        sumB += pixel[0] * kernel[i + radius, j + radius]; // Blue
+                    }
+                }
+            }
+
+            // Ustaw nowe wartości piksela
+            int currentIndex = y * stride + x * 4;
+            byte newR = (byte)Math.Max(0, Math.Min(255, sumR));
+            byte newG = (byte)Math.Max(0, Math.Min(255, sumG));
+            byte newB = (byte)Math.Max(0, Math.Min(255, sumB));
+
+            pixels[currentIndex + 2] = newR; // Red
+            pixels[currentIndex + 1] = newG; // Green
+            pixels[currentIndex] = newB;     // Blue
+        }
+        private void ApplyGaussianBlurFilter(int x, int y, WriteableBitmap writableBitmap, byte[] pixels, int stride)
+        {
+            int width = writableBitmap.PixelWidth;
+            int height = writableBitmap.PixelHeight;
+
+            // Kernel Gaussa
+            double[,] kernel = {
+                { 1, 2, 1 },
+                { 2, 4, 2 },
+                { 1, 2, 1 }
+            };
+
+            int radius = kernel.GetLength(0) / 2;
+
+            double sumR = 0, sumG = 0, sumB = 0;
+            double sumKernel = 0;
+
+            for (int i = -radius; i <= radius; i++)
+            {
+                for (int j = -radius; j <= radius; j++)
+                {
+                    int offsetX = x + i;
+                    int offsetY = y + j;
+
+                    if (offsetX >= 0 && offsetX < width && offsetY >= 0 && offsetY < height)
+                    {
+                        int pixelIndex = offsetY * stride + offsetX * 4;
+                        byte[] pixel = new byte[4];
+                        Array.Copy(pixels, pixelIndex, pixel, 0, 4);
+
+                        double kernelValue = kernel[i + radius, j + radius];
+
+                        sumR += pixel[2] * kernelValue; // Red
+                        sumG += pixel[1] * kernelValue; // Green
+                        sumB += pixel[0] * kernelValue; // Blue
+                        sumKernel += kernelValue;
+                    }
+                }
+            }
+
+            // Ustaw nowe wartości piksela
+            int currentIndex = y * stride + x * 4;
+            byte newR = (byte)Math.Max(0, Math.Min(255, sumR / sumKernel));
+            byte newG = (byte)Math.Max(0, Math.Min(255, sumG / sumKernel));
+            byte newB = (byte)Math.Max(0, Math.Min(255, sumB / sumKernel));
+
+            pixels[currentIndex + 2] = newR; // Red
+            pixels[currentIndex + 1] = newG; // Greens
+            pixels[currentIndex] = newB;     // Blue
         }
 
 

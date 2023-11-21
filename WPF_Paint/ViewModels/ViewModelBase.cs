@@ -795,7 +795,7 @@ namespace WPF_Paint.ViewModels
         {
             if (_mainCanvas != null)
             {
-                BitmapSource source = (BitmapSource)_mainCanvas.Children[0].GetValue(Image.SourceProperty);
+                BitmapSource source = (BitmapSource)GetCanvasBitmap();
 
                 if (source != null)
                 {

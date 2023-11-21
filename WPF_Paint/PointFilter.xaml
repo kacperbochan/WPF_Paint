@@ -1,0 +1,45 @@
+﻿<Window x:Class="WPF_Paint.PointFilter"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+        xmlns:local="clr-namespace:WPF_Paint"
+        mc:Ignorable="d"
+        Title="{Binding FilterName}" Height="180" Width="337">
+        <Grid Margin="10">
+        <Grid.RowDefinitions>
+            <RowDefinition Height="30"></RowDefinition>
+            <RowDefinition Height="60"></RowDefinition>
+            <RowDefinition Height="20"></RowDefinition>
+        </Grid.RowDefinitions>
+        <Label Grid.Row="0"  FontWeight="Bold" FontSize="14" >RGB</Label>
+            
+        <Grid Grid.Row="1">
+            <Grid.RowDefinitions>
+                <RowDefinition Height="30"></RowDefinition>
+                <RowDefinition Height="20"></RowDefinition>
+            </Grid.RowDefinitions>
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="100"></ColumnDefinition>
+                <ColumnDefinition Width="100"></ColumnDefinition>
+                <ColumnDefinition Width="100"></ColumnDefinition>
+            </Grid.ColumnDefinitions>
+            
+            <Label Grid.Row="0" Grid.Column="0">Red (0-255)</Label>
+            <TextBox Grid.Row="1" Grid.Column="0" x:Name="RedTextBox"/>
+            <Label Grid.Row="0" Grid.Column="1">Green (0-255)</Label>
+            <TextBox Grid.Row="1" Grid.Column="1" x:Name="GreenTextBox"/>
+            <Label Grid.Row="0" Grid.Column="2">Blue (0-255)</Label>
+            <TextBox Grid.Row="1" Grid.Column="2" x:Name="BlueTextBox"/>
+            
+        </Grid>
+
+        <Grid Grid.Row="2" >
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="*"></ColumnDefinition>
+                <ColumnDefinition Width="100"></ColumnDefinition>
+            </Grid.ColumnDefinitions>
+            <Button Grid.Column="1" Width="100" Content="Zatwierdź" Click="AcceptButton_Click" />
+        </Grid>
+    </Grid>
+</Window>

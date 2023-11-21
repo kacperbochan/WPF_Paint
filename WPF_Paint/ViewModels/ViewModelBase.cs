@@ -133,8 +133,8 @@ namespace WPF_Paint.ViewModels
             SubtractFilterCommand = new RelayCommand(() => ApplyPointFilter(1));
             MultiplyFilterCommand = new RelayCommand(() => ApplyPointFilter(2));
             DivideFilterCommand = new RelayCommand(() => ApplyPointFilter(3));
-            BrightnessFilterCommand = new RelayCommand(() => ApplyPointFilter(4));
-            GrayscaleFilterCommand = new RelayCommand(() => ApplyPointFilter(5));
+            BrightnessFilterCommand = new RelayCommand(() => ApplyBrightnessFilter());
+            GrayscaleFilterCommand = new RelayCommand(() => ApplyGrayscaleFilter());
 
             ColorSettings.StaticPropertyChanged += ColorSettings_StaticPropertyChanged;
         }
@@ -886,38 +886,185 @@ namespace WPF_Paint.ViewModels
                     int stride = width * 4; // 4 kanały (RGBA) na piksel
                     byte[] sourcePixels = new byte[height * stride];
                     writableBitmap.CopyPixels(sourcePixels, stride, 0);
-                    
 
-                    int radius = 1; // Promień filtra 
-
-                    for (int y = radius; y < height - radius; y++)
+                    string filterName = "";
+                    switch (filterType)
                     {
-                        for (int x = radius; x < width - radius; x++)
-                        {
-                            switch (filterType)
-                            {
-                                case 0:
-                                    //Dodawanie
-                                    break;
-                                case 1:
-                                    //Odejmowanie
-                                    break;
-                                case 2:
-                                    //Mnożenie
-                                    break;
-                                case 3:
-                                    //Dzielenie
-                                    break;
-                                case 4:
-                                    //Zmiana jaskości
-                                    break;
-                                case 5:
-                                    //Skala szarości
-                                    break;
-                            }
-                        }
+                        case 0:
+                            filterName = "Dodawanie";
+                            break;
+                        case 1:
+                            filterName = "Odejmowanie";
+                            break;
+                        case 2:
+                            filterName = "Mnożenie";                            
+                            break;
+                        case 3:
+                            filterName = "Dzielenie";
+                            break;
+                        case 4:
+                            filterName = "Zmiana jaskości";
+                            break;
+                        case 5:
+                            filterName = "Skala szarości";
+                            break;
                     }
 
+                    
+
+                    if(filterType < 4)
+                    {
+                        PointFilter inputWindow = new PointFilter(filterName);
+                        bool? dialogResult = inputWindow.ShowDialog();
+
+                        if (dialogResult != true) return;
+
+                        double[] inputValue = inputWindow.Value;
+
+                        switch (filterType)
+                        {
+                            case 0:
+                                for(int y = 0;y<height;y++)
+                                {
+                                    for(int x = 0; x < stride; x += 4)
+                                    {
+                                        sourcePixels[y * stride + x] = (byte)Math.Min(((int)sourcePixels[y * stride + x] + (int)inputValue[0]),255);
+                                        sourcePixels[y * stride + x + 1] = (byte)Math.Min(((int)sourcePixels[y * stride + x + 1] + (int)inputValue[1]), 255);
+                                        sourcePixels[y * stride + x + 2] = (byte)Math.Min(((int)sourcePixels[y * stride + x + 2] + (int)inputValue[2]), 255);
+                                    }
+                                }
+                                break;
+                            case 1:
+                                for (int y = 0; y < height; y++)
+                                {
+                                    for (int x = 0; x < stride; x += 4)
+                                    {
+                                        sourcePixels[y * stride + x] = (byte)Math.Max(((int)sourcePixels[y * stride + x] - (int)inputValue[0]), 0);
+                                        sourcePixels[y * stride + x + 1] = (byte)Math.Max(((int)sourcePixels[y * stride + x + 1] - (int)inputValue[1]), 0);
+                                        sourcePixels[y * stride + x + 2] = (byte)Math.Max(((int)sourcePixels[y * stride + x + 2] - (int)inputValue[2]), 0);
+                                    }
+                                }
+                                break;
+                            case 2:
+                                for (int y = 0; y < height; y++)
+                                {
+                                    for (int x = 0; x < stride; x += 4)
+                                    {
+                                        sourcePixels[y * stride + x] = (byte)Math.Min(((double)sourcePixels[y * stride + x] * inputValue[0]), 255);
+                                        sourcePixels[y * stride + x + 1] = (byte)Math.Min(((double)sourcePixels[y * stride + x + 1] * inputValue[1]), 255);
+                                        sourcePixels[y * stride + x + 2] = (byte)Math.Min(((double)sourcePixels[y * stride + x + 2] * inputValue[2]), 255);
+                                    }
+                                }
+                                break;
+                            case 3:
+                                if (inputValue[0] == 0) inputValue[0] = 1;
+                                if (inputValue[1] == 0) inputValue[1] = 1;
+                                if (inputValue[2] == 0) inputValue[2] = 1;
+                                for (int y = 0; y < height; y++)
+                                {
+                                    for (int x = 0; x < stride; x += 4)
+                                    {
+                                        sourcePixels[y * stride + x] = (byte)Math.Min(((double)sourcePixels[y * stride + x] / inputValue[0]), 255);
+                                        sourcePixels[y * stride + x + 1] = (byte)Math.Min(((double)sourcePixels[y * stride + x + 1] / inputValue[1]), 255);
+                                        sourcePixels[y * stride + x + 2] = (byte)Math.Min(((double)sourcePixels[y * stride + x + 2] / inputValue[2]), 255);
+                                    }
+                                }
+                                break;
+                        }
+                    }
+                    
+
+
+                    // Ustawienie zmodyfikowanych pikseli z powrotem do obrazu
+                    writableBitmap.WritePixels(new Int32Rect(0, 0, width, height), sourcePixels, stride, 0);
+
+                    // Ustawienie zmodyfikowanego obrazu z powrotem na Canvas
+                    Image modifiedImage = new Image();
+                    modifiedImage.Source = writableBitmap;
+
+                    _mainCanvas.Children.Clear();
+                    _mainCanvas.Children.Add(modifiedImage);
+                }
+            }
+        }
+
+        private void ApplyGrayscaleFilter()
+        {
+            if (_mainCanvas != null)
+            {
+                BitmapSource source = (BitmapSource)GetCanvasBitmap();
+
+                if (source != null)
+                {
+                    // Konwersja obrazu na format WriteableBitmap, aby móc modyfikować piksele
+                    WriteableBitmap writableBitmap = new WriteableBitmap(source);
+
+                    int width = writableBitmap.PixelWidth;
+                    int height = writableBitmap.PixelHeight;
+
+                    // Konwersja obrazu na format array pikseli
+                    int stride = width * 4; // 4 kanały (RGBA) na piksel
+                    byte[] sourcePixels = new byte[height * stride];
+                    writableBitmap.CopyPixels(sourcePixels, stride, 0);
+                    for (int y = 0; y < height; y++)
+                    {
+                        for (int x = 0; x < stride; x += 4)
+                        {
+                            int grayscale = (int)(0.299 * sourcePixels[y * stride + x] + 0.587 * sourcePixels[y * stride + x + 1] + 0.114 * sourcePixels[y * stride + x + 2]);
+                            sourcePixels[y * stride + x] = (byte)grayscale;
+                            sourcePixels[y * stride + x + 1] = (byte)grayscale;
+                            sourcePixels[y * stride + x + 2] = (byte)grayscale;
+                        }
+                    }
+                    
+                    // Ustawienie zmodyfikowanych pikseli z powrotem do obrazu
+                    writableBitmap.WritePixels(new Int32Rect(0, 0, width, height), sourcePixels, stride, 0);
+
+                    // Ustawienie zmodyfikowanego obrazu z powrotem na Canvas
+                    Image modifiedImage = new Image();
+                    modifiedImage.Source = writableBitmap;
+
+                    _mainCanvas.Children.Clear();
+                    _mainCanvas.Children.Add(modifiedImage);
+                }
+            }
+        }
+
+        private void ApplyBrightnessFilter()
+        {
+            if (_mainCanvas != null)
+            {
+                BitmapSource source = (BitmapSource)GetCanvasBitmap();
+
+                if (source != null)
+                {
+                    BrightnessFilter inputWindow = new BrightnessFilter();
+                    bool? dialogResult = inputWindow.ShowDialog();
+
+                    if (dialogResult != true) return;
+
+                    double inputValue = inputWindow.Value;
+
+                    // Konwersja obrazu na format WriteableBitmap, aby móc modyfikować piksele
+                    WriteableBitmap writableBitmap = new WriteableBitmap(source);
+
+                    int width = writableBitmap.PixelWidth;
+                    int height = writableBitmap.PixelHeight;
+
+                    // Konwersja obrazu na format array pikseli
+                    int stride = width * 4; // 4 kanały (RGBA) na piksel
+                    byte[] sourcePixels = new byte[height * stride];
+                    writableBitmap.CopyPixels(sourcePixels, stride, 0);
+                    for (int y = 0; y < height; y++)
+                    {
+                        for (int x = 0; x < stride; x += 4)
+                        {
+                            sourcePixels[y * stride + x] = (byte)Math.Max(Math.Min(((int)sourcePixels[y * stride + x] + (int)inputValue), 255),0);
+                            sourcePixels[y * stride + x + 1] = (byte)Math.Max(Math.Min(((int)sourcePixels[y * stride + x + 1] + (int)inputValue), 255),0);
+                            sourcePixels[y * stride + x + 2] = (byte)Math.Max(Math.Min(((int)sourcePixels[y * stride + x + 2] + (int)inputValue), 255),0);
+                        }
+                    }
+                    
                     // Ustawienie zmodyfikowanych pikseli z powrotem do obrazu
                     writableBitmap.WritePixels(new Int32Rect(0, 0, width, height), sourcePixels, stride, 0);
 

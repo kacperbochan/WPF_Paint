@@ -807,6 +807,89 @@ namespace WPF_Paint.ViewModels
             }
         }
 
+        private void CopyBitmapToCenter(WriteableBitmap originalBitmap, WriteableBitmap expandedBitmap, int radius)
+        {
+            int originalWidth = originalBitmap.PixelWidth;
+            int originalHeight = originalBitmap.PixelHeight;
+            int originalStride = originalWidth * (originalBitmap.Format.BitsPerPixel / 8);
+
+            byte[] originalPixels = new byte[originalHeight * originalStride];
+            originalBitmap.CopyPixels(originalPixels, originalStride, 0);
+
+            expandedBitmap.Lock();
+
+            for (int y = 0; y < originalHeight; y++)
+            {
+                int sourceIndex = y * originalStride;
+                int destY = y + radius;
+                expandedBitmap.WritePixels(new Int32Rect(radius, destY, originalWidth, 1), originalPixels, originalStride, sourceIndex);
+            }
+
+            expandedBitmap.Unlock();
+        }
+
+        private void FillBorders(WriteableBitmap expandedBitmap, int radius)
+        {
+            int width = expandedBitmap.PixelWidth;
+            int height = expandedBitmap.PixelHeight;
+            int stride = width * (expandedBitmap.Format.BitsPerPixel / 8);
+
+            expandedBitmap.Lock();
+            byte[] pixels = new byte[height * stride];
+            expandedBitmap.CopyPixels(pixels, stride, 0);
+
+            // Fill top and bottom borders
+            for (int y = 0; y < radius; y++)
+            {
+                Array.Copy(pixels, radius * stride, pixels, y * stride, stride); // Top border
+                Array.Copy(pixels, (height - radius - 1) * stride, pixels, (height - y - 1) * stride, stride); // Bottom border
+            }
+
+            // Fill left and right borders
+            for (int y = 0; y < height; y++)
+            {
+                for (int x = 0; x < radius; x++)
+                {
+                    // Left border
+                    CopyPixel(pixels, stride, x + radius, y, x, y);
+
+                    // Right border
+                    CopyPixel(pixels, stride, width - radius - 1, y, width - x - 1, y);
+                }
+            }
+
+            expandedBitmap.WritePixels(new Int32Rect(0, 0, width, height), pixels, stride, 0);
+            expandedBitmap.Unlock();
+        }
+
+        private void CopyPixel(byte[] pixels, int stride, int sourceX, int sourceY, int destX, int destY)
+        {
+            int bpp = 4; // Assuming 4 bytes per pixel (e.g., RGBA)
+            int sourceIndex = (sourceY * stride) + (sourceX * bpp);
+            int destIndex = (destY * stride) + (destX * bpp);
+            Array.Copy(pixels, sourceIndex, pixels, destIndex, bpp);
+        }
+
+        private WriteableBitmap ExtractOriginalPortion(WriteableBitmap expandedBitmap, int radius)
+        {
+            int originalWidth = expandedBitmap.PixelWidth - 2 * radius;
+            int originalHeight = expandedBitmap.PixelHeight - 2 * radius;
+            WriteableBitmap originalBitmap = new WriteableBitmap(originalWidth, originalHeight, expandedBitmap.DpiX, expandedBitmap.DpiY, expandedBitmap.Format, null);
+
+            expandedBitmap.Lock();
+
+            for (int y = 0; y < originalHeight; y++)
+            {
+                int sourceY = y + radius;
+                originalBitmap.WritePixels(new Int32Rect(0, y, originalWidth, 1), expandedBitmap.BackBuffer, expandedBitmap.BackBufferStride, radius * 4 + sourceY * expandedBitmap.BackBufferStride);
+            }
+
+            expandedBitmap.Unlock();
+
+            return originalBitmap;
+        }
+
+
         private void ApplyFilter(int filterType)
         {
             if (_mainCanvas != null)
@@ -815,52 +898,64 @@ namespace WPF_Paint.ViewModels
 
                 if (source != null)
                 {
-                    // Konwersja obrazu na format WriteableBitmap, aby móc modyfikować piksele
-                    WriteableBitmap writableBitmap = new WriteableBitmap(source);
-
-                    int width = writableBitmap.PixelWidth;
-                    int height = writableBitmap.PixelHeight;
-
-                    // Konwersja obrazu na format array pikseli
-                    int stride = width * 4; // 4 kanały (RGBA) na piksel
-                    byte[] sourcePixels = new byte[height * stride];
-                    byte[] bufforPixels = new byte[height * stride];
-                    writableBitmap.CopyPixels(sourcePixels, stride, 0);
-                    writableBitmap.CopyPixels(bufforPixels, stride, 0);
-
                     int radius = 1; // Promień filtra 
 
-                    for (int y = radius; y < height - radius; y++)
+
+                    // Konwersja obrazu na format WriteableBitmap, aby móc modyfikować piksele
+                    WriteableBitmap originalBitmap = new WriteableBitmap(source);
+
+                    int originalWidth = originalBitmap.PixelWidth;
+                    int originalHeight = originalBitmap.PixelHeight;
+
+                    int width = originalWidth + 2 * radius;
+                    int height = originalHeight + 2 * radius;
+
+                    WriteableBitmap expandedBitmap = new WriteableBitmap(width, height, originalBitmap.DpiX, originalBitmap.DpiY, originalBitmap.Format, null);
+
+                    CopyBitmapToCenter(originalBitmap, expandedBitmap, radius);
+                    FillBorders(expandedBitmap, radius);
+
+
+                    // Konwersja obrazu na format array pikseli
+                    int stride = originalWidth * 4; // 4 kanały (RGBA) na piksel
+                    byte[] sourcePixels = new byte[originalHeight * stride];
+                    byte[] bufforPixels = new byte[originalHeight * stride];
+                    expandedBitmap.CopyPixels(sourcePixels, stride, 0);
+                    expandedBitmap.CopyPixels(bufforPixels, stride, 0);
+
+                    
+
+                    for (int y = radius; y < originalHeight - radius; y++)
                     {
-                        for (int x = radius; x < width - radius; x++)
+                        for (int x = radius; x < originalWidth - radius; x++)
                         {
                             switch (filterType)
                             {
                                 case 0:
-                                    Filter.ApplyAveragePixelFilter(x, y, radius, writableBitmap, sourcePixels, bufforPixels, stride);
+                                    Filter.ApplyAveragePixelFilter(x, y, radius, expandedBitmap, sourcePixels, bufforPixels, stride);
                                     break;
                                 case 1:
-                                    Filter.ApplyMedianPixelFilter(x, y, radius, writableBitmap, sourcePixels, bufforPixels, stride);
+                                    Filter.ApplyMedianPixelFilter(x, y, radius, expandedBitmap, sourcePixels, bufforPixels, stride);
                                     break;
                                 case 2:
-                                    Filter.ApplySobelEdgeDetection(x, y, writableBitmap, sourcePixels, bufforPixels, stride);
+                                    Filter.ApplySobelEdgeDetection(x, y, expandedBitmap, sourcePixels, bufforPixels, stride);
                                     break;
                                 case 3:
-                                    Filter.ApplyHighPassFilter(x, y, writableBitmap, sourcePixels, bufforPixels, stride);
+                                    Filter.ApplyHighPassFilter(x, y, expandedBitmap, sourcePixels, bufforPixels, stride);
                                     break;
                                 case 4:
-                                    Filter.ApplyGaussianBlurFilter(x, y, writableBitmap, sourcePixels, bufforPixels, stride);
+                                    Filter.ApplyGaussianBlurFilter(x, y, expandedBitmap, sourcePixels, bufforPixels, stride);
                                     break;
                             }
                         }
                     }
 
                     // Ustawienie zmodyfikowanych pikseli z powrotem do obrazu
-                    writableBitmap.WritePixels(new Int32Rect(0, 0, width, height), bufforPixels, stride, 0);
+                    expandedBitmap.WritePixels(new Int32Rect(0, 0, originalWidth, originalHeight), bufforPixels, stride, 0);
 
                     // Ustawienie zmodyfikowanego obrazu z powrotem na Canvas
                     Image modifiedImage = new Image();
-                    modifiedImage.Source = writableBitmap;
+                    modifiedImage.Source = ExtractOriginalPortion(expandedBitmap, radius);
 
                     _mainCanvas.Children.Clear();
                     _mainCanvas.Children.Add(modifiedImage);

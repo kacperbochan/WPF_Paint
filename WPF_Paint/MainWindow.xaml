@@ -43,7 +43,7 @@
     </i:Interaction.Behaviors>
     <Grid>
         <Grid.ColumnDefinitions>
-            <ColumnDefinition Width="120"/>
+            <ColumnDefinition Width="90"/>
             <ColumnDefinition Width="*"/>
         </Grid.ColumnDefinitions>
 
@@ -60,7 +60,23 @@
         
         <!-- Toolbar on the left -->
         <ToolBarTray Grid.Column="0">
-            <ToolBar>
+            <ToolBar Margin="5,0,5,0">
+                <ToolBar.Resources>
+                    <Style TargetType="{x:Type ToolBar}">
+                        <Setter Property="Template">
+                            <Setter.Value>
+                                <ControlTemplate TargetType="{x:Type ToolBar}">
+                                    <Border>
+                                        <DockPanel>
+                                            <WrapPanel Orientation="Horizontal" DockPanel.Dock="Top" IsItemsHost="True"/>
+                                            <!-- Do not include the part that creates the overflow button -->
+                                        </DockPanel>
+                                    </Border>
+                                </ControlTemplate>
+                            </Setter.Value>
+                        </Setter>
+                    </Style>
+                </ToolBar.Resources>
                 <StackPanel>
                     <Menu Margin="0,5,0,0" Width="70" BorderThickness="1" BorderBrush="Black">
                         <MenuItem Width="70">

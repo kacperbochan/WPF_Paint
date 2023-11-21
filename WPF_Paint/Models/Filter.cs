@@ -13,7 +13,7 @@ namespace WPF_Paint.Models
         public static void ApplyAveragePixelFilter(int x, int y, int radius, WriteableBitmap writableBitmap, byte[] sourcePixels, byte[] bufforpixels, int stride)
         {
             int sumR = 0, sumG = 0, sumB = 0;
-
+            
             for (int i = -radius; i <= radius; i++)
             {
                 for (int j = -radius; j <= radius; j++)
@@ -21,9 +21,12 @@ namespace WPF_Paint.Models
                     int offsetX = Math.Clamp(x + i, 0, (int)writableBitmap.Width - 1);
                     int offsetY = Math.Clamp(y + j, 0, (int)writableBitmap.Height - 1);
 
+
+
                     // Pobierz składowe koloru piksela
                     byte[] pixel = new byte[4];
                     int pixelIndex = offsetY * stride + offsetX * 4;
+                    
                     Array.Copy(sourcePixels, pixelIndex, pixel, 0, 4);
 
                     sumR += pixel[2]; // Red
@@ -200,8 +203,52 @@ namespace WPF_Paint.Models
             {
                 for (int j = -radius; j <= radius; j++)
                 {
-                    int offsetX = x + i;
-                    int offsetY = y + j;
+                    int offsetX = Math.Clamp(x + i, 0, (int)writableBitmap.Width - 1);
+                    int offsetY = Math.Clamp(y + j, 0, (int)writableBitmap.Height - 1);
+
+                    if (offsetX >= 0 && offsetX < width && offsetY >= 0 && offsetY < height)
+                    {
+                        int pixelIndex = offsetY * stride + offsetX * 4;
+                        byte[] pixel = new byte[4];
+                        Array.Copy(sourcePixels, pixelIndex, pixel, 0, 4);
+
+                        double kernelValue = kernel[i + radius, j + radius];
+
+                        sumR += pixel[2] * kernelValue; // Red
+                        sumG += pixel[1] * kernelValue; // Green
+                        sumB += pixel[0] * kernelValue; // Blue
+                        sumKernel += kernelValue;
+                    }
+                }
+            }
+
+            // Ustaw nowe wartości piksela
+            int currentIndex = y * stride + x * 4;
+            byte newR = (byte)Math.Max(0, Math.Min(255, sumR / sumKernel));
+            byte newG = (byte)Math.Max(0, Math.Min(255, sumG / sumKernel));
+            byte newB = (byte)Math.Max(0, Math.Min(255, sumB / sumKernel));
+
+            bufforpixels[currentIndex + 2] = newR; // Red
+            bufforpixels[currentIndex + 1] = newG; // Greens
+            bufforpixels[currentIndex] = newB;     // Blue
+        }
+
+        public static void ApplyCustomFilter(int x, int y, double[,] kernel, WriteableBitmap writableBitmap, byte[] sourcePixels, byte[] bufforpixels, int stride)
+        {
+            int width = writableBitmap.PixelWidth;
+            int height = writableBitmap.PixelHeight;
+
+            int radius = kernel.GetLength(0) / 2;
+
+            double sumR = 0, sumG = 0, sumB = 0;
+            double sumKernel = 0;
+
+            for (int i = -radius; i <= radius; i++)
+            {
+                for (int j = -radius; j <= radius; j++)
+                {
+                    int offsetX = Math.Clamp(x + i, 0, (int)writableBitmap.Width - 1);
+                    int offsetY = Math.Clamp(y + j, 0, (int)writableBitmap.Height - 1);
 
                     if (offsetX >= 0 && offsetX < width && offsetY >= 0 && offsetY < height)
                     {
@@ -231,3 +278,4 @@ namespace WPF_Paint.Models
         }
     }
 }
+

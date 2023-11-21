@@ -15,6 +15,9 @@
     <Compile Update="BrightnessFilter.xaml.cs">
       <SubType>Code</SubType>
     </Compile>
+    <Compile Update="CustomFilter.xaml.cs">
+      <SubType>Code</SubType>
+    </Compile>
     <Compile Update="PointFilter.xaml.cs">
       <SubType>Code</SubType>
     </Compile>

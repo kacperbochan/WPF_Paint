@@ -15,6 +15,7 @@ using System.Windows.Controls;
 using System.Windows.Input;
 using System.Windows.Media;
 using System.Windows.Media.Imaging;
+using System.Windows.Media.Media3D;
 using System.Windows.Shapes;
 using WPF_Paint.Models;
 using static WPF_Paint.HelperMethods;
@@ -90,6 +91,7 @@ namespace WPF_Paint.ViewModels
         public ICommand ApplySobelEdgeDetectionCommand { get; }
         public ICommand ApplyHighPassFilterCommand { get; }
         public ICommand ApplyGaussianBlurFilterCommand { get; }
+        public ICommand ApplyCustomFilterCommand { get; }
 
         public ICommand AddFilterCommand { get; }
         public ICommand SubtractFilterCommand { get; }
@@ -128,6 +130,7 @@ namespace WPF_Paint.ViewModels
             ApplySobelEdgeDetectionCommand = new RelayCommand(() => ApplyFilter(2));
             ApplyHighPassFilterCommand = new RelayCommand(() => ApplyFilter(3));
             ApplyGaussianBlurFilterCommand = new RelayCommand(() => ApplyFilter(4));
+            ApplyCustomFilterCommand = new RelayCommand(() => ApplyFilter(5));
 
             AddFilterCommand = new RelayCommand(() => ApplyPointFilter(0));
             SubtractFilterCommand = new RelayCommand(() => ApplyPointFilter(1));
@@ -828,6 +831,22 @@ namespace WPF_Paint.ViewModels
                     writableBitmap.CopyPixels(sourcePixels, stride, 0);
                     writableBitmap.CopyPixels(bufforPixels, stride, 0);
 
+                    double[,] kernel = {
+                        { 1, 2, 1 },
+                        { 2, 4, 2 },
+                        { 1, 2, 1 }
+                    };
+
+                    if (filterType == 5)
+                    {
+                        CustomFilter inputWindow = new CustomFilter();
+                        bool? dialogResult = inputWindow.ShowDialog();
+
+                        if (dialogResult != true) return;
+
+                        kernel = inputWindow.Values;
+                    }
+
                     int radius = 1; // Promień filtra 
 
                     for (int y = 0; y < height; y++)
@@ -850,6 +869,10 @@ namespace WPF_Paint.ViewModels
                                     break;
                                 case 4:
                                     Filter.ApplyGaussianBlurFilter(x, y, writableBitmap, sourcePixels, bufforPixels, stride);
+                                    break;
+                                case 5:
+
+                                    Filter.ApplyCustomFilter(x, y, kernel, writableBitmap, sourcePixels, bufforPixels, stride);
                                     break;
                             }
                         }

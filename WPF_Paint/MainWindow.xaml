@@ -127,6 +127,7 @@
                             <MenuItem Header="Sobela" Command="{Binding ApplySobelEdgeDetectionCommand}" CommandParameter="{Binding ElementName=MainCanvas}" />
                             <MenuItem Header="Wyostrzający" Command="{Binding ApplyHighPassFilterCommand}" CommandParameter="{Binding ElementName=MainCanvas}" />
                             <MenuItem Header="Gaussa" Command="{Binding ApplyGaussianBlurFilterCommand}" CommandParameter="{Binding ElementName=MainCanvas}" />
+                            <MenuItem Header="Własny" Command="{Binding ApplyCustomFilterCommand}" CommandParameter="{Binding ElementName=MainCanvas}" />
                         </MenuItem>
                     </Menu>
 

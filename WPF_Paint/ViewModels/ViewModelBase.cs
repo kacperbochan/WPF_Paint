@@ -330,11 +330,10 @@ namespace WPF_Paint.ViewModels
             string filePath = GetPicturePath();
             if (String.IsNullOrEmpty(filePath)) return;
 
-            
-
-            Netpbm netpbm = new Netpbm(filePath);
-
             BitmapSource bitmap;
+            // Create an Image control and set the BitmapSource as its source
+            Image image = new Image();
+
             if (System.IO.Path.GetExtension(filePath).Equals(".jpg", StringComparison.OrdinalIgnoreCase) ||
                 System.IO.Path.GetExtension(filePath).Equals(".jpeg", StringComparison.OrdinalIgnoreCase) ||
                 System.IO.Path.GetExtension(filePath).Equals(".png", StringComparison.OrdinalIgnoreCase))
@@ -342,18 +341,15 @@ namespace WPF_Paint.ViewModels
                 // Load JPEG image
                 BitmapImage bitmapImage = new BitmapImage(new Uri(filePath));
                 bitmap = new WriteableBitmap(bitmapImage);
+                image.Source = bitmap;
             }
-
             else
             {
-                
-                    MainCanvas.Children.Clear();
-
-
-            // Create an Image control and set the BitmapSource as its source
-            Image image = new Image();
-            image.Source = netpbm.Bitmap;
-
+                Netpbm netpbm = new Netpbm(filePath);
+                image.Source = netpbm.Bitmap;
+            }
+            
+            MainCanvas.Children.Clear();
             // Add the Image control to the MainCanvas
             MainCanvas.Children.Add(image);
         }
@@ -1020,6 +1016,7 @@ namespace WPF_Paint.ViewModels
             pixels[currentIndex + 1] = newG; // Green
             pixels[currentIndex] = newB;     // Blue
         }
+
         private void ApplyGaussianBlurFilter(int x, int y, WriteableBitmap writableBitmap, byte[] pixels, int stride)
         {
             int width = writableBitmap.PixelWidth;

@@ -830,9 +830,9 @@ namespace WPF_Paint.ViewModels
 
                     int radius = 1; // Promień filtra 
 
-                    for (int y = radius; y < height - radius; y++)
+                    for (int y = 0; y < height; y++)
                     {
-                        for (int x = radius; x < width - radius; x++)
+                        for (int x = 0; x < width; x++)
                         {
                             switch (filterType)
                             {

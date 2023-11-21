@@ -18,8 +18,8 @@ namespace WPF_Paint.Models
             {
                 for (int j = -radius; j <= radius; j++)
                 {
-                    int offsetX = x + i;
-                    int offsetY = y + j;
+                    int offsetX = Math.Clamp(x + i, 0, (int)writableBitmap.Width - 1);
+                    int offsetY = Math.Clamp(y + j, 0, (int)writableBitmap.Height - 1);
 
                     // Pobierz składowe koloru piksela
                     byte[] pixel = new byte[4];
@@ -54,8 +54,8 @@ namespace WPF_Paint.Models
             {
                 for (int j = -radius; j <= radius; j++)
                 {
-                    int offsetX = x + i;
-                    int offsetY = y + j;
+                    int offsetX = Math.Clamp(x + i, 0, (int)writableBitmap.Width - 1);
+                    int offsetY = Math.Clamp(y + j, 0, (int)writableBitmap.Height - 1);
 
                     // Pobierz składowe koloru piksela
                     byte[] pixel = new byte[4];
@@ -101,8 +101,8 @@ namespace WPF_Paint.Models
             {
                 for (int j = -1; j <= 1; j++)
                 {
-                    int offsetX = x + i;
-                    int offsetY = y + j;
+                    int offsetX = Math.Clamp(x + i, 0, (int)writableBitmap.Width - 1);
+                    int offsetY = Math.Clamp(y + j, 0, (int)writableBitmap.Height - 1);
 
                     if (offsetX >= 0 && offsetX < width && offsetY >= 0 && offsetY < height)
                     {
@@ -152,8 +152,8 @@ namespace WPF_Paint.Models
             {
                 for (int j = -radius; j <= radius; j++)
                 {
-                    int offsetX = x + i;
-                    int offsetY = y + j;
+                    int offsetX = Math.Clamp(x + i, 0, (int)writableBitmap.Width - 1);
+                    int offsetY = Math.Clamp(y + j, 0, (int)writableBitmap.Height - 1);
 
                     if (offsetX >= 0 && offsetX < width && offsetY >= 0 && offsetY < height)
                     {

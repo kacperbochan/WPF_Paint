@@ -91,6 +91,14 @@ namespace WPF_Paint.ViewModels
         public ICommand ApplyHighPassFilterCommand { get; }
         public ICommand ApplyGaussianBlurFilterCommand { get; }
 
+        public ICommand AddFilterCommand { get; }
+        public ICommand SubtractFilterCommand { get; }
+        public ICommand MultiplyFilterCommand { get; }
+        public ICommand DivideFilterCommand { get; }
+        public ICommand BrightnessFilterCommand { get; }
+        public ICommand GrayscaleFilterCommand { get; }
+
+
         
         public event PropertyChangedEventHandler? PropertyChanged;
 
@@ -114,11 +122,19 @@ namespace WPF_Paint.ViewModels
 
             OpenFillingColorSelectorCommand = new RelayCommand(() => OpenColorSelector(0));
             OpenBorderColorSelectorCommand = new RelayCommand(() => OpenColorSelector(1));
+
             ApplyAverageFilterCommand = new RelayCommand(() => ApplyFilter(0));
             ApplyMedianFilterCommand = new RelayCommand(() => ApplyFilter(1));
             ApplySobelEdgeDetectionCommand = new RelayCommand(() => ApplyFilter(2));
             ApplyHighPassFilterCommand = new RelayCommand(() => ApplyFilter(3));
             ApplyGaussianBlurFilterCommand = new RelayCommand(() => ApplyFilter(4));
+
+            AddFilterCommand = new RelayCommand(() => ApplyPointFilter(0));
+            SubtractFilterCommand = new RelayCommand(() => ApplyPointFilter(1));
+            MultiplyFilterCommand = new RelayCommand(() => ApplyPointFilter(2));
+            DivideFilterCommand = new RelayCommand(() => ApplyPointFilter(3));
+            BrightnessFilterCommand = new RelayCommand(() => ApplyPointFilter(4));
+            GrayscaleFilterCommand = new RelayCommand(() => ApplyPointFilter(5));
 
             ColorSettings.StaticPropertyChanged += ColorSettings_StaticPropertyChanged;
         }
@@ -852,7 +868,68 @@ namespace WPF_Paint.ViewModels
             }
         }
 
+        private void ApplyPointFilter(int filterType)
+        {
+            if (_mainCanvas != null)
+            {
+                BitmapSource source = (BitmapSource)GetCanvasBitmap();
 
+                if (source != null)
+                {
+                    // Konwersja obrazu na format WriteableBitmap, aby móc modyfikować piksele
+                    WriteableBitmap writableBitmap = new WriteableBitmap(source);
+
+                    int width = writableBitmap.PixelWidth;
+                    int height = writableBitmap.PixelHeight;
+
+                    // Konwersja obrazu na format array pikseli
+                    int stride = width * 4; // 4 kanały (RGBA) na piksel
+                    byte[] sourcePixels = new byte[height * stride];
+                    writableBitmap.CopyPixels(sourcePixels, stride, 0);
+                    
+
+                    int radius = 1; // Promień filtra 
+
+                    for (int y = radius; y < height - radius; y++)
+                    {
+                        for (int x = radius; x < width - radius; x++)
+                        {
+                            switch (filterType)
+                            {
+                                case 0:
+                                    //Dodawanie
+                                    break;
+                                case 1:
+                                    //Odejmowanie
+                                    break;
+                                case 2:
+                                    //Mnożenie
+                                    break;
+                                case 3:
+                                    //Dzielenie
+                                    break;
+                                case 4:
+                                    //Zmiana jaskości
+                                    break;
+                                case 5:
+                                    //Skala szarości
+                                    break;
+                            }
+                        }
+                    }
+
+                    // Ustawienie zmodyfikowanych pikseli z powrotem do obrazu
+                    writableBitmap.WritePixels(new Int32Rect(0, 0, width, height), sourcePixels, stride, 0);
+
+                    // Ustawienie zmodyfikowanego obrazu z powrotem na Canvas
+                    Image modifiedImage = new Image();
+                    modifiedImage.Source = writableBitmap;
+
+                    _mainCanvas.Children.Clear();
+                    _mainCanvas.Children.Add(modifiedImage);
+                }
+            }
+        }
 
     }
 }

@@ -114,7 +114,15 @@
                                 <TextBlock Text=" ▼" Margin="5,0,0,0" />
                             </StackPanel>
                         </MenuItem.Header>
-                        <MenuItem Header="Uśredniający" Command="{Binding ApplyAverageFilterCommand}" CommandParameter="{Binding ElementName=MainCanvas}" />
+                            <MenuItem Header="Punktowy">
+                                <MenuItem Header="Dodawanie" Command="{Binding AddFilterCommand}" CommandParameter="{Binding ElementName=MainCanvas}" />
+                                <MenuItem Header="Odejmowanie" Command="{Binding SubtractFilterCommand}" CommandParameter="{Binding ElementName=MainCanvas}" />
+                                <MenuItem Header="Mnożenie" Command="{Binding MultiplyFilterCommand}" CommandParameter="{Binding ElementName=MainCanvas}" />
+                                <MenuItem Header="Dzielenie" Command="{Binding DivideFilterCommand}" CommandParameter="{Binding ElementName=MainCanvas}" />
+                                <MenuItem Header="Zmiana jaskości" Command="{Binding BrightnessFilterCommand}" CommandParameter="{Binding ElementName=MainCanvas}" />
+                                <MenuItem Header="Skala szarości" Command="{Binding GrayscaleFilterCommand}" CommandParameter="{Binding ElementName=MainCanvas}" />
+                            </MenuItem>
+                            <MenuItem Header="Uśredniający" Command="{Binding ApplyAverageFilterCommand}" CommandParameter="{Binding ElementName=MainCanvas}" />
                             <MenuItem Header="Medianowy" Command="{Binding ApplyMedianFilterCommand}" CommandParameter="{Binding ElementName=MainCanvas}" />
                             <MenuItem Header="Sobela" Command="{Binding ApplySobelEdgeDetectionCommand}" CommandParameter="{Binding ElementName=MainCanvas}" />
                             <MenuItem Header="Wyostrzający" Command="{Binding ApplyHighPassFilterCommand}" CommandParameter="{Binding ElementName=MainCanvas}" />

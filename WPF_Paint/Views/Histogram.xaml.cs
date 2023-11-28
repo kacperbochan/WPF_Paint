@@ -33,12 +33,12 @@ namespace WPF_Paint.Views
         private void HistogramCanvas_Loaded(object sender, RoutedEventArgs e)
         {
             Console.WriteLine(HistogramCanvas.Children);
-            DrawHistogram(ImgHistogram.Histogram);
+            DrawHistogram(ImgHistogram.Histogram, Brushes.Black);
         }
 
         private void HistogramCanvas_SizeChanged(object sender, SizeChangedEventArgs e)
         {
-            DrawHistogram(ImgHistogram.Histogram);
+            DrawHistogram(ImgHistogram.Histogram, Brushes.Black);
         }
 
         private void RadioButton_Checked(object sender, RoutedEventArgs e)
@@ -49,28 +49,28 @@ namespace WPF_Paint.Views
                 string selectedColor = radioButton.Content.ToString();
                 switch(selectedColor) {
                     case "Średnia":
-                        DrawHistogram(ImgHistogram.Histogram);
+                        DrawHistogram(ImgHistogram.Histogram, Brushes.Black);
                         break;
                     case "Czerwony":
-                        DrawHistogram(ImgHistogram.RedHistogram);
+                        DrawHistogram(ImgHistogram.RedHistogram, Brushes.Red);
                         break;
                     case "Zielony":
-                        DrawHistogram(ImgHistogram.GreenHistogram);
+                        DrawHistogram(ImgHistogram.GreenHistogram, Brushes.Green);
                         break;
                     case "Niebieski":
-                        DrawHistogram(ImgHistogram.BlueHistogram);
+                        DrawHistogram(ImgHistogram.BlueHistogram, Brushes.Blue);
                         break;
                     case "Dystrybuanta":
-                        DrawHistogram(ImgHistogram.CDF);
+                        DrawHistogram(ImgHistogram.CDF, Brushes.Black);
                         break;
                     case "Wyrównany":
-                        DrawHistogram(ImgHistogram.EqHistogram);
+                        DrawHistogram(ImgHistogram.EqHistogram, Brushes.Black);
                         break;
                 }
             }
         }
 
-        private void DrawHistogram(int[] histogramData)
+        private void DrawHistogram(int[] histogramData, Brush brush)
         {
             HistogramCanvas.Children.Clear();
             double canvasWidth = HistogramCanvas.ActualWidth;
@@ -87,8 +87,8 @@ namespace WPF_Paint.Views
                 {
                     Width = barWidth,
                     Height = barHeight,
-                    Fill = Brushes.Black,
-                    Stroke = Brushes.Black
+                    Fill = brush,
+                    Stroke = brush
                 };
 
                 Canvas.SetLeft(rect, i * barWidth);

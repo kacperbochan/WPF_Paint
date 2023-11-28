@@ -18,7 +18,7 @@ using System.Windows.Media.Imaging;
 using System.Windows.Media.Media3D;
 using System.Windows.Shapes;
 using WPF_Paint.Models;
-using static WPF_Paint.HelperMethods;
+using static WPF_Paint.Models.HelperMethods;
 
 namespace WPF_Paint.ViewModels
 {
@@ -100,6 +100,11 @@ namespace WPF_Paint.ViewModels
         public ICommand BrightnessFilterCommand { get; }
         public ICommand GrayscaleFilterCommand { get; }
 
+        public ICommand HistogramWindowCommand { get; }
+        public ICommand BinarizationUserCommand { get; }
+        public ICommand BinarizationPercentCommand { get; }
+        public ICommand BinarizationMedianCommand { get; }
+
 
         
         public event PropertyChangedEventHandler? PropertyChanged;
@@ -139,7 +144,25 @@ namespace WPF_Paint.ViewModels
             BrightnessFilterCommand = new RelayCommand(() => ApplyBrightnessFilter());
             GrayscaleFilterCommand = new RelayCommand(() => ApplyGrayscaleFilter());
 
+            HistogramWindowCommand = new RelayCommand(() => OpenHistogramWindow());
+            BinarizationUserCommand = new RelayCommand(() => ApplyGrayscaleFilter());
+            BinarizationPercentCommand = new RelayCommand(() => ApplyGrayscaleFilter());
+            BinarizationMedianCommand = new RelayCommand(() => ApplyGrayscaleFilter());
+
             ColorSettings.StaticPropertyChanged += ColorSettings_StaticPropertyChanged;
+        }
+
+        private void OpenHistogramWindow()
+        {
+            BitmapSource source = (BitmapSource)GetCanvasBitmap();
+
+            ImgHistogram histogram = new ImgHistogram(source);
+
+            WPF_Paint.Views.Histogram inputWindow = new WPF_Paint.Views.Histogram(histogram);
+            bool? dialogResult = inputWindow.ShowDialog();
+
+            if (dialogResult != true) return;
+
         }
 
         private void ColorSettings_StaticPropertyChanged(object sender, PropertyChangedEventArgs e)

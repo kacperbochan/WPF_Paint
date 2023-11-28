@@ -110,6 +110,18 @@
                         <MenuItem Width="70">
                         <MenuItem.Header>
                             <StackPanel Orientation="Horizontal">
+                                    <TextBlock Text="Kolory" />
+                                    <TextBlock Text=" ▼" Margin="5,0,0,0" />
+                                </StackPanel>
+                            </MenuItem.Header>
+                            <MenuItem Header="Histogram" Command="{Binding HistogramWindowCommand}" CommandParameter="{Binding ElementName=MainCanvas}" />
+                        </MenuItem>
+                    </Menu>
+
+                    <Menu Margin="0,5,0,0" Width="70" BorderThickness="1" BorderBrush="Black">
+                        <MenuItem Width="70">
+                            <MenuItem.Header>
+                                <StackPanel Orientation="Horizontal">
                                 <TextBlock Text="Filtry" />
                                 <TextBlock Text=" ▼" Margin="5,0,0,0" />
                             </StackPanel>
@@ -121,6 +133,11 @@
                                 <MenuItem Header="Dzielenie" Command="{Binding DivideFilterCommand}" CommandParameter="{Binding ElementName=MainCanvas}" />
                                 <MenuItem Header="Zmiana jaskości" Command="{Binding BrightnessFilterCommand}" CommandParameter="{Binding ElementName=MainCanvas}" />
                                 <MenuItem Header="Skala szarości" Command="{Binding GrayscaleFilterCommand}" CommandParameter="{Binding ElementName=MainCanvas}" />
+                            </MenuItem>
+                            <MenuItem Header="Binaryzacji">
+                                <MenuItem Header="Ręczny" Command="{Binding BinarizationUserCommand}" CommandParameter="{Binding ElementName=MainCanvas}" />
+                                <MenuItem Header="Procentowy" Command="{Binding BinarizationPercentCommand}" CommandParameter="{Binding ElementName=MainCanvas}" />
+                                <MenuItem Header="Selekcja iteratywna średniej" Command="{Binding BinarizationMedianCommand}" CommandParameter="{Binding ElementName=MainCanvas}" />
                             </MenuItem>
                             <MenuItem Header="Uśredniający" Command="{Binding ApplyAverageFilterCommand}" CommandParameter="{Binding ElementName=MainCanvas}" />
                             <MenuItem Header="Medianowy" Command="{Binding ApplyMedianFilterCommand}" CommandParameter="{Binding ElementName=MainCanvas}" />

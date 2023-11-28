@@ -26,7 +26,6 @@ namespace WPF_Paint.ViewModels
     {
 
         private Canvas _mainCanvas;
-        
 
         public Canvas MainCanvas
         {
@@ -35,6 +34,18 @@ namespace WPF_Paint.ViewModels
             {
                 _mainCanvas = value;
                 OnPropertyChanged(nameof(MainCanvas));
+            }
+        }
+
+        private double _zoomLevel = 1.0;
+
+        public double ZoomLevel
+        {
+            get { return _zoomLevel; }
+            set
+            {
+                _zoomLevel = value;
+                OnPropertyChanged(nameof(ZoomLevel));
             }
         }
 

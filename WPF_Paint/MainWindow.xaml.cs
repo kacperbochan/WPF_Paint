@@ -33,6 +33,8 @@ namespace WPF_Paint
             {
                 viewModel.MainCanvas = MainCanvas;
             }
+
+            MainCanvas.MouseWheel += MainCanvas_MouseWheel;
         }
 
         private ViewModelColors ViewModel
@@ -55,6 +57,34 @@ namespace WPF_Paint
             colorSelectorWindow.ViewModel.ColorSelected += SelectedColorChanged; // Subskrybuj zdarzenie
             colorSelectorWindow.Show();
         }
+
+        private void MainCanvas_MouseWheel(object sender, MouseWheelEventArgs e)
+        {
+            var st = (ScaleTransform)MainCanvas.LayoutTransform;
+
+            // Current scale factor
+            double currentScale = st.ScaleX;
+
+            // Determine the zoom direction and calculate zoom factor
+            bool zoomingIn = e.Delta > 0;
+            double zoomFactor = zoomingIn ? 0.1 : -0.1;
+
+            // Apply a logarithmic approach to reduce zoom change as scale decreases
+            if (!zoomingIn && currentScale < 1)
+            {
+                zoomFactor *= currentScale; // Reduce the zoom out effect as the scale gets smaller
+            }
+
+            // Calculate new scale
+            double newScale = currentScale + zoomFactor;
+
+            // Ensure new scale is positive and within bounds
+            newScale = Math.Max(newScale, 0.1); // Prevent it from going below a certain threshold (e.g., 0.1)
+
+            // Apply the new scale
+            st.ScaleX = st.ScaleY = newScale;
+        }
+
 
         private void SelectedColorChanged(System.Windows.Media.Color selectedColor)
         {

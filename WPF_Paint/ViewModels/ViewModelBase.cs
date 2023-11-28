@@ -187,7 +187,7 @@ namespace WPF_Paint.ViewModels
             HistogramWindowCommand = new RelayCommand(() => OpenHistogramWindow());
             HistEqualizationCommand = new RelayCommand(() => HistogramEqualize());
             BinarizationUserCommand = new RelayCommand(() => UserValueBinarization());
-            BinarizationPercentCommand = new RelayCommand(() => ApplyGrayscaleFilter());
+            BinarizationPercentCommand = new RelayCommand(() => PercentBinarization());
             BinarizationMedianCommand = new RelayCommand(() => ApplyGrayscaleFilter());
 
             ColorSettings.StaticPropertyChanged += ColorSettings_StaticPropertyChanged;
@@ -205,6 +205,22 @@ namespace WPF_Paint.ViewModels
             BitmapSource source = GetCanvasBitmap();
 
             BinarizationView binarization = new BinarizationView(source,MainCanvas);
+            bool? dialogResult = binarization.ShowDialog();
+
+            if (dialogResult != true)
+            {
+                Image originalImage = new Image();
+                originalImage.Source = source;
+                MainCanvas.Children.Clear();
+                MainCanvas.Children.Add(originalImage);
+            }
+        }
+        
+        private void PercentBinarization()
+        {
+            BitmapSource source = GetCanvasBitmap();
+
+            BinarizationPercentView binarization = new BinarizationPercentView(source,MainCanvas);
             bool? dialogResult = binarization.ShowDialog();
 
             if (dialogResult != true)

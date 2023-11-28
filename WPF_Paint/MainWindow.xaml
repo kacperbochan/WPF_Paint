@@ -25,8 +25,86 @@
                         </Border>
                         <ControlTemplate.Triggers>
                             <Trigger Property="IsMouseOver" Value="True">
-                                <Setter Property="BorderBrush" Value="LightBlue"/>
+                                <Setter Property="BorderBrush" Value="#885df1"/>
                                 <Setter Property="BorderThickness" Value="2"/>
+                            </Trigger>
+                        </ControlTemplate.Triggers>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
+        <Style x:Key="NormalButtonStyle" TargetType="Button">
+            <Setter Property="Background" Value="#885df1"/>
+            <Setter Property="Foreground" Value="White"/>
+            <Setter Property="BorderBrush" Value="#885df1"/>
+            <Setter Property="BorderThickness" Value="1"/>
+            <Setter Property="FontWeight" Value="Bold"/>
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="Button">
+                        <Border Background="{TemplateBinding Background}"
+                                BorderBrush="{TemplateBinding BorderBrush}"
+                                BorderThickness="{TemplateBinding BorderThickness}"
+                                CornerRadius="10">
+                            <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center" Margin="0,5"/>
+                        </Border>
+                        <ControlTemplate.Triggers>
+                            <Trigger Property="IsMouseOver" Value="True">
+                                <Setter Property="Background" Value="#662eed"/>
+                                <Setter Property="BorderBrush" Value="#662eed"/>
+                            </Trigger>
+                        </ControlTemplate.Triggers>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
+        <Style x:Key="MenuStyle1" TargetType="{x:Type Menu}">
+            <Setter Property="Background" Value="#885df1"/>
+            <Setter Property="Foreground" Value="White"/>
+            <Setter Property="BorderBrush" Value="#885df1"/>
+            <Setter Property="BorderThickness" Value="1"/>
+            <Setter Property="FontWeight" Value="Bold"/>
+            <Setter Property="VerticalContentAlignment" Value="Center"/>
+            
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="{x:Type Menu}">
+                        <Border Background="{TemplateBinding Background}" 
+                                BorderBrush="{TemplateBinding BorderBrush}" 
+                                BorderThickness="{TemplateBinding BorderThickness}" 
+                                Padding="{TemplateBinding Padding}" 
+                                 CornerRadius="10"
+                                SnapsToDevicePixels="true">
+                            <ItemsPresenter SnapsToDevicePixels="{TemplateBinding SnapsToDevicePixels}" Margin="0,5"/>
+
+                        </Border>
+                        <ControlTemplate.Triggers>
+                            <Trigger Property="IsMouseOver" Value="True">
+                                <Setter Property="Background" Value="#662eed"/>
+                                <Setter Property="BorderBrush" Value="#662eed"/>
+                            </Trigger>
+                        </ControlTemplate.Triggers>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
+        <Style x:Key="PurpleBackgroundMenuItemStyle" TargetType="{x:Type MenuItem}">
+            <Setter Property="Background" Value="#885df1"/>
+            <Setter Property="Foreground" Value="White"/>
+            <Setter Property="BorderBrush" Value="#885df1"/>
+            <Setter Property="BorderThickness" Value="1"/>
+            <Setter Property="FontWeight" Value="Bold"/>
+            <Setter Property="VerticalContentAlignment" Value="Center"/>
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="{x:Type MenuItem}">
+                        <Border x:Name="Bd" Padding="17,0,17,0" BorderBrush="{TemplateBinding BorderBrush}" BorderThickness="{TemplateBinding BorderThickness}" Background="{TemplateBinding Background}" SnapsToDevicePixels="True" Uid="Border_38">
+                            <ContentPresenter x:Name="ContentPresenter"  Content="{TemplateBinding Header}" Grid.Column="1" ContentSource="Header" Margin="{TemplateBinding Padding}" RecognizesAccessKey="True" SnapsToDevicePixels="{TemplateBinding SnapsToDevicePixels}" Uid="ContentPresenter_33"/>
+                        </Border>
+                        <ControlTemplate.Triggers>
+                            <Trigger Property="IsHighlighted" Value="True">
+                                <Setter Property="Background" TargetName="Bd" Value="#662eed"/>
+                                <Setter Property="BorderBrush" TargetName="Bd" Value="#662eed"/>
                             </Trigger>
                         </ControlTemplate.Triggers>
                     </ControlTemplate>
@@ -59,7 +137,7 @@
         </Canvas>
         
         <!-- Toolbar on the left -->
-        <ToolBarTray Grid.Column="0">
+        <ToolBarTray Grid.Column="0" Background="Lavender">
             <ToolBar Margin="5,0,5,0">
                 <ToolBar.Resources>
                     <Style TargetType="{x:Type ToolBar}">
@@ -78,7 +156,7 @@
                     </Style>
                 </ToolBar.Resources>
                 <StackPanel>
-                    <Menu Margin="0,5,0,0" Width="70" BorderThickness="1" BorderBrush="Black">
+                    <Menu Margin="0,5,0,0" Width="70"  Style="{StaticResource MenuStyle1}">
                         <MenuItem Width="70">
                             <MenuItem.Header>
                                 <StackPanel Orientation="Horizontal">
@@ -86,14 +164,14 @@
                                     <TextBlock Text="▼" Margin="5,0,0,0" />
                                 </StackPanel>
                             </MenuItem.Header>
-                            <MenuItem Header="Prostokąt" Command="{Binding RectangleCommand}" />
-                            <MenuItem Header="Trójkąt" Command="{Binding TriangleCommand}" />
-                            <MenuItem Header="Elipsa" Command="{Binding EllipseCommand}" />
-                            <MenuItem Header="Linia" Command="{Binding LineCommand}" />
+                            <MenuItem Header="Prostokąt" Command="{Binding RectangleCommand}" Style="{StaticResource PurpleBackgroundMenuItemStyle}"/>
+                            <MenuItem Header="Trójkąt" Command="{Binding TriangleCommand}" Style="{StaticResource PurpleBackgroundMenuItemStyle}"/>
+                            <MenuItem Header="Elipsa" Command="{Binding EllipseCommand}" Style="{StaticResource PurpleBackgroundMenuItemStyle}"/>
+                            <MenuItem Header="Linia" Command="{Binding LineCommand}" Style="{StaticResource PurpleBackgroundMenuItemStyle}"/>
                         </MenuItem>
                     </Menu>
-                    <Button Margin="0,5,0,0" Command="{Binding DrawCommand}">Rysowanie</Button>
-                    <Button Margin="0,5,0,0" Command="{Binding TextCommand}">Tekst</Button>
+                    <Button Margin="0,5,0,0" Command="{Binding DrawCommand}" Style="{StaticResource NormalButtonStyle}">Rysowanie</Button>
+                    <Button Margin="0,5,0,0" Command="{Binding TextCommand}" Style="{StaticResource NormalButtonStyle}">Tekst</Button>
                     
                     <Grid Margin="0,20,0,0">
                         <Grid.ColumnDefinitions>
@@ -106,7 +184,7 @@
                         <Button  Grid.Column="1" Background="{Binding FillColorProperty, Converter={StaticResource RGBToBrushConverter}}" Style="{StaticResource ColorButtonStyle}"  Command="{Binding OpenFillingColorSelectorCommand}" />
                     </Grid>
 
-                    <Menu Margin="0,20,0,0" Width="70" BorderThickness="1" BorderBrush="Black">
+                    <Menu Margin="0,20,0,0" Width="70" Style="{StaticResource MenuStyle1}">
                         <MenuItem Width="70">
                         <MenuItem.Header>
                             <StackPanel Orientation="Horizontal">
@@ -114,25 +192,25 @@
                                 <TextBlock Text=" ▼" Margin="5,0,0,0" />
                             </StackPanel>
                         </MenuItem.Header>
-                            <MenuItem Header="Punktowy">
-                                <MenuItem Header="Dodawanie" Command="{Binding AddFilterCommand}" CommandParameter="{Binding ElementName=MainCanvas}" />
-                                <MenuItem Header="Odejmowanie" Command="{Binding SubtractFilterCommand}" CommandParameter="{Binding ElementName=MainCanvas}" />
-                                <MenuItem Header="Mnożenie" Command="{Binding MultiplyFilterCommand}" CommandParameter="{Binding ElementName=MainCanvas}" />
-                                <MenuItem Header="Dzielenie" Command="{Binding DivideFilterCommand}" CommandParameter="{Binding ElementName=MainCanvas}" />
-                                <MenuItem Header="Zmiana jaskości" Command="{Binding BrightnessFilterCommand}" CommandParameter="{Binding ElementName=MainCanvas}" />
-                                <MenuItem Header="Skala szarości" Command="{Binding GrayscaleFilterCommand}" CommandParameter="{Binding ElementName=MainCanvas}" />
+                            <MenuItem Header="Punktowy" Background="#885df1" >
+                                <MenuItem Header="Dodawanie" Command="{Binding AddFilterCommand}" CommandParameter="{Binding ElementName=MainCanvas}" Style="{StaticResource PurpleBackgroundMenuItemStyle}"/>
+                                <MenuItem Header="Odejmowanie" Command="{Binding SubtractFilterCommand}" CommandParameter="{Binding ElementName=MainCanvas}" Style="{StaticResource PurpleBackgroundMenuItemStyle}"/>
+                                <MenuItem Header="Mnożenie" Command="{Binding MultiplyFilterCommand}" CommandParameter="{Binding ElementName=MainCanvas}" Style="{StaticResource PurpleBackgroundMenuItemStyle}"/>
+                                <MenuItem Header="Dzielenie" Command="{Binding DivideFilterCommand}" CommandParameter="{Binding ElementName=MainCanvas}" Style="{StaticResource PurpleBackgroundMenuItemStyle}"/>
+                                <MenuItem Header="Zmiana jaskości" Command="{Binding BrightnessFilterCommand}" CommandParameter="{Binding ElementName=MainCanvas}" Style="{StaticResource PurpleBackgroundMenuItemStyle}"/>
+                                <MenuItem Header="Skala szarości" Command="{Binding GrayscaleFilterCommand}" CommandParameter="{Binding ElementName=MainCanvas}" Style="{StaticResource PurpleBackgroundMenuItemStyle}"/>
                             </MenuItem>
-                            <MenuItem Header="Uśredniający" Command="{Binding ApplyAverageFilterCommand}" CommandParameter="{Binding ElementName=MainCanvas}" />
-                            <MenuItem Header="Medianowy" Command="{Binding ApplyMedianFilterCommand}" CommandParameter="{Binding ElementName=MainCanvas}" />
-                            <MenuItem Header="Sobela" Command="{Binding ApplySobelEdgeDetectionCommand}" CommandParameter="{Binding ElementName=MainCanvas}" />
-                            <MenuItem Header="Wyostrzający" Command="{Binding ApplyHighPassFilterCommand}" CommandParameter="{Binding ElementName=MainCanvas}" />
-                            <MenuItem Header="Gaussa" Command="{Binding ApplyGaussianBlurFilterCommand}" CommandParameter="{Binding ElementName=MainCanvas}" />
-                            <MenuItem Header="Własny" Command="{Binding ApplyCustomFilterCommand}" CommandParameter="{Binding ElementName=MainCanvas}" />
+                            <MenuItem Header="Uśredniający" Command="{Binding ApplyAverageFilterCommand}" CommandParameter="{Binding ElementName=MainCanvas}" Style="{StaticResource PurpleBackgroundMenuItemStyle}"/>
+                            <MenuItem Header="Medianowy" Command="{Binding ApplyMedianFilterCommand}" CommandParameter="{Binding ElementName=MainCanvas}" Style="{StaticResource PurpleBackgroundMenuItemStyle}"/>
+                            <MenuItem Header="Sobela" Command="{Binding ApplySobelEdgeDetectionCommand}" CommandParameter="{Binding ElementName=MainCanvas}" Style="{StaticResource PurpleBackgroundMenuItemStyle}"/>
+                            <MenuItem Header="Wyostrzający" Command="{Binding ApplyHighPassFilterCommand}" CommandParameter="{Binding ElementName=MainCanvas}" Style="{StaticResource PurpleBackgroundMenuItemStyle}"/>
+                            <MenuItem Header="Gaussa" Command="{Binding ApplyGaussianBlurFilterCommand}" CommandParameter="{Binding ElementName=MainCanvas}" Style="{StaticResource PurpleBackgroundMenuItemStyle}"/>
+                            <MenuItem Header="Własny" Command="{Binding ApplyCustomFilterCommand}" CommandParameter="{Binding ElementName=MainCanvas}" Style="{StaticResource PurpleBackgroundMenuItemStyle}"/>
                         </MenuItem>
                     </Menu>
 
-                    <Button Margin="0,30,0,0" Command="{Binding OpenCommand}" CommandParameter="{Binding ElementName=MainCanvas}" Content="Otwórz"/>
-                    <Button Margin="0,5,0,0" Command="{Binding SaveCommand}" CommandParameter="{Binding ElementName=MainCanvas}" Content="Zapisz"/>
+                    <Button Margin="0,30,0,0" Command="{Binding OpenCommand}" CommandParameter="{Binding ElementName=MainCanvas}" Style="{StaticResource NormalButtonStyle}" Content="Otwórz"/>
+                    <Button Margin="0,5,0,0" Command="{Binding SaveCommand}" CommandParameter="{Binding ElementName=MainCanvas}" Style="{StaticResource NormalButtonStyle}" Content="Zapisz"/>
                     
                 </StackPanel>
             </ToolBar>

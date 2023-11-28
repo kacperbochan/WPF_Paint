@@ -219,7 +219,12 @@ namespace WPF_Paint.ViewModels
 
             ImgHistogram histogram = new ImgHistogram(source);
 
-            histogram.EqualizeHistogram();
+            Image equalImage = new Image();
+            equalImage.Source = histogram.EqualBitmapSource();
+
+            MainCanvas.Children.Clear();
+            MainCanvas.Children.Add(equalImage);
+
         }
 
         private void ColorSettings_StaticPropertyChanged(object sender, PropertyChangedEventArgs e)

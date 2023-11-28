@@ -3,6 +3,8 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using System.Windows.Media;
+using System.Windows;
 using System.Windows.Media.Imaging;
 
 namespace WPF_Paint.Models
@@ -45,11 +47,18 @@ namespace WPF_Paint.Models
 
         private byte[] _sourcePixels;
         private byte[] _equalPixels;
+        public byte[] EqualizedPixels
+        {
+            get { return _equalPixels; }
+        }
+
+        private int width;
+        private int height;
 
         public ImgHistogram(BitmapSource currentImage) 
         {
-            int width = currentImage.PixelWidth;
-            int height = currentImage.PixelHeight;
+            width = currentImage.PixelWidth;
+            height = currentImage.PixelHeight;
 
             // Konwersja obrazu na format array pikseli
             int stride = width * 4; // 4 kanały (RGBA) na piksel
@@ -70,11 +79,6 @@ namespace WPF_Paint.Models
                     _histogram[grayscale]++;
                 }
 
-            EqualizeHistogram();
-        }
-
-        public void EqualizeHistogram()
-        {
             int numPixels = _sourcePixels.Length / 4; 
             int[] cdfMinHistogram = _histogram.Where(h => h != 0).ToArray();
             int cdfMin = cdfMinHistogram.Length > 0 ? cdfMinHistogram.Min() : 0;
@@ -103,6 +107,16 @@ namespace WPF_Paint.Models
                 int grayscale = (int)(0.299 * _equalPixels[i] + 0.587 * _equalPixels[i + 1] + 0.114 * _equalPixels[i + 2]);
                 _eqHistogram[grayscale]++;
             }
+        }
+
+        public BitmapSource EqualBitmapSource()
+        {
+            int stride = width * 4; // 4 bytes per pixel in RGBA format
+
+            WriteableBitmap writeableBitmap = new WriteableBitmap(width, height, 96, 96, PixelFormats.Pbgra32, null);
+            writeableBitmap.WritePixels(new Int32Rect(0, 0, width, height), _equalPixels, stride, 0);
+
+            return writeableBitmap;
         }
 
     }

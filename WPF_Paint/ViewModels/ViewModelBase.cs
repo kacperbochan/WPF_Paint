@@ -186,7 +186,7 @@ namespace WPF_Paint.ViewModels
 
             HistogramWindowCommand = new RelayCommand(() => OpenHistogramWindow());
             HistEqualizationCommand = new RelayCommand(() => HistogramEqualize());
-            BinarizationUserCommand = new RelayCommand(() => ApplyGrayscaleFilter());
+            BinarizationUserCommand = new RelayCommand(() => UserValueBinarization());
             BinarizationPercentCommand = new RelayCommand(() => ApplyGrayscaleFilter());
             BinarizationMedianCommand = new RelayCommand(() => ApplyGrayscaleFilter());
 
@@ -200,6 +200,24 @@ namespace WPF_Paint.ViewModels
             CanvasWidth = 300;
         }
 
+        private void UserValueBinarization()
+        {
+            BitmapSource source = GetCanvasBitmap();
+
+            BinarizationView binarization = new BinarizationView(source,MainCanvas);
+            bool? dialogResult = binarization.ShowDialog();
+
+            if (dialogResult != true)
+            {
+                Image originalImage = new Image();
+                originalImage.Source = source;
+                MainCanvas.Children.Clear();
+                MainCanvas.Children.Add(originalImage);
+            }
+        }
+
+
+
         private void OpenHistogramWindow()
         {
             BitmapSource source = GetCanvasBitmap();
@@ -208,8 +226,6 @@ namespace WPF_Paint.ViewModels
 
             WPF_Paint.Views.Histogram inputWindow = new WPF_Paint.Views.Histogram(histogram);
             bool? dialogResult = inputWindow.ShowDialog();
-
-            if (dialogResult != true) return;
 
         }
 

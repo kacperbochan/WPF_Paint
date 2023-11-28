@@ -7,7 +7,28 @@
         mc:Ignorable="d"
         Title="Histogram" Height="350" Width="525">
     <Grid>
-        <Canvas Name="HistogramCanvas" Loaded="HistogramCanvas_Loaded" SizeChanged="HistogramCanvas_SizeChanged"/>
+        <Grid.RowDefinitions>
+            <RowDefinition Height="30"></RowDefinition>
+            <RowDefinition Height="*"></RowDefinition>
+        </Grid.RowDefinitions>
+        <Label Grid.Row="0"  FontWeight="Bold" FontSize="14" Margin="20,0">Histogram</Label>
+        <Grid Grid.Row="1">
+            <Grid.RowDefinitions>
+                <RowDefinition Height="Auto"></RowDefinition>
+                <RowDefinition Height="*"></RowDefinition>
+            </Grid.RowDefinitions>
 
+            <!-- Dodana sekcja przycisków radio -->
+            <StackPanel Grid.Row="0" Orientation="Horizontal" HorizontalAlignment="Center" VerticalAlignment="Center"  Name="ColorOptionsPanel">
+                <RadioButton Content="Średnia" Margin="5" GroupName="ColorOptions" IsChecked="True" Checked="RadioButton_Checked"/>
+                <RadioButton Content="Czerwony" Margin="5" GroupName="ColorOptions" Checked="RadioButton_Checked"/>
+                <RadioButton Content="Zielony" Margin="5" GroupName="ColorOptions" Checked="RadioButton_Checked"/>
+                <RadioButton Content="Niebieski" Margin="5" GroupName="ColorOptions" Checked="RadioButton_Checked"/>
+                <RadioButton Content="Dystrybuanta" Margin="5" GroupName="ColorOptions" Checked="RadioButton_Checked"/>
+                <RadioButton Content="Wyrównany" Margin="5" GroupName="ColorOptions" Checked="RadioButton_Checked"/>
+            </StackPanel>
+
+            <Canvas Grid.Row="1" Name="HistogramCanvas" Loaded="HistogramCanvas_Loaded" SizeChanged="HistogramCanvas_SizeChanged" Margin="20,0,20,20" Background="WhiteSmoke"/>
+        </Grid>
     </Grid>
 </Window>

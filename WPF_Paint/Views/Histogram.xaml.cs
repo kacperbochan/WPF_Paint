@@ -41,6 +41,34 @@ namespace WPF_Paint.Views
             DrawHistogram(ImgHistogram.Histogram);
         }
 
+        private void RadioButton_Checked(object sender, RoutedEventArgs e)
+        {
+            if (sender is RadioButton radioButton && ImgHistogram is not null)
+            {
+                // Tu wykonaj działanie po wyborze przycisku radio
+                string selectedColor = radioButton.Content.ToString();
+                switch(selectedColor) {
+                    case "Średnia":
+                        DrawHistogram(ImgHistogram.Histogram);
+                        break;
+                    case "Czerwony":
+                        DrawHistogram(ImgHistogram.RedHistogram);
+                        break;
+                    case "Zielony":
+                        DrawHistogram(ImgHistogram.GreenHistogram);
+                        break;
+                    case "Niebieski":
+                        DrawHistogram(ImgHistogram.BlueHistogram);
+                        break;
+                    case "Dystrybuanta":
+                        DrawHistogram(ImgHistogram.CDF);
+                        break;
+                    case "Wyrównany":
+                        DrawHistogram(ImgHistogram.EqHistogram);
+                        break;
+                }
+            }
+        }
 
         private void DrawHistogram(int[] histogramData)
         {

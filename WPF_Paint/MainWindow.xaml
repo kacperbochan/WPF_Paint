@@ -122,6 +122,7 @@
                                 </StackPanel>
                             </MenuItem.Header>
                             <MenuItem Header="Histogram" Command="{Binding HistogramWindowCommand}" CommandParameter="{Binding ElementName=MainCanvas}" />
+                            <MenuItem Header="Wyrównywanie" Command="{Binding HistEqualizationCommand}" CommandParameter="{Binding ElementName=MainCanvas}" />
                         </MenuItem>
                     </Menu>
 

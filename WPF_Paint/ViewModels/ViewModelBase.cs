@@ -138,6 +138,7 @@ namespace WPF_Paint.ViewModels
         public ICommand GrayscaleFilterCommand { get; }
 
         public ICommand HistogramWindowCommand { get; }
+        public ICommand HistEqualizationCommand { get; }
         public ICommand BinarizationUserCommand { get; }
         public ICommand BinarizationPercentCommand { get; }
         public ICommand BinarizationMedianCommand { get; }
@@ -184,6 +185,7 @@ namespace WPF_Paint.ViewModels
             GrayscaleFilterCommand = new RelayCommand(() => ApplyGrayscaleFilter());
 
             HistogramWindowCommand = new RelayCommand(() => OpenHistogramWindow());
+            HistEqualizationCommand = new RelayCommand(() => HistogramEqualize());
             BinarizationUserCommand = new RelayCommand(() => ApplyGrayscaleFilter());
             BinarizationPercentCommand = new RelayCommand(() => ApplyGrayscaleFilter());
             BinarizationMedianCommand = new RelayCommand(() => ApplyGrayscaleFilter());
@@ -209,6 +211,15 @@ namespace WPF_Paint.ViewModels
 
             if (dialogResult != true) return;
 
+        }
+
+        private void HistogramEqualize()
+        {
+            BitmapSource source = GetCanvasBitmap();
+
+            ImgHistogram histogram = new ImgHistogram(source);
+
+            histogram.EqualizeHistogram();
         }
 
         private void ColorSettings_StaticPropertyChanged(object sender, PropertyChangedEventArgs e)

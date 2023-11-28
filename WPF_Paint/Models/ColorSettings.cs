@@ -6,7 +6,7 @@ using System.Text;
 using System.Threading.Tasks;
 using System.Windows.Media;
 
-namespace WPF_Paint
+namespace WPF_Paint.Models
 {
     public static class ColorSettings
     {

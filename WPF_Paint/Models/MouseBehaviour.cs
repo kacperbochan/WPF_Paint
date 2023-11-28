@@ -7,7 +7,7 @@ using System.Windows.Input;
 using System.Windows.Interactivity;
 using System.Windows;
 
-namespace WPF_Paint
+namespace WPF_Paint.Models
 {
     public class MouseBehaviour : Behavior<UIElement>
     {

@@ -11,6 +11,7 @@ using System.Windows.Input;
 using System.Windows.Media;
 using System.Windows.Media.Imaging;
 using System.Windows.Shapes;
+using WPF_Paint.Models;
 using WPF_Paint.ViewModels;
 
 namespace WPF_Paint

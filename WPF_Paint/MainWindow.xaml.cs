@@ -13,7 +13,8 @@ using System.Windows.Media.Imaging;
 using System.Windows.Navigation;
 using System.Windows.Shapes;
 using WPF_Paint.ViewModels;
-using static WPF_Paint.HelperMethods;
+using WPF_Paint.Models;
+using static WPF_Paint.Models.HelperMethods;
 
 namespace WPF_Paint
 {

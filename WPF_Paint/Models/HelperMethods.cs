@@ -2,7 +2,7 @@
 using System.Windows.Media;
 using System.Windows.Shapes;
 
-namespace WPF_Paint
+namespace WPF_Paint.Models
 {
     static class HelperMethods
     {

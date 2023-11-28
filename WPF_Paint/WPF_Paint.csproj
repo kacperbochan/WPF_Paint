@@ -12,13 +12,13 @@
   </ItemGroup>
 
   <ItemGroup>
-    <Compile Update="BrightnessFilter.xaml.cs">
+    <Compile Update="Views\BrightnessFilter.xaml.cs">
       <SubType>Code</SubType>
     </Compile>
-    <Compile Update="CustomFilter.xaml.cs">
+    <Compile Update="Views\CustomFilter.xaml.cs">
       <SubType>Code</SubType>
     </Compile>
-    <Compile Update="PointFilter.xaml.cs">
+    <Compile Update="Views\PointFilter.xaml.cs">
       <SubType>Code</SubType>
     </Compile>
   </ItemGroup>

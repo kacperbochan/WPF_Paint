@@ -8,7 +8,8 @@ using System.Text;
 using System.Threading.Tasks;
 using System.Windows.Input;
 using System.Windows.Media;
-using static WPF_Paint.ColorConverter;
+using WPF_Paint.Models;
+using static WPF_Paint.Models.ColorConverter;
 
 namespace WPF_Paint.ViewModels
 {

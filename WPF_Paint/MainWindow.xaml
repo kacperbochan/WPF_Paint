@@ -4,11 +4,11 @@
         xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
         xmlns:i="http://schemas.microsoft.com/expression/2010/interactivity"
-        xmlns:local="clr-namespace:WPF_Paint"
+        xmlns:local="clr-namespace:WPF_Paint" xmlns:local1="clr-namespace:WPF_Paint.Models"
         mc:Ignorable="d"
         Title="Paint Premium" Height="450" Width="800">
     <Window.Resources>
-        <local:RGBToSolidColorBrushConverter x:Key="RGBToBrushConverter"/>
+        <local1:RGBToSolidColorBrushConverter x:Key="RGBToBrushConverter"/>
         <Style x:Key="ColorButtonStyle" TargetType="Button">
             <Setter Property="Width" Value="20"/>
             <Setter Property="Height" Value="20"/>
@@ -37,7 +37,7 @@
 
     <i:Interaction.Behaviors>
         <!-- Zachowania klawiatury -->
-        <local:KeyboardBehaviour 
+        <local1:KeyboardBehaviour
                     KeyDownCommand="{Binding DataContext.KeyDownCommand, RelativeSource={RelativeSource AncestorType=Window}}"
                     KeyUpCommand="{Binding DataContext.KeyUpCommand, RelativeSource={RelativeSource AncestorType=Window}}" />
     </i:Interaction.Behaviors>

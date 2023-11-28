@@ -7,13 +7,13 @@ using System.Threading.Tasks;
 using System.Windows.Data;
 using System.Windows.Media;
 
-namespace WPF_Paint
+namespace WPF_Paint.Models
 {
     public class RGBToSolidColorBrushConverter : IValueConverter
     {
         public object Convert(object value, Type targetType, object parameter, CultureInfo culture)
         {
-            if (value is System.Windows.Media.Color color)
+            if (value is Color color)
             {
                 return new SolidColorBrush(color);
             }

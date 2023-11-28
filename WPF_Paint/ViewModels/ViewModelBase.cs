@@ -49,6 +49,30 @@ namespace WPF_Paint.ViewModels
             }
         }
 
+        private double _canvasWidth = 300;
+
+        public double CanvasWidth
+        {
+            get { return _canvasWidth; }
+            set
+            {
+                _canvasWidth = value;
+                OnPropertyChanged(nameof(CanvasWidth));
+            }
+        }
+
+        private double _canvasHeight = 200;
+
+        public double CanvasHeight
+        {
+            get { return _canvasHeight; }
+            set
+            {
+                _canvasHeight = value;
+                OnPropertyChanged(nameof(CanvasHeight));
+            }
+        }
+
         private enum DrawingMode
         {
             None,
@@ -90,7 +114,9 @@ namespace WPF_Paint.ViewModels
         public ICommand TextCommand { get; }
 
         public ICommand OpenCommand { get; }
+        public ICommand ImageCommand { get; }
         public ICommand SaveCommand { get; }
+        public ICommand NewCanvasCommand { get; }
 
         public ICommand FillColorCommand { get; }
         public ICommand BorderColorCommand { get; }
@@ -135,8 +161,10 @@ namespace WPF_Paint.ViewModels
             DrawCommand = new RelayCommand(DrawButton_Click);
             TextCommand = new RelayCommand(TextButton_Click);
 
+            ImageCommand = new RelayCommand(SetImageSize);
             OpenCommand = new RelayCommand(OpenPicture);
             SaveCommand = new RelayCommand(SaveCanvas);
+            NewCanvasCommand = new RelayCommand(NewCanvas);
 
             OpenFillingColorSelectorCommand = new RelayCommand(() => OpenColorSelector(0));
             OpenBorderColorSelectorCommand = new RelayCommand(() => OpenColorSelector(1));
@@ -163,9 +191,16 @@ namespace WPF_Paint.ViewModels
             ColorSettings.StaticPropertyChanged += ColorSettings_StaticPropertyChanged;
         }
 
+        private void NewCanvas()
+        {
+            MainCanvas.Children.Clear();
+            CanvasHeight = 200;
+            CanvasWidth = 300;
+        }
+
         private void OpenHistogramWindow()
         {
-            BitmapSource source = (BitmapSource)GetCanvasBitmap();
+            BitmapSource source = GetCanvasBitmap();
 
             ImgHistogram histogram = new ImgHistogram(source);
 
@@ -376,6 +411,24 @@ namespace WPF_Paint.ViewModels
             ChangeDrawingMode(DrawingMode.Text);
         }
 
+        private void SetImageSize()
+        {
+            BitmapSource source = GetCanvasBitmap();
+            ImageSize imageSize = new ImageSize(source.PixelWidth, source.PixelHeight);
+            bool? dialogResult = imageSize.ShowDialog();
+
+            if (dialogResult != true) {
+
+                MainCanvas.UpdateLayout();
+                return;
+            } 
+
+            CanvasWidth = imageSize.Width;
+            CanvasHeight = imageSize.Height;
+
+
+        }
+
         private void OpenPicture()
         {
             ChangeDrawingMode(DrawingMode.None);
@@ -403,6 +456,9 @@ namespace WPF_Paint.ViewModels
             }
             
             MainCanvas.Children.Clear();
+
+            CanvasWidth = image.Source.Width;
+            CanvasHeight = image.Source.Height;
             // Add the Image control to the MainCanvas
             MainCanvas.Children.Add(image);
         }
@@ -425,7 +481,7 @@ namespace WPF_Paint.ViewModels
         private void SaveCanvas()
         {
             ChangeDrawingMode(DrawingMode.None);
-            CroppedBitmap canvasBitmap = GetCanvasBitmap();
+            BitmapSource canvasBitmap = GetCanvasBitmap();
 
             (int fileType, string filePath) = GetFileNameAndExtension();
 
@@ -447,19 +503,47 @@ namespace WPF_Paint.ViewModels
             }
         }
 
-        private CroppedBitmap GetCanvasBitmap()
+        private BitmapSource GetCanvasBitmap()
         {
-            Rect rect = new Rect(90, 0, MainCanvas.ActualWidth, MainCanvas.ActualHeight);
-            RenderTargetBitmap rtb = new RenderTargetBitmap((int)rect.Right, (int)rect.Bottom, 96d, 96d, System.Windows.Media.PixelFormats.Default);
-            rtb.Render(MainCanvas);
+            // Save the current transform and offset of the Canvas
+            var originalTransform = MainCanvas.LayoutTransform;
+            var originalOffset = new Point(Canvas.GetLeft(MainCanvas), Canvas.GetTop(MainCanvas));
 
-            // Określ prostokąt, który chcesz zachować (x, y, width, height)
-            Int32Rect cropRect = new Int32Rect(90, 0, (int)(rtb.PixelWidth - 90), (int)rtb.PixelHeight);
+            ScaleTransform St = ((ScaleTransform)MainCanvas.LayoutTransform);
+            double OriginalScale = St.ScaleX;
 
-            // Utwórz CroppedBitmap na podstawie RenderTargetBitmap i prostokąta
-            CroppedBitmap croppedBitmap = new CroppedBitmap(rtb, cropRect);
+            if (OriginalScale < 1.4)
+            {
+                St.ScaleX = 1.5;
+                St.ScaleY = 1.5;
+            }
 
-            return croppedBitmap;
+            // Update layout for rendering
+            MainCanvas.LayoutTransform = null; // Temporarily remove any layout transforms
+            MainCanvas.UpdateLayout();
+            MainCanvas.Measure(new Size(MainCanvas.Width, MainCanvas.Height));
+            MainCanvas.Arrange(new Rect(new Size(MainCanvas.Width, MainCanvas.Height)));
+
+            // Create a render bitmap and push the canvas to it
+            RenderTargetBitmap renderBitmap = new RenderTargetBitmap(
+                (int)MainCanvas.Width,
+                (int)MainCanvas.Height,
+                96d,
+                96d,
+                PixelFormats.Pbgra32);
+            renderBitmap.Render(MainCanvas);
+            MainCanvas.UpdateLayout();
+
+            // Restore the original transform and offset of the Canvas
+            MainCanvas.LayoutTransform = originalTransform;
+
+            // Update the layout again to reflect the restored state
+            MainCanvas.UpdateLayout();
+            St.ScaleX = OriginalScale;
+            St.ScaleY = OriginalScale;
+
+
+            return renderBitmap;
         }
 
         private (int, string) GetFileNameAndExtension()
@@ -483,7 +567,7 @@ namespace WPF_Paint.ViewModels
             return (dlg.ShowDialog() == true) ? (dlg.FilterIndex, dlg.FileName) : (0,"");
         }
 
-        private void SaveToJPG(string filePath, CroppedBitmap canvasBitmap)
+        private void SaveToJPG(string filePath, BitmapSource canvasBitmap)
         {
             using (FileStream fs = File.Open(filePath, FileMode.Create))
             {
@@ -501,7 +585,7 @@ namespace WPF_Paint.ViewModels
         //5 = P4
         //6 = P5
         //7 = P6
-        private void SaveToP(int fileType, string filePath, CroppedBitmap canvasBitmap)
+        private void SaveToP(int fileType, string filePath, BitmapSource canvasBitmap)
         {
             int Px = fileType - 1;
             int width = canvasBitmap.PixelWidth;
@@ -848,7 +932,7 @@ namespace WPF_Paint.ViewModels
         {
             if (_mainCanvas != null)
             {
-                BitmapSource source = (BitmapSource)GetCanvasBitmap();
+                BitmapSource source = GetCanvasBitmap();
 
                 if (source != null)
                 {
@@ -929,7 +1013,7 @@ namespace WPF_Paint.ViewModels
         {
             if (_mainCanvas != null)
             {
-                BitmapSource source = (BitmapSource)GetCanvasBitmap();
+                BitmapSource source = GetCanvasBitmap();
 
                 if (source != null)
                 {
@@ -1049,7 +1133,7 @@ namespace WPF_Paint.ViewModels
         {
             if (_mainCanvas != null)
             {
-                BitmapSource source = (BitmapSource)GetCanvasBitmap();
+                BitmapSource source = GetCanvasBitmap();
 
                 if (source != null)
                 {
@@ -1091,7 +1175,7 @@ namespace WPF_Paint.ViewModels
         {
             if (_mainCanvas != null)
             {
-                BitmapSource source = (BitmapSource)GetCanvasBitmap();
+                BitmapSource source = GetCanvasBitmap();
 
                 if (source != null)
                 {

@@ -92,6 +92,19 @@ namespace WPF_Paint
             // Na przykład:
             // this.ViewModel.SelectedColor = selectedColor;
         }
+        // This method refreshes the layout of the ScrollViewer
+
+        private void RefreshScrollViewerLayout()
+        {
+            // Invalidate the measure of the ScrollViewer to force it to re-measure its content
+            MainScrollViewer.InvalidateMeasure();
+
+            // Optionally, you can also invalidate its arrangement
+            MainScrollViewer.InvalidateArrange();
+
+            // Update the layout immediately
+            MainScrollViewer.UpdateLayout();
+        }
 
 
     }

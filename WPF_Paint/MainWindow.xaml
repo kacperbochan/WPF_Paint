@@ -6,7 +6,7 @@
         xmlns:i="http://schemas.microsoft.com/expression/2010/interactivity"
         xmlns:local="clr-namespace:WPF_Paint" xmlns:local1="clr-namespace:WPF_Paint.Models"
         mc:Ignorable="d"
-        Title="Paint Premium" Height="450" Width="800">
+        Title="Paint Premium" Height="450" Width="800" Background="LightSlateGray">
     <Window.Resources>
         <local1:RGBToSolidColorBrushConverter x:Key="RGBToBrushConverter"/>
         <Style x:Key="ColorButtonStyle" TargetType="Button">
@@ -48,8 +48,10 @@
         </Grid.ColumnDefinitions>
 
         <!-- Canvas on the right -->
-        <ScrollViewer HorizontalScrollBarVisibility="Auto" VerticalScrollBarVisibility="Auto" Grid.Column="1">
-            <Canvas x:Name="MainCanvas" DataContext="{Binding MainCanvas, Mode=TwoWay}" >
+        <ScrollViewer x:Name="MainScrollViewer" HorizontalScrollBarVisibility="Auto" VerticalScrollBarVisibility="Auto" Grid.Column="1">
+            <Canvas x:Name="MainCanvas" Margin="-200" DataContext="{Binding MainCanvas, Mode=TwoWay}"   ClipToBounds="True"
+                    Width="{Binding DataContext.CanvasWidth, RelativeSource={RelativeSource AncestorType=Window}}" 
+                    Height="{Binding DataContext.CanvasHeight, RelativeSource={RelativeSource AncestorType=Window}}">
                 <Canvas.LayoutTransform>
                     <ScaleTransform ScaleX="{Binding DataContext.ZoomLevel, RelativeSource={RelativeSource AncestorType=Window}}" 
                             ScaleY="{Binding DataContext.ZoomLevel, RelativeSource={RelativeSource AncestorType=Window}}"/>
@@ -152,11 +154,23 @@
                             <MenuItem Header="Własny" Command="{Binding ApplyCustomFilterCommand}" CommandParameter="{Binding ElementName=MainCanvas}" />
                         </MenuItem>
                     </Menu>
+                    <Button Margin="0,5,0,0" Command="{Binding ImageCommand}" CommandParameter="{Binding ElementName=MainCanvas}" Content="Obraz"/>
 
 
-                    <Button Margin="0,30,0,0" Command="{Binding OpenCommand}" CommandParameter="{Binding ElementName=MainCanvas}" Content="Otwórz"/>
-                    <Button Margin="0,5,0,0" Command="{Binding SaveCommand}" CommandParameter="{Binding ElementName=MainCanvas}" Content="Zapisz"/>
-                    
+
+                    <Menu Margin="0,5,0,0" Width="70" BorderThickness="1" BorderBrush="Black">
+                        <MenuItem Width="70">
+                            <MenuItem.Header>
+                                <StackPanel Orientation="Horizontal">
+                                    <TextBlock Text="Pliki" />
+                                    <TextBlock Text=" ▼" Margin="5,0,0,0" />
+                                </StackPanel>
+                            </MenuItem.Header>
+                            <MenuItem Header="Nowy" Command="{Binding NewCanvasCommand}" CommandParameter="{Binding ElementName=MainCanvas}" />
+                            <MenuItem Header="Otwórz" Command="{Binding OpenCommand}" CommandParameter="{Binding ElementName=MainCanvas}" />
+                            <MenuItem Header="Zapisz" Command="{Binding SaveCommand}" CommandParameter="{Binding ElementName=MainCanvas}" />
+                        </MenuItem>
+                    </Menu>
                 </StackPanel>
             </ToolBar>
         </ToolBarTray>

@@ -19,14 +19,42 @@
             </Grid.RowDefinitions>
 
             <!-- Dodana sekcja przycisków radio -->
-            <StackPanel Grid.Row="0" Orientation="Horizontal" HorizontalAlignment="Center" VerticalAlignment="Center"  Name="ColorOptionsPanel">
-                <RadioButton Content="Średnia" Margin="5" GroupName="ColorOptions" IsChecked="True" Checked="RadioButton_Checked"/>
-                <RadioButton Content="Czerwony" Margin="5" GroupName="ColorOptions" Checked="RadioButton_Checked"/>
-                <RadioButton Content="Zielony" Margin="5" GroupName="ColorOptions" Checked="RadioButton_Checked"/>
-                <RadioButton Content="Niebieski" Margin="5" GroupName="ColorOptions" Checked="RadioButton_Checked"/>
-                <RadioButton Content="Dystrybuanta" Margin="5" GroupName="ColorOptions" Checked="RadioButton_Checked"/>
-                <RadioButton Content="Wyrównany" Margin="5" GroupName="ColorOptions" Checked="RadioButton_Checked"/>
-            </StackPanel>
+            <Grid Grid.Row="0">
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="*"/>
+                    <ColumnDefinition Width="*"/>
+                    <ColumnDefinition Width="*"/>
+                </Grid.ColumnDefinitions>
+
+                <!-- First Column for Histogram and Dystrybuanta -->
+                <StackPanel Grid.Column="0" Orientation="Vertical" HorizontalAlignment="Center" VerticalAlignment="Center">
+                    <RadioButton x:Name="rbHistogram" Content="Histogram" Margin="5" GroupName="HistogramOptions" Checked="RadioButton_Checked" IsChecked="True" />
+                    <RadioButton x:Name="rbDystrybuanta" Content="Dystrybuanta" Margin="5" GroupName="HistogramOptions" Checked="RadioButton_Checked"/>
+                </StackPanel>
+
+                <!-- Second Column for Oryginał and Wyrównany -->
+                <StackPanel Grid.Column="1" Orientation="Vertical" HorizontalAlignment="Center" VerticalAlignment="Center" >
+                    <RadioButton x:Name="rbOryginal" Content="Oryginał" Margin="5" GroupName="ImageOptions" Checked="RadioButton_Checked" IsChecked="True" />
+                    <RadioButton x:Name="rbEqualized" Content="Wyrównany" Margin="5" GroupName="ImageOptions" Checked="RadioButton_Checked"/>
+                </StackPanel>
+
+                <!-- Third Column for Średnia, Czerwony, Zielony, Niebieski -->
+                <Grid Grid.Column="2">
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="auto"/>
+                        <ColumnDefinition Width="auto"/>
+                    </Grid.ColumnDefinitions>
+                    <StackPanel Grid.Column="0" Orientation="Vertical" HorizontalAlignment="Center" VerticalAlignment="Center" >
+                        <RadioButton x:Name="rbAvg" Content="Średnia" Margin="5" GroupName="ChannelOptions" Checked="RadioButton_Checked" IsChecked="True" />
+                        <RadioButton x:Name="rbRed" Content="Czerwony" Margin="5" GroupName="ChannelOptions" Checked="RadioButton_Checked"/>
+                    </StackPanel>
+                    <StackPanel Grid.Column="1" Orientation="Vertical" HorizontalAlignment="Center" VerticalAlignment="Center">
+                        <RadioButton x:Name="rbGreen" Content="Zielony" Margin="5" GroupName="ChannelOptions" Checked="RadioButton_Checked"/>
+                        <RadioButton x:Name="rbBlue" Content="Niebieski" Margin="5" GroupName="ChannelOptions" Checked="RadioButton_Checked"/>
+                    </StackPanel>
+                </Grid>
+            </Grid>
+
 
             <Canvas Grid.Row="1" Name="HistogramCanvas" Loaded="HistogramCanvas_Loaded" SizeChanged="HistogramCanvas_SizeChanged" Margin="20,0,20,20" Background="WhiteSmoke"/>
         </Grid>

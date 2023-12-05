@@ -36,7 +36,7 @@ namespace WPF_Paint
         private long pixelSum = 0;
         private long pixelAmount = 0;
 
-        private byte finalTreshold = 0;
+        private byte finalThreshold = 0;
 
         public BinarizationMedianView(BitmapSource source, Canvas canvas)
         {
@@ -60,7 +60,7 @@ namespace WPF_Paint
             GetValueMapping();
             MapTheValue();
             ReplaceImage();
-            thresholdSlider.Value = finalTreshold;
+            thresholdSlider.Value = finalThreshold;
         }
 
         private void AcceptButton_Click(object sender, RoutedEventArgs e)
@@ -110,29 +110,29 @@ namespace WPF_Paint
 
         private void GetValueMapping()
         {
-            //initial treshold
-            byte treshold = (byte)(pixelSum / pixelAmount);
+            //initial threshold
+            byte threshold = (byte)(pixelSum / pixelAmount);
 
-            bool tresholdChanged;
+            bool thresholdChanged;
             do
             {
-                tresholdChanged = false;
-                byte newTreshold = ComputeNewThreshold(treshold);
-                if(newTreshold != treshold)
+                thresholdChanged = false;
+                byte newThreshold = ComputeNewThreshold(threshold);
+                if(newThreshold != threshold)
                 {
-                    treshold = newTreshold;
-                    tresholdChanged = true;
+                    threshold = newThreshold;
+                    thresholdChanged = true;
                 }
             }
-            while (tresholdChanged);
+            while (thresholdChanged);
 
-            finalTreshold = treshold;
+            finalThreshold = threshold;
 
-            for (int i = 0; i < treshold; i++)
+            for (int i = 0; i < threshold; i++)
             {
                 valueMapping[i] = 0;
             }
-            for (int i = treshold; i < 256; i++)
+            for (int i = threshold; i < 256; i++)
             {
                 valueMapping[i] = 255;
             }

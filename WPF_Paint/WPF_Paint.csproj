@@ -12,6 +12,9 @@
   </ItemGroup>
 
   <ItemGroup>
+    <Compile Update="Views\BinarizationEntropyView.xaml.cs">
+      <SubType>Code</SubType>
+    </Compile>
     <Compile Update="Views\BinarizationMedianView.xaml.cs">
       <SubType>Code</SubType>
     </Compile>

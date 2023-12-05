@@ -19,12 +19,12 @@ namespace WPF_Paint
     /// <summary>
     /// Interaction logic for ColorSelector.xaml
     /// </summary>
-    public partial class BinarizationView : Window
+    public partial class BinarizationValueView : Window
     {
         private BinarizationHelper _binarizationHelper;
         private byte _finalThreshold;
 
-        public BinarizationView(BinarizationHelper binarizationHelper)
+        public BinarizationValueView(BinarizationHelper binarizationHelper)
         {
             _binarizationHelper = binarizationHelper;
             _finalThreshold = 150;

@@ -12,22 +12,22 @@
   </ItemGroup>
 
   <ItemGroup>
-    <Compile Update="Views\BinarizationBernsensView.xaml.cs">
+    <Compile Update="Views\Binarization\BinarizationBernsensView.xaml.cs">
       <SubType>Code</SubType>
     </Compile>
-    <Compile Update="Views\BinarizationOtsuView.xaml.cs">
+    <Compile Update="Views\Binarization\BinarizationOtsuView.xaml.cs">
       <SubType>Code</SubType>
     </Compile>
-    <Compile Update="Views\BinarizationMedianView.xaml.cs">
+    <Compile Update="Views\Binarization\BinarizationMedianView.xaml.cs">
       <SubType>Code</SubType>
     </Compile>
-    <Compile Update="Views\BinarizationPercentView.xaml.cs">
+    <Compile Update="Views\Binarization\BinarizationPercentView.xaml.cs">
       <SubType>Code</SubType>
     </Compile>
     <Compile Update="Views\BrightnessFilter.xaml.cs">
       <SubType>Code</SubType>
     </Compile>
-    <Compile Update="Views\BinarizationView.xaml.cs">
+    <Compile Update="Views\Binarization\BinarizationView.xaml.cs">
       <SubType>Code</SubType>
     </Compile>
     <Compile Update="Views\ImageSize.xaml.cs">

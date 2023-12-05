@@ -213,7 +213,7 @@ namespace WPF_Paint.ViewModels
             switch (binType)
             {
                 case 0:
-                    binarization = new BinarizationView(binarizationHelper);
+                    binarization = new BinarizationValueView(binarizationHelper);
                     break;
                 case 1:
                     binarization = new BinarizationPercentView(binarizationHelper);

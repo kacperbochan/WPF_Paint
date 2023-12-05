@@ -1001,9 +1001,9 @@ namespace WPF_Paint.ViewModels
                     // Konwersja obrazu na format array pikseli
                     int stride = width * 4; // 4 kanały (RGBA) na piksel
                     byte[] sourcePixels = new byte[height * stride];
-                    byte[] bufforPixels = new byte[height * stride];
+                    byte[] bufferPixels = new byte[height * stride];
                     writableBitmap.CopyPixels(sourcePixels, stride, 0);
-                    writableBitmap.CopyPixels(bufforPixels, stride, 0);
+                    writableBitmap.CopyPixels(bufferPixels, stride, 0);
 
                     double[,] kernel = {
                         { 1, 2, 1 },
@@ -1030,30 +1030,30 @@ namespace WPF_Paint.ViewModels
                             switch (filterType)
                             {
                                 case 0:
-                                    Filter.ApplyAveragePixelFilter(x, y, radius, writableBitmap, sourcePixels, bufforPixels, stride);
+                                    Filter.ApplyAveragePixelFilter(x, y, radius, writableBitmap, sourcePixels, bufferPixels, stride);
                                     break;
                                 case 1:
-                                    Filter.ApplyMedianPixelFilter(x, y, radius, writableBitmap, sourcePixels, bufforPixels, stride);
+                                    Filter.ApplyMedianPixelFilter(x, y, radius, writableBitmap, sourcePixels, bufferPixels, stride);
                                     break;
                                 case 2:
-                                    Filter.ApplySobelEdgeDetection(x, y, writableBitmap, sourcePixels, bufforPixels, stride);
+                                    Filter.ApplySobelEdgeDetection(x, y, writableBitmap, sourcePixels, bufferPixels, stride);
                                     break;
                                 case 3:
-                                    Filter.ApplyHighPassFilter(x, y, writableBitmap, sourcePixels, bufforPixels, stride);
+                                    Filter.ApplyHighPassFilter(x, y, writableBitmap, sourcePixels, bufferPixels, stride);
                                     break;
                                 case 4:
-                                    Filter.ApplyGaussianBlurFilter(x, y, writableBitmap, sourcePixels, bufforPixels, stride);
+                                    Filter.ApplyGaussianBlurFilter(x, y, writableBitmap, sourcePixels, bufferPixels, stride);
                                     break;
                                 case 5:
 
-                                    Filter.ApplyCustomFilter(x, y, kernel, writableBitmap, sourcePixels, bufforPixels, stride);
+                                    Filter.ApplyCustomFilter(x, y, kernel, writableBitmap, sourcePixels, bufferPixels, stride);
                                     break;
                             }
                         }
                     }
 
                     // Ustawienie zmodyfikowanych pikseli z powrotem do obrazu
-                    writableBitmap.WritePixels(new Int32Rect(0, 0, width, height), bufforPixels, stride, 0);
+                    writableBitmap.WritePixels(new Int32Rect(0, 0, width, height), bufferPixels, stride, 0);
 
                     // Ustawienie zmodyfikowanego obrazu z powrotem na Canvas
                     Image modifiedImage = new Image();

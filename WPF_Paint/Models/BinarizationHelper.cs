@@ -14,7 +14,7 @@ namespace WPF_Paint.Models
         private Canvas _canvas;
         private WriteableBitmap _writableBitmap;
         private byte[] _originalGrayScale;
-        private byte[] _bufforImage;
+        private byte[] _bufferImage;
 
         private int[] valueMapping = new int[256];
 
@@ -40,7 +40,7 @@ namespace WPF_Paint.Models
             _histogram = new ImgHistogram(source).Histogram;
             _width = source.PixelWidth;
             _height = source.PixelHeight;
-            _bufforImage = new byte[_width * _height];
+            _bufferImage = new byte[_width * _height];
 
             _pixelAmount = _width * _height; // Total number of pixels for the channel
 
@@ -81,7 +81,7 @@ namespace WPF_Paint.Models
         }
         public void UpdateImageWithByteMap(byte[] bytemap)
         {
-            _bufforImage = bytemap;
+            _bufferImage = bytemap;
             ReplaceImage();
         }
 
@@ -101,7 +101,7 @@ namespace WPF_Paint.Models
         {
             for (int i = 0; i < _originalGrayScale.Length; i++)
             {
-                _bufforImage[i] = (byte)valueMapping[_originalGrayScale[i]];
+                _bufferImage[i] = (byte)valueMapping[_originalGrayScale[i]];
             }
         }
 
@@ -116,11 +116,11 @@ namespace WPF_Paint.Models
                 for (int x = 0; x < _width; x++)
                 {
                     int index = y * stride + x * 4;
-                    int bufforindex = y * _width + x;
+                    int bufferindex = y * _width + x;
 
-                    sourcePixels[index] = (byte)_bufforImage[bufforindex];
-                    sourcePixels[index + 1] = (byte)_bufforImage[bufforindex];
-                    sourcePixels[index + 2] = (byte)_bufforImage[bufforindex];
+                    sourcePixels[index] = (byte)_bufferImage[bufferindex];
+                    sourcePixels[index + 1] = (byte)_bufferImage[bufferindex];
+                    sourcePixels[index + 2] = (byte)_bufferImage[bufferindex];
                 }
             }
 

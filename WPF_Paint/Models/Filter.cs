@@ -10,7 +10,7 @@ namespace WPF_Paint.Models
 {
     internal static class Filter
     {
-        public static void ApplyAveragePixelFilter(int x, int y, int radius, WriteableBitmap writableBitmap, byte[] sourcePixels, byte[] bufforpixels, int stride)
+        public static void ApplyAveragePixelFilter(int x, int y, int radius, WriteableBitmap writableBitmap, byte[] sourcePixels, byte[] bufferpixels, int stride)
         {
             int sumR = 0, sumG = 0, sumB = 0;
             
@@ -42,12 +42,12 @@ namespace WPF_Paint.Models
 
             // Ustaw nowe wartości piksela
             int currentIndex = y * stride + x * 4;
-            bufforpixels[currentIndex + 2] = averageR; // Red
-            bufforpixels[currentIndex + 1] = averageG; // Green
-            bufforpixels[currentIndex] = averageB;     // Blue
+            bufferpixels[currentIndex + 2] = averageR; // Red
+            bufferpixels[currentIndex + 1] = averageG; // Green
+            bufferpixels[currentIndex] = averageB;     // Blue
         }
 
-        public static void ApplyMedianPixelFilter(int x, int y, int radius, WriteableBitmap writableBitmap, byte[] sourcePixels, byte[] bufforpixels, int stride)
+        public static void ApplyMedianPixelFilter(int x, int y, int radius, WriteableBitmap writableBitmap, byte[] sourcePixels, byte[] bufferpixels, int stride)
         {
             List<byte> redValues = new List<byte>();
             List<byte> greenValues = new List<byte>();
@@ -83,12 +83,12 @@ namespace WPF_Paint.Models
 
             // Ustaw nowe wartości piksela
             int currentIndex = y * stride + x * 4;
-            bufforpixels[currentIndex + 2] = medianR; // Red
-            bufforpixels[currentIndex + 1] = medianG; // Green
-            bufforpixels[currentIndex] = medianB;     // Blue
+            bufferpixels[currentIndex + 2] = medianR; // Red
+            bufferpixels[currentIndex + 1] = medianG; // Green
+            bufferpixels[currentIndex] = medianB;     // Blue
         }
 
-        public static void ApplySobelEdgeDetection(int x, int y, WriteableBitmap writableBitmap, byte[] sourcePixels, byte[] bufforpixels, int stride)
+        public static void ApplySobelEdgeDetection(int x, int y, WriteableBitmap writableBitmap, byte[] sourcePixels, byte[] bufferpixels, int stride)
         {
             int width = writableBitmap.PixelWidth;
             int height = writableBitmap.PixelHeight;
@@ -129,14 +129,14 @@ namespace WPF_Paint.Models
 
             // Ustaw nową wartość piksela
             int currentIndex = y * stride + x * 4;
-            bufforpixels[currentIndex + 2] = (byte)normalizedMagnitude; // Red
-            bufforpixels[currentIndex + 1] = (byte)normalizedMagnitude; // Green
-            bufforpixels[currentIndex] = (byte)normalizedMagnitude;     // Blue
+            bufferpixels[currentIndex + 2] = (byte)normalizedMagnitude; // Red
+            bufferpixels[currentIndex + 1] = (byte)normalizedMagnitude; // Green
+            bufferpixels[currentIndex] = (byte)normalizedMagnitude;     // Blue
         }
 
 
 
-        public static void ApplyHighPassFilter(int x, int y, WriteableBitmap writableBitmap, byte[] sourcePixels, byte[] bufforpixels, int stride)
+        public static void ApplyHighPassFilter(int x, int y, WriteableBitmap writableBitmap, byte[] sourcePixels, byte[] bufferpixels, int stride)
         {
             int[,] kernel = {
                 { -1, -1, -1 },
@@ -177,12 +177,12 @@ namespace WPF_Paint.Models
             byte newG = (byte)Math.Max(0, Math.Min(255, sumG));
             byte newB = (byte)Math.Max(0, Math.Min(255, sumB));
 
-            bufforpixels[currentIndex + 2] = newR; // Red
-            bufforpixels[currentIndex + 1] = newG; // Green
-            bufforpixels[currentIndex] = newB;     // Blue
+            bufferpixels[currentIndex + 2] = newR; // Red
+            bufferpixels[currentIndex + 1] = newG; // Green
+            bufferpixels[currentIndex] = newB;     // Blue
         }
 
-        public static void ApplyGaussianBlurFilter(int x, int y, WriteableBitmap writableBitmap, byte[] sourcePixels, byte[] bufforpixels, int stride)
+        public static void ApplyGaussianBlurFilter(int x, int y, WriteableBitmap writableBitmap, byte[] sourcePixels, byte[] bufferpixels, int stride)
         {
             int width = writableBitmap.PixelWidth;
             int height = writableBitmap.PixelHeight;
@@ -227,12 +227,12 @@ namespace WPF_Paint.Models
             byte newG = (byte)Math.Max(0, Math.Min(255, sumG / sumKernel));
             byte newB = (byte)Math.Max(0, Math.Min(255, sumB / sumKernel));
 
-            bufforpixels[currentIndex + 2] = newR; // Red
-            bufforpixels[currentIndex + 1] = newG; // Greens
-            bufforpixels[currentIndex] = newB;     // Blue
+            bufferpixels[currentIndex + 2] = newR; // Red
+            bufferpixels[currentIndex + 1] = newG; // Greens
+            bufferpixels[currentIndex] = newB;     // Blue
         }
 
-        public static void ApplyCustomFilter(int x, int y, double[,] kernel, WriteableBitmap writableBitmap, byte[] sourcePixels, byte[] bufforpixels, int stride)
+        public static void ApplyCustomFilter(int x, int y, double[,] kernel, WriteableBitmap writableBitmap, byte[] sourcePixels, byte[] bufferpixels, int stride)
         {
             int width = writableBitmap.PixelWidth;
             int height = writableBitmap.PixelHeight;
@@ -271,9 +271,9 @@ namespace WPF_Paint.Models
             byte newG = (byte)Math.Max(0, Math.Min(255, sumG / sumKernel));
             byte newB = (byte)Math.Max(0, Math.Min(255, sumB / sumKernel));
 
-            bufforpixels[currentIndex + 2] = newR; // Red
-            bufforpixels[currentIndex + 1] = newG; // Greens
-            bufforpixels[currentIndex] = newB;     // Blue
+            bufferpixels[currentIndex + 2] = newR; // Red
+            bufferpixels[currentIndex + 1] = newG; // Greens
+            bufferpixels[currentIndex] = newB;     // Blue
         }
     }
 }

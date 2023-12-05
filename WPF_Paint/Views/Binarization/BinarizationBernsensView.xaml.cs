@@ -23,7 +23,7 @@ namespace WPF_Paint
     {
         private BinarizationHelper _binarizationHelper;
         private byte _radius = 0;
-        private byte[] _bitmapBuffor;
+        private byte[] _bitmapBuffer;
 
         public BinarizationBernsensView(BinarizationHelper binarizationHelper)
         {
@@ -32,7 +32,7 @@ namespace WPF_Paint
             InitializeComponent();
 
             CalculateNewBitmap();
-            _binarizationHelper.UpdateImageWithByteMap(_bitmapBuffor);
+            _binarizationHelper.UpdateImageWithByteMap(_bitmapBuffer);
         }
 
         private void Slider_ValueChanged(object sender, RoutedPropertyChangedEventArgs<double> e)
@@ -42,7 +42,7 @@ namespace WPF_Paint
             _radius = (byte)e.NewValue;
 
             CalculateNewBitmap();
-            _binarizationHelper.UpdateImageWithByteMap(_bitmapBuffor);
+            _binarizationHelper.UpdateImageWithByteMap(_bitmapBuffer);
         }
 
         private void AcceptButton_Click(object sender, RoutedEventArgs e)
@@ -54,12 +54,12 @@ namespace WPF_Paint
 
         private byte[] CloneGrayscale()
         {
-            byte[] bitmapBuffor = new byte[_binarizationHelper.GrayScale.Length];
-            for(int i= 0; i<bitmapBuffor.Length; i++)
+            byte[] bitmapBuffer = new byte[_binarizationHelper.GrayScale.Length];
+            for(int i= 0; i<bitmapBuffer.Length; i++)
             {
-                bitmapBuffor[i] = _binarizationHelper.GrayScale[i];
+                bitmapBuffer[i] = _binarizationHelper.GrayScale[i];
             }
-            return bitmapBuffor;
+            return bitmapBuffer;
         }
 
         private byte PixelFilter(int x, int y) 
@@ -94,13 +94,13 @@ namespace WPF_Paint
 
         private void CalculateNewBitmap()
         {
-            _bitmapBuffor = CloneGrayscale();
+            _bitmapBuffer = CloneGrayscale();
 
             for (int y = 0; y < _binarizationHelper.Height; y++) 
             {
                 for (int x = 0; x < _binarizationHelper.Width; x++)
                 {
-                    _bitmapBuffor[y * _binarizationHelper.Width + x] = PixelFilter(x, y);
+                    _bitmapBuffer[y * _binarizationHelper.Width + x] = PixelFilter(x, y);
                 }
             }
         }

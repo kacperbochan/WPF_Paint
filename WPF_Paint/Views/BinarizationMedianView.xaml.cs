@@ -21,73 +21,27 @@ namespace WPF_Paint
     /// </summary>
     public partial class BinarizationMedianView : Window
     {
-        private Canvas Canvas;
-        private WriteableBitmap writableBitmap;
-        public byte[] OriginalGrayScale;
-        public byte[] BufforImage;
+        private BinarizationHelper _binarizationHelper;
+        private byte _finalThreshold;
 
-        private ImgHistogram histogram;
-
-        public int[] valueMapping = new int[256];
-
-        public int width = 0;
-        public int height = 0;
-
-        private long pixelSum = 0;
-        private long pixelAmount = 0;
-
-        private byte finalThreshold = 0;
-
-        public BinarizationMedianView(BitmapSource source, Canvas canvas)
+        public BinarizationMedianView(BinarizationHelper binarizationHelper)
         {
-            histogram = new ImgHistogram(source);
-            width = source.PixelWidth;
-            height = source.PixelHeight;
-            BufforImage = new byte[width * height];
+            _binarizationHelper = binarizationHelper;
+            _finalThreshold = CalculateFinalThreshold();
 
-            pixelAmount = width * height; // Total number of pixels for the channel
-
-            for (int i = 0; i < 256; i++)
-                pixelSum += i * histogram.Histogram[i];
-
-            GetGrayScale(source);
-            writableBitmap = new WriteableBitmap(source);
-
-            Canvas = canvas;
+            _binarizationHelper.UpdateImageWithThreshold(_finalThreshold);
 
             InitializeComponent();
 
-            GetValueMapping();
-            MapTheValue();
-            ReplaceImage();
-            thresholdSlider.Value = finalThreshold;
+            thresholdSlider.Value = _finalThreshold;
         }
 
         private void AcceptButton_Click(object sender, RoutedEventArgs e)
         {
             this.DialogResult = true;
-            // Zamknij okno
             this.Close();
         }
 
-        private void GetGrayScale(BitmapSource source)
-        {
-            int stride = width * 4;
-
-            byte[] sourcePixels = new byte[height * stride];
-            source.CopyPixels(sourcePixels, stride, 0);
-            OriginalGrayScale = new byte[width * height];
-
-            for (int y = 0; y < height; y++)
-            {
-                for (int x = 0; x < width; x++)
-                {
-                    int pixelIndex = y * stride + x * 4;
-                    int grayscale = (sourcePixels[pixelIndex] + sourcePixels[pixelIndex+1] + sourcePixels[pixelIndex + 2]) / 3;
-                    OriginalGrayScale[y * width + x] = (byte)grayscale;
-                }
-            }
-        }
 
         private byte ComputeNewThreshold(byte oldThreshold) 
         {
@@ -96,11 +50,11 @@ namespace WPF_Paint
 
             for (int i = oldThreshold+1; i < 256; i++)
             {
-                sumBackground += i * histogram.Histogram[i];
-                countBackground += histogram.Histogram[i];
+                sumBackground += i * _binarizationHelper.Histogram[i];
+                countBackground += _binarizationHelper.Histogram[i];
             }
-            sumForeground = pixelSum - sumBackground;
-            countForeground = pixelAmount - countBackground;
+            sumForeground = _binarizationHelper.PixelSum - sumBackground;
+            countForeground = _binarizationHelper.PixelAmount - countBackground;
 
             byte meanBackground = (byte)(sumBackground / Math.Max(1, countBackground));
             byte meanForeground = (byte)(sumForeground / Math.Max(1, countForeground));
@@ -108,17 +62,16 @@ namespace WPF_Paint
             return (byte)((meanBackground + meanForeground) / 2);
         }
 
-        private void GetValueMapping()
+        private byte CalculateFinalThreshold()
         {
-            //initial threshold
-            byte threshold = (byte)(pixelSum / pixelAmount);
+            byte threshold = (byte)(_binarizationHelper.PixelSum / _binarizationHelper.PixelAmount);
 
             bool thresholdChanged;
             do
             {
                 thresholdChanged = false;
                 byte newThreshold = ComputeNewThreshold(threshold);
-                if(newThreshold != threshold)
+                if (newThreshold != threshold)
                 {
                     threshold = newThreshold;
                     thresholdChanged = true;
@@ -126,54 +79,7 @@ namespace WPF_Paint
             }
             while (thresholdChanged);
 
-            finalThreshold = threshold;
-
-            for (int i = 0; i < threshold; i++)
-            {
-                valueMapping[i] = 0;
-            }
-            for (int i = threshold; i < 256; i++)
-            {
-                valueMapping[i] = 255;
-            }
-        }
-
-        private void MapTheValue()
-        {
-            
-            for (int i=0; i< OriginalGrayScale.Length; i++)
-            {
-                BufforImage[i] = (byte)valueMapping[OriginalGrayScale[i]];
-            }
-        }
-
-        private void ReplaceImage()
-        {
-            int stride = width * 4; // 4 bytes per pixel in RGBA format
-
-            byte[] sourcePixels = new byte[height * stride];
-            writableBitmap.CopyPixels(sourcePixels, stride, 0);
-            for (int y = 0; y < height; y++)
-            {
-                for (int x = 0; x < width; x++)
-                {
-                    int index = y * stride + x * 4;
-                    int bufforindex = y * width + x;
-                    
-                    sourcePixels[index] = (byte)BufforImage[bufforindex];
-                    sourcePixels[index + 1] = (byte)BufforImage[bufforindex];
-                    sourcePixels[index + 2] = (byte)BufforImage[bufforindex];
-                }
-            }
-
-            writableBitmap.WritePixels(new Int32Rect(0, 0, width, height), sourcePixels, stride, 0);
-
-            Image equalImage = new Image();
-            equalImage.Source = writableBitmap;
-
-            Canvas.Children.Clear();
-            Canvas.Children.Add(equalImage);
-
+            return threshold;
         }
     }
 }

@@ -182,26 +182,6 @@ namespace WPF_Paint.Models
 
             return cdf;
         }
-        
-        public int[] CalculatePercentdistribution(int[] histogram)
-        {
-            long numPixels = width*height; // Total number of pixels for the channel
-
-            int[] cdf = new int[256];
-            cdf[0] = histogram[0];
-            for (int i = 1; i < histogram.Length; i++)
-            {
-                cdf[i] = cdf[i - 1] + histogram[i];
-            }
-
-            // Normalize CDF
-            for (int i = 0; i < cdf.Length; i++)
-            {
-                cdf[i] = (int)(((cdf[i]) / (float)(numPixels)) * 100);
-            }
-
-            return cdf;
-        }
 
         public void EqualizeHistograms()
         {

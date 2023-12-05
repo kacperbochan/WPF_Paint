@@ -10,6 +10,7 @@ using System.Windows.Documents;
 using System.Windows.Input;
 using System.Windows.Media;
 using System.Windows.Media.Imaging;
+using System.Windows.Media.Media3D;
 using System.Windows.Shapes;
 using WPF_Paint.Models;
 using WPF_Paint.ViewModels;
@@ -21,34 +22,21 @@ namespace WPF_Paint
     /// </summary>
     public partial class BinarizationPercentView : Window
     {
-        private Canvas Canvas;
-        private WriteableBitmap writableBitmap;
-        public byte[] OriginalGrayScale;
-        public byte[] BufforImage;
+        private BinarizationHelper _binarizationHelper;
+        private byte _finalThreshold;
+        private int[] _percentDistribution;
 
-        private ImgHistogram histogram;
-
-        public int[] percentDistribution = new int[256];
-        public int[] valueMapping = new int[256];
-        public int currentValue = 150;
-
-        public int width = 0;
-        public int height = 0;
-
-        public BinarizationPercentView(BitmapSource source, Canvas canvas)
+        public BinarizationPercentView(BinarizationHelper binarizationHelper)
         {
-            histogram = new ImgHistogram(source);
-            percentDistribution = histogram.CalculatePercentdistribution(histogram.Histogram);
-            width = source.PixelWidth;
-            height = source.PixelHeight;
-            BufforImage = new byte[width * height];
-
-            GetGrayScale(source);
-            writableBitmap = new WriteableBitmap(source);
-
-            Canvas = canvas;
-
+            _binarizationHelper = binarizationHelper;
+            _percentDistribution = CalculatePercentdistribution();
             InitializeComponent();
+
+            _finalThreshold = CalculateThreshold();
+            thresholdSlider.Value = _finalThreshold;
+            _binarizationHelper.UpdateImageWithThreshold(_finalThreshold);
+
+            
         }
 
         private void AcceptButton_Click(object sender, RoutedEventArgs e)
@@ -60,94 +48,46 @@ namespace WPF_Paint
 
         private void Slider_ValueChanged(object sender, RoutedPropertyChangedEventArgs<double> e)
         {
-            if (e.NewValue == currentValue) return;
+            if (e.NewValue == _finalThreshold) return;
 
-            GetValueMapping();
-            MapTheValue();
-            ReplaceImage();
+            _finalThreshold = CalculateThreshold();
+            _binarizationHelper.UpdateImageWithThreshold(_finalThreshold);
         }
 
-        private void GetGrayScale(BitmapSource source)
-        {
-            int stride = width * 4;
-
-            byte[] sourcePixels = new byte[height * stride];
-            source.CopyPixels(sourcePixels, stride, 0);
-            OriginalGrayScale = new byte[width * height];
-
-            for (int y = 0; y < height; y++)
-            {
-                for (int x = 0; x < width; x++)
-                {
-                    int pixelIndex = y * stride + x * 4;
-                    int grayscale = (sourcePixels[pixelIndex] + sourcePixels[pixelIndex+1] + sourcePixels[pixelIndex + 2]) / 3;
-                    OriginalGrayScale[y * width + x] = (byte)grayscale;
-                }
-            }
-        }
-
-        private void GetValueMapping()
+        private byte CalculateThreshold()
         {
             int sliderValue = (int)thresholdSlider.Value;
 
-            int minvalue = 255;
+            int threshold = 255;
 
-            for(int i = 0; i < 256; i++)
+            for (int i = 0; i < 256; i++)
             {
-                if (percentDistribution[i] > sliderValue)
+                if (_percentDistribution[i] > sliderValue)
                 {
-                    minvalue = i;
+                    threshold = i;
                     break;
                 }
             }
 
-
-            for (int i = 0; i < minvalue; i++)
-            {
-                valueMapping[i] = 0;
-            }
-            for (int i = minvalue; i < 256; i++)
-            {
-                valueMapping[i] = 255;
-            }
+            return (byte)threshold;
         }
 
-        private void MapTheValue()
+        public int[] CalculatePercentdistribution()
         {
-            
-            for (int i=0; i< OriginalGrayScale.Length; i++)
+            int[] cdf = new int[256];
+            cdf[0] = _binarizationHelper.Histogram[0];
+            for (int i = 1; i < 256; i++)
             {
-                BufforImage[i] = (byte)valueMapping[OriginalGrayScale[i]];
-            }
-        }
-
-        private void ReplaceImage()
-        {
-            int stride = width * 4; // 4 bytes per pixel in RGBA format
-
-            byte[] sourcePixels = new byte[height * stride];
-            writableBitmap.CopyPixels(sourcePixels, stride, 0);
-            for (int y = 0; y < height; y++)
-            {
-                for (int x = 0; x < width; x++)
-                {
-                    int index = y * stride + x * 4;
-                    int bufforindex = y * width + x;
-                    
-                    sourcePixels[index] = (byte)BufforImage[bufforindex];
-                    sourcePixels[index + 1] = (byte)BufforImage[bufforindex];
-                    sourcePixels[index + 2] = (byte)BufforImage[bufforindex];
-                }
+                cdf[i] = cdf[i - 1] + _binarizationHelper.Histogram[i];
             }
 
-            writableBitmap.WritePixels(new Int32Rect(0, 0, width, height), sourcePixels, stride, 0);
+            // Normalize CDF
+            for (int i = 0; i < cdf.Length; i++)
+            {
+                cdf[i] = (int)(((cdf[i]) / (float)(_binarizationHelper.PixelAmount)) * 100);
+            }
 
-            Image equalImage = new Image();
-            equalImage.Source = writableBitmap;
-
-            Canvas.Children.Clear();
-            Canvas.Children.Add(equalImage);
-
+            return cdf;
         }
     }
 }

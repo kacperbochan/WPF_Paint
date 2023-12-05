@@ -7,6 +7,7 @@ using System.Windows.Media;
 using System.Windows;
 using System.Windows.Media.Imaging;
 using System.Windows.Ink;
+using System.Windows.Controls;
 
 namespace WPF_Paint.Models
 {
@@ -163,7 +164,7 @@ namespace WPF_Paint.Models
 
         private int[] CalculateCDF(int[] histogram)
         {
-            int numPixels = histogram.Sum(); // Total number of pixels for the channel
+            long numPixels = width * height; // Total number of pixels for the channel
             int cdfMin = histogram.First(h => h != 0); // Minimum non-zero value in the histogram
 
             int[] cdf = new int[256];
@@ -177,6 +178,26 @@ namespace WPF_Paint.Models
             for (int i = 0; i < cdf.Length; i++)
             {
                 cdf[i] = (int)(((cdf[i] - cdfMin) / (float)(numPixels - cdfMin)) * 255);
+            }
+
+            return cdf;
+        }
+        
+        public int[] CalculatePercentdistribution(int[] histogram)
+        {
+            long numPixels = width*height; // Total number of pixels for the channel
+
+            int[] cdf = new int[256];
+            cdf[0] = histogram[0];
+            for (int i = 1; i < histogram.Length; i++)
+            {
+                cdf[i] = cdf[i - 1] + histogram[i];
+            }
+
+            // Normalize CDF
+            for (int i = 0; i < cdf.Length; i++)
+            {
+                cdf[i] = (int)(((cdf[i]) / (float)(numPixels)) * 100);
             }
 
             return cdf;

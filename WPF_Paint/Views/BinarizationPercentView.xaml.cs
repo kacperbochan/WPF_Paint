@@ -28,6 +28,7 @@ namespace WPF_Paint
 
         private ImgHistogram histogram;
 
+        public int[] percentDistribution = new int[256];
         public int[] valueMapping = new int[256];
         public int currentValue = 150;
 
@@ -37,6 +38,7 @@ namespace WPF_Paint
         public BinarizationPercentView(BitmapSource source, Canvas canvas)
         {
             histogram = new ImgHistogram(source);
+            percentDistribution = histogram.CalculatePercentdistribution(histogram.Histogram);
             width = source.PixelWidth;
             height = source.PixelHeight;
             BufforImage = new byte[width * height];
@@ -86,21 +88,25 @@ namespace WPF_Paint
 
         private void GetValueMapping()
         {
-            int sliderValue = (int)thresholdSlider.Value*255/100;
+            int sliderValue = (int)thresholdSlider.Value;
 
-            int minvalue = 0;
+            int minvalue = 255;
 
             for(int i = 0; i < 256; i++)
             {
-                if (histogram.Cdf[i]<=sliderValue) minvalue = i;
+                if (percentDistribution[i] > sliderValue)
+                {
+                    minvalue = i;
+                    break;
+                }
             }
 
 
-            for (int i = 0; i < sliderValue; i++)
+            for (int i = 0; i < minvalue; i++)
             {
                 valueMapping[i] = 0;
             }
-            for (int i = sliderValue; i < 256; i++)
+            for (int i = minvalue; i < 256; i++)
             {
                 valueMapping[i] = 255;
             }

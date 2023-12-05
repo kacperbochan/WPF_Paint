@@ -147,6 +147,7 @@
                                 <MenuItem Header="Procentowy" Command="{Binding BinarizationPercentCommand}" CommandParameter="{Binding ElementName=MainCanvas}" />
                                 <MenuItem Header="Selekcja iteratywna średniej" Command="{Binding BinarizationMedianCommand}" CommandParameter="{Binding ElementName=MainCanvas}" />
                                 <MenuItem Header="Otsu" Command="{Binding BinarizationOtsuCommand}" CommandParameter="{Binding ElementName=MainCanvas}" />
+                                <MenuItem Header="Bernsens" Command="{Binding BinarizationBernsensCommand}" CommandParameter="{Binding ElementName=MainCanvas}" />
                             </MenuItem>
                             <MenuItem Header="Uśredniający" Command="{Binding ApplyAverageFilterCommand}" CommandParameter="{Binding ElementName=MainCanvas}" />
                             <MenuItem Header="Medianowy" Command="{Binding ApplyMedianFilterCommand}" CommandParameter="{Binding ElementName=MainCanvas}" />

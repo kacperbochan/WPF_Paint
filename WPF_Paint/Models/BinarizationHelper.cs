@@ -79,6 +79,11 @@ namespace WPF_Paint.Models
             MapTheValue();
             ReplaceImage();
         }
+        public void UpdateImageWithByteMap(byte[] bytemap)
+        {
+            _bufforImage = bytemap;
+            ReplaceImage();
+        }
 
         private void GetValueMapping()
         {

@@ -206,19 +206,18 @@ namespace WPF_Paint.Models
                     int offsetX = Math.Clamp(x + i, 0, (int)writableBitmap.Width - 1);
                     int offsetY = Math.Clamp(y + j, 0, (int)writableBitmap.Height - 1);
 
-                    if (offsetX >= 0 && offsetX < width && offsetY >= 0 && offsetY < height)
-                    {
-                        int pixelIndex = offsetY * stride + offsetX * 4;
-                        byte[] pixel = new byte[4];
-                        Array.Copy(sourcePixels, pixelIndex, pixel, 0, 4);
+                    
+                    int pixelIndex = offsetY * stride + offsetX * 4;
+                    byte[] pixel = new byte[4];
+                    Array.Copy(sourcePixels, pixelIndex, pixel, 0, 4);
 
-                        double kernelValue = kernel[i + radius, j + radius];
+                    double kernelValue = kernel[i + radius, j + radius];
 
-                        sumR += pixel[2] * kernelValue; // Red
-                        sumG += pixel[1] * kernelValue; // Green
-                        sumB += pixel[0] * kernelValue; // Blue
-                        sumKernel += kernelValue;
-                    }
+                    sumR += pixel[2] * kernelValue; // Red
+                    sumG += pixel[1] * kernelValue; // Green
+                    sumB += pixel[0] * kernelValue; // Blue
+                    sumKernel += kernelValue;
+                    
                 }
             }
 

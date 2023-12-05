@@ -143,6 +143,7 @@ namespace WPF_Paint.ViewModels
         public ICommand BinarizationPercentCommand { get; }
         public ICommand BinarizationMedianCommand { get; }
         public ICommand BinarizationOtsuCommand { get; }
+        public ICommand BinarizationBernsensCommand { get; }
 
 
         
@@ -191,6 +192,7 @@ namespace WPF_Paint.ViewModels
             BinarizationPercentCommand = new RelayCommand(() => BinarizationSelector(1));
             BinarizationMedianCommand = new RelayCommand(() => BinarizationSelector(2));
             BinarizationOtsuCommand = new RelayCommand(() => BinarizationSelector(3));
+            BinarizationBernsensCommand = new RelayCommand(() => BinarizationSelector(4));
 
             ColorSettings.StaticPropertyChanged += ColorSettings_StaticPropertyChanged;
         }
@@ -221,6 +223,9 @@ namespace WPF_Paint.ViewModels
                     break;
                 case 3:
                     binarization = new BinarizationOtsuView(binarizationHelper);
+                    break;
+                case 4:
+                    binarization = new BinarizationBernsensView(binarizationHelper);
                     break;
             }
                 

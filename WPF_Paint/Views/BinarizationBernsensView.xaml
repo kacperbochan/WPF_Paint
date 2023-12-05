@@ -1,0 +1,36 @@
+﻿<Window x:Class="WPF_Paint.BinarizationBernsensView"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+        xmlns:local="clr-namespace:WPF_Paint"
+        mc:Ignorable="d"
+        Title="Własny Filtr" Height="180" Width="337">
+        <Grid Margin="10">
+        <Grid.RowDefinitions>
+            <RowDefinition Height="30"></RowDefinition>
+            <RowDefinition Height="30"></RowDefinition>
+            <RowDefinition Height="30"></RowDefinition>
+            <RowDefinition Height="20"></RowDefinition>
+        </Grid.RowDefinitions>
+        <Label Grid.Row="0"  FontWeight="Bold" FontSize="14" >Binaryzacja</Label>
+        <Grid Grid.Row="1">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="auto"></ColumnDefinition>
+                <ColumnDefinition Width="auto"></ColumnDefinition>
+                <ColumnDefinition Width="auto"></ColumnDefinition>
+                <ColumnDefinition Width="*"></ColumnDefinition>
+            </Grid.ColumnDefinitions>
+            <TextBlock Grid.Column="0" FontWeight="Bold" FontSize="12" Margin="5,0">Promień filtra:</TextBlock>
+            <TextBlock Grid.Column="1" Text="{Binding ElementName=thresholdSlider, Path=Value, StringFormat=N0}" FontWeight="Bold" FontSize="12"  Margin="5,0"/>
+        </Grid>
+        <Slider Grid.Row="2" Minimum="0" Maximum="10" Value="1" TickFrequency="1" SmallChange="1" LargeChange="1" x:Name="thresholdSlider" IsEnabled="True" ValueChanged="Slider_ValueChanged"></Slider>
+        <Grid Grid.Row="3" >
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="*"></ColumnDefinition>
+                <ColumnDefinition Width="100"></ColumnDefinition>
+            </Grid.ColumnDefinitions>
+            <Button Grid.Column="1" Width="100" Content="Zatwierdź" Click="AcceptButton_Click" />
+        </Grid>
+    </Grid>
+</Window>

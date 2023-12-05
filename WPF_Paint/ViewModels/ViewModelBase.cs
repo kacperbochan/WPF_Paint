@@ -186,9 +186,9 @@ namespace WPF_Paint.ViewModels
 
             HistogramWindowCommand = new RelayCommand(() => OpenHistogramWindow());
             HistEqualizationCommand = new RelayCommand(() => HistogramEqualize());
-            BinarizationUserCommand = new RelayCommand(() => UserValueBinarization());
-            BinarizationPercentCommand = new RelayCommand(() => PercentBinarization());
-            BinarizationMedianCommand = new RelayCommand(() => ApplyGrayscaleFilter());
+            BinarizationUserCommand = new RelayCommand(() => BinarizationSelector(0));
+            BinarizationPercentCommand = new RelayCommand(() => BinarizationSelector(1));
+            BinarizationMedianCommand = new RelayCommand(() => BinarizationSelector(2));
 
             ColorSettings.StaticPropertyChanged += ColorSettings_StaticPropertyChanged;
         }
@@ -200,27 +200,24 @@ namespace WPF_Paint.ViewModels
             CanvasWidth = 300;
         }
 
-        private void UserValueBinarization()
+        private void BinarizationSelector(int binType)
         {
             BitmapSource source = GetCanvasBitmap();
 
-            BinarizationView binarization = new BinarizationView(source,MainCanvas);
-            bool? dialogResult = binarization.ShowDialog();
-
-            if (dialogResult != true)
+            Window binarization = new Window();
+            switch (binType)
             {
-                Image originalImage = new Image();
-                originalImage.Source = source;
-                MainCanvas.Children.Clear();
-                MainCanvas.Children.Add(originalImage);
+                case 0:
+                    binarization = new BinarizationView(source, MainCanvas);
+                    break;
+                case 1:
+                    binarization = new BinarizationPercentView(source, MainCanvas);
+                    break;
+                case 2:
+                    binarization = new BinarizationMedianView(source, MainCanvas);
+                    break;
             }
-        }
-        
-        private void PercentBinarization()
-        {
-            BitmapSource source = GetCanvasBitmap();
-
-            BinarizationPercentView binarization = new BinarizationPercentView(source,MainCanvas);
+                
             bool? dialogResult = binarization.ShowDialog();
 
             if (dialogResult != true)

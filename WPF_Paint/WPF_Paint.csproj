@@ -12,6 +12,9 @@
   </ItemGroup>
 
   <ItemGroup>
+    <Compile Update="Views\Binarization\BinarizationNiblack.xaml.cs">
+      <SubType>Code</SubType>
+    </Compile>
     <Compile Update="Views\Binarization\BinarizationBernsensView.xaml.cs">
       <SubType>Code</SubType>
     </Compile>
@@ -27,7 +30,7 @@
     <Compile Update="Views\BrightnessFilter.xaml.cs">
       <SubType>Code</SubType>
     </Compile>
-    <Compile Update="Views\Binarization\BinarizationView.xaml.cs">
+    <Compile Update="Views\Binarization\BinarizationValueView.xaml.cs">
       <SubType>Code</SubType>
     </Compile>
     <Compile Update="Views\ImageSize.xaml.cs">

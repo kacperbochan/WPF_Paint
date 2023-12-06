@@ -210,7 +210,7 @@ namespace WPF_Paint.ViewModels
         {
             BitmapSource source = GetCanvasBitmap();
 
-            Window binarization = new Window();
+            Window binarization;
             BinarizationHelper binarizationHelper = new BinarizationHelper(source, MainCanvas);
             switch (binType)
             {
@@ -231,6 +231,9 @@ namespace WPF_Paint.ViewModels
                     break;
                 case 5:
                     binarization = new BinarizationBernsensView(binarizationHelper);
+                    break;
+                default:
+                    binarization = new BinarizationValueView(binarizationHelper);
                     break;
             }
                 

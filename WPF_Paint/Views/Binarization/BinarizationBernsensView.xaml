@@ -22,9 +22,9 @@
                 <ColumnDefinition Width="*"></ColumnDefinition>
             </Grid.ColumnDefinitions>
             <TextBlock Grid.Column="0" FontWeight="Bold" FontSize="12" Margin="5,0">Promień filtra:</TextBlock>
-            <TextBlock Grid.Column="1" Text="{Binding ElementName=thresholdSlider, Path=Value, StringFormat=N0}" FontWeight="Bold" FontSize="12"  Margin="5,0"/>
+            <TextBlock Grid.Column="1" Text="{Binding ElementName=radiusSlider, Path=Value, StringFormat=N0}" FontWeight="Bold" FontSize="12"  Margin="5,0"/>
         </Grid>
-        <Slider Grid.Row="2" Minimum="0" Maximum="10" Value="1" TickFrequency="1" SmallChange="1" LargeChange="1" x:Name="thresholdSlider" IsEnabled="True" ValueChanged="Slider_ValueChanged"></Slider>
+        <Slider Grid.Row="2" Minimum="0" Maximum="10" Value="1" TickFrequency="1" SmallChange="1" LargeChange="1" x:Name="radiusSlider" IsEnabled="True" ValueChanged="RadiusSlider_ValueChanged"></Slider>
         <Grid Grid.Row="3" >
             <Grid.ColumnDefinitions>
                 <ColumnDefinition Width="*"></ColumnDefinition>

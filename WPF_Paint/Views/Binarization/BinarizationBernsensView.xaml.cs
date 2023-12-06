@@ -35,7 +35,7 @@ namespace WPF_Paint
             _binarizationHelper.UpdateImageWithByteMap(_bitmapBuffer);
         }
 
-        private void Slider_ValueChanged(object sender, RoutedPropertyChangedEventArgs<double> e)
+        private void RadiusSlider_ValueChanged(object sender, RoutedPropertyChangedEventArgs<double> e)
         {
             if (e.NewValue == _radius) return;
 

@@ -71,7 +71,7 @@ namespace WPF_Paint
                 int offsetY = Math.Clamp(y + i, 0, _binarizationHelper.Height-1) * _binarizationHelper.Width;
                 for (int j = -_radius; j <= _radius; j++)
                 {
-                    int offset = offsetY + Math.Clamp(x + i, 0, _binarizationHelper.Width-1);
+                    int offset = offsetY + Math.Clamp(x + j, 0, _binarizationHelper.Width-1);
 
                     byte pixelValue = _binarizationHelper.GrayScale[offset];
 

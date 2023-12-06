@@ -146,6 +146,13 @@ namespace WPF_Paint.ViewModels
         public ICommand BinarizationNiblackCommand { get; }
         public ICommand BinarizationBernsensCommand { get; }
 
+        public ICommand MorphologyDilatationCommand { get; }
+        public ICommand MorphologyErosionCommand { get; }
+        public ICommand MorphologyOpeningCommand { get; }
+        public ICommand MorphologyClosingCommand { get; }
+        public ICommand MorphologyThiningCommand { get; }
+        public ICommand MorphologyThickeningCommand { get; }
+
 
         
         public event PropertyChangedEventHandler? PropertyChanged;
@@ -196,6 +203,13 @@ namespace WPF_Paint.ViewModels
             BinarizationNiblackCommand = new RelayCommand(() => BinarizationSelector(4));
             BinarizationBernsensCommand = new RelayCommand(() => BinarizationSelector(5));
 
+            MorphologyDilatationCommand = new RelayCommand(() => BinarizationSelector(6));
+            MorphologyErosionCommand = new RelayCommand(() => BinarizationSelector(7));
+            MorphologyOpeningCommand = new RelayCommand(() => BinarizationSelector(8));
+            MorphologyClosingCommand = new RelayCommand(() => BinarizationSelector(9));
+            MorphologyThiningCommand = new RelayCommand(() => BinarizationSelector(10));
+            MorphologyThickeningCommand = new RelayCommand(() => BinarizationSelector(11));
+
             ColorSettings.StaticPropertyChanged += ColorSettings_StaticPropertyChanged;
         }
 
@@ -231,6 +245,24 @@ namespace WPF_Paint.ViewModels
                     break;
                 case 5:
                     binarization = new BinarizationBernsensView(binarizationHelper);
+                    break;
+                case 6:
+                    binarization = new MorphologyView(binarizationHelper,0);
+                    break;
+                case 7:
+                    binarization = new MorphologyView(binarizationHelper,1);
+                    break;
+                case 8:
+                    binarization = new MorphologyView(binarizationHelper,2);
+                    break;
+                case 9:
+                    binarization = new MorphologyView(binarizationHelper,3);
+                    break;
+                case 10:
+                    binarization = new MorphologyView(binarizationHelper,4);
+                    break;
+                case 11:
+                    binarization = new MorphologyView(binarizationHelper,5);
                     break;
                 default:
                     binarization = new BinarizationValueView(binarizationHelper);

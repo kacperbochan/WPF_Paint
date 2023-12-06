@@ -148,7 +148,15 @@
                                 <MenuItem Header="Selekcja iteratywna średniej" Command="{Binding BinarizationMedianCommand}" CommandParameter="{Binding ElementName=MainCanvas}" />
                                 <MenuItem Header="Otsu" Command="{Binding BinarizationOtsuCommand}" CommandParameter="{Binding ElementName=MainCanvas}" />
                                 <MenuItem Header="Niblack" Command="{Binding BinarizationNiblackCommand}" CommandParameter="{Binding ElementName=MainCanvas}" />
-                                <MenuItem Header="Bernsens" Command="{Binding BinarizationBernsensCommand}" CommandParameter="{Binding ElementName=MainCanvas}" />
+                                <MenuItem Header="Bernsen" Command="{Binding BinarizationBernsensCommand}" CommandParameter="{Binding ElementName=MainCanvas}" />
+                            </MenuItem>
+                            <MenuItem Header="Morfologiczne">
+                                <MenuItem Header="Dylatacja" Command="{Binding MorphologyDilatationCommand}" CommandParameter="{Binding ElementName=MainCanvas}" />
+                                <MenuItem Header="Erozja" Command="{Binding MorphologyErosionCommand}" CommandParameter="{Binding ElementName=MainCanvas}" />
+                                <MenuItem Header="Otwarcie" Command="{Binding MorphologyOpeningCommand}" CommandParameter="{Binding ElementName=MainCanvas}" />
+                                <MenuItem Header="Domknięcie" Command="{Binding MorphologyClosingCommand}" CommandParameter="{Binding ElementName=MainCanvas}" />
+                                <MenuItem Header="Pocienianie" Command="{Binding MorphologyThiningCommand}" CommandParameter="{Binding ElementName=MainCanvas}" />
+                                <MenuItem Header="Pogrubianie" Command="{Binding MorphologyThickeningCommand}" CommandParameter="{Binding ElementName=MainCanvas}" />
                             </MenuItem>
                             <MenuItem Header="Uśredniający" Command="{Binding ApplyAverageFilterCommand}" CommandParameter="{Binding ElementName=MainCanvas}" />
                             <MenuItem Header="Medianowy" Command="{Binding ApplyMedianFilterCommand}" CommandParameter="{Binding ElementName=MainCanvas}" />

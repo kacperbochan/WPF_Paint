@@ -78,7 +78,8 @@ namespace WPF_Paint.ViewModels
             None,
             Shape,
             Draw,
-            Text
+            Text,
+            Polygon
         }
         private enum ShapeType 
         { 
@@ -89,13 +90,11 @@ namespace WPF_Paint.ViewModels
         }
 
         private System.Windows.Shapes.Path _currentShape;
-        private Point _startPosition, _endPosition;
+        private Point _startPosition, _endPosition, _currentPoint;
         private DrawingMode _currentDrawingMode = DrawingMode.None;
         private TextBox? activeTextBox;
         private ShapeType _currentShapeType, _nextShapeType = ShapeType.Ellipse;
         private bool _isMousePressed = false;
-
-        private Point _currentPoint;
 
         public ICommand MouseLeftDownCommand  { get; }
         public ICommand MouseUpCommand { get; }
@@ -152,9 +151,10 @@ namespace WPF_Paint.ViewModels
         public ICommand MorphologyClosingCommand { get; }
         public ICommand MorphologyThiningCommand { get; }
         public ICommand MorphologyThickeningCommand { get; }
+        public ICommand PolygonToolCommand { get; }
 
 
-        
+
         public event PropertyChangedEventHandler? PropertyChanged;
 
         public ViewModelBase()
@@ -171,6 +171,7 @@ namespace WPF_Paint.ViewModels
             LineCommand = new RelayCommand(() => ChooseShape(3));
             DrawCommand = new RelayCommand(DrawButton_Click);
             TextCommand = new RelayCommand(TextButton_Click);
+            PolygonToolCommand = new RelayCommand(PolygonButton_Click);
 
             ImageCommand = new RelayCommand(SetImageSize);
             OpenCommand = new RelayCommand(OpenPicture);
@@ -220,6 +221,8 @@ namespace WPF_Paint.ViewModels
             CanvasWidth = 300;
         }
 
+
+        //-------------------------------------------------HISTOGRAM-----------------------------------------------
         private void BinarizationSelector(int binType)
         {
             BitmapSource source = GetCanvasBitmap();
@@ -307,6 +310,9 @@ namespace WPF_Paint.ViewModels
 
         }
 
+        //-------------------------------------------------COLOR CHANGE-----------------------------------------------
+
+
         private void ColorSettings_StaticPropertyChanged(object sender, PropertyChangedEventArgs e)
         {
             // Check which property changed and react accordingly
@@ -358,6 +364,9 @@ namespace WPF_Paint.ViewModels
         }
 
 
+        //-----------------------------------------------------DRAWING MODE----------------------------------------------------------
+         //------------------operacje na canvasie-----------------
+
         /// <summary>
         /// Wywoływane gdy urzytkownik przyciśnie klawisz myszy nad Canvas
         /// </summary>
@@ -365,7 +374,6 @@ namespace WPF_Paint.ViewModels
         private void Canvas_MouseLeftButtonDown(Point point)
         {
             _isMousePressed = true;
-
             _currentPoint = point;
             _startPosition = point;
             _endPosition = point;
@@ -394,6 +402,17 @@ namespace WPF_Paint.ViewModels
                         AddTextBox();
                     }
                     break;
+                case DrawingMode.Polygon:
+                    if (!_isPolygonDrawing)
+                    {
+                        _isPolygonDrawing = true;
+                        _polygonPoints.Clear();
+                    }
+
+                    _polygonPoints.Add(point);
+                    UpdatePolygonPreview();
+                    break;
+
             }
         }
 
@@ -403,12 +422,34 @@ namespace WPF_Paint.ViewModels
 
             _currentPoint = point;
 
-            if (_currentDrawingMode == DrawingMode.Shape)
+            switch (_currentDrawingMode)
             {
-                UpdateShape();
+                case DrawingMode.Shape:
+                    UpdateShape();
+                    break;
+                case DrawingMode.Polygon:
+                    if (_isPolygonDrawing)
+                    {
+                        _polygonPoints.Add(point);
+
+                        if (_polygonPoints.Count >= 3 && DistanceBetweenPoints(_polygonPoints.First(), _polygonPoints.Last()) < 10)
+                        {
+                            // Zakończ rysowanie wielokąta
+                            _isPolygonDrawing = false;
+                        }
+                    }
+                    break;
             }
 
+
             Mouse.Capture(null);
+        }
+
+        private double DistanceBetweenPoints(Point point1, Point point2)
+        {
+            double deltaX = point2.X - point1.X;
+            double deltaY = point2.Y - point1.Y;
+            return Math.Sqrt(deltaX * deltaX + deltaY * deltaY);
         }
 
         private void Canvas_MouseMove(Point point)
@@ -427,7 +468,9 @@ namespace WPF_Paint.ViewModels
                         // Obsługa rysowania linii
                         ContinueDrawing();
                         break;
-                        // Dodaj inne przypadki dla innych trybów rysowania
+                    // Dodaj inne przypadki dla innych trybów rysowania
+                    case DrawingMode.Polygon:
+                        break;
                 }
             }
         }
@@ -442,25 +485,7 @@ namespace WPF_Paint.ViewModels
 
         private void Canvas_KeyUp(KeyEventArgs e) { }
 
-        private void ReplaceTextBoxWithTextBlock(TextBox textBox)
-        {
-            TextBlock textBlock = new TextBlock
-            {
-                Width = textBox.Width,
-                Height = textBox.Height,
-                Foreground = Brushes.Black,
-                FontSize = 12,
-                Text = textBox.Text
-            };
 
-            // Ustaw pozycję tekstu
-            textBlock.SetValue(Canvas.LeftProperty, Canvas.GetLeft(textBox));
-            textBlock.SetValue(Canvas.TopProperty, Canvas.GetTop(textBox));
-
-            // Usuń TextBox i dodaj TextBlock
-            MainCanvas.Children.Remove(textBox);
-            MainCanvas.Children.Add(textBlock);
-        }
 
         private void ChangeDrawingMode(DrawingMode newMode)
         {
@@ -476,6 +501,41 @@ namespace WPF_Paint.ViewModels
             _currentDrawingMode = newMode;
         }
 
+        //----------------polygon--------------
+        private void PolygonButton_Click()
+        {
+            ChangeDrawingMode(DrawingMode.Polygon);
+        }
+
+        private List<Point> _polygonPoints = new List<Point>();
+        private bool _isPolygonDrawing = false;
+
+        private void UpdatePolygonPreview()
+        {
+            // Sprawdź zamknięcie figury
+            if (_polygonPoints.Count >= 3 && DistanceBetweenPoints(_polygonPoints.First(), _polygonPoints.Last()) < 10)
+            {
+                _polygonPoints[_polygonPoints.Count - 1] = _polygonPoints.First();
+
+            }
+
+            // Rysuj linie łączące zaokrąglone punkty wielokąta
+            for (int i = 1; i < _polygonPoints.Count; i++)
+            {
+                Line line = new Line
+                {
+                    Stroke = Brushes.Black,
+                    X1 = _polygonPoints[i - 1].X,
+                    Y1 = _polygonPoints[i - 1].Y,
+                    X2 = _polygonPoints[i].X,
+                    Y2 = _polygonPoints[i].Y
+                };
+
+                MainCanvas.Children.Add(line);
+            }
+        }
+
+        //---------------kształty---------------
         private void DrawButton_Click()
         {
             ChangeDrawingMode(DrawingMode.Draw);
@@ -502,327 +562,7 @@ namespace WPF_Paint.ViewModels
             ChangeDrawingMode(DrawingMode.Shape);
         }
 
-        private void TextButton_Click()
-        {
-            ChangeDrawingMode(DrawingMode.Text);
-        }
 
-        private void SetImageSize()
-        {
-            BitmapSource source = GetCanvasBitmap();
-            ImageSize imageSize = new ImageSize(source.PixelWidth, source.PixelHeight);
-            bool? dialogResult = imageSize.ShowDialog();
-
-            if (dialogResult != true) {
-
-                MainCanvas.UpdateLayout();
-                return;
-            } 
-
-            CanvasWidth = imageSize.Width;
-            CanvasHeight = imageSize.Height;
-
-
-        }
-
-        private void OpenPicture()
-        {
-            ChangeDrawingMode(DrawingMode.None);
-
-            string filePath = GetPicturePath();
-            if (String.IsNullOrEmpty(filePath)) return;
-
-            BitmapSource bitmap;
-            // Create an Image control and set the BitmapSource as its source
-            Image image = new Image();
-
-            if (System.IO.Path.GetExtension(filePath).Equals(".jpg", StringComparison.OrdinalIgnoreCase) ||
-                System.IO.Path.GetExtension(filePath).Equals(".jpeg", StringComparison.OrdinalIgnoreCase) ||
-                System.IO.Path.GetExtension(filePath).Equals(".png", StringComparison.OrdinalIgnoreCase))
-            {
-                // Load JPEG image
-                BitmapImage bitmapImage = new BitmapImage(new Uri(filePath));
-                bitmap = new WriteableBitmap(bitmapImage);
-                image.Source = bitmap;
-            }
-            else
-            {
-                Netpbm netpbm = new Netpbm(filePath);
-                image.Source = netpbm.Bitmap;
-            }
-            
-            MainCanvas.Children.Clear();
-
-            CanvasWidth = image.Source.Width;
-            CanvasHeight = image.Source.Height;
-            // Add the Image control to the MainCanvas
-            MainCanvas.Children.Add(image);
-        }
-
-        private string GetPicturePath()
-        {
-            Microsoft.Win32.OpenFileDialog dlg = new Microsoft.Win32.OpenFileDialog();
-            dlg.Filter =
-                "any (*.*)|*.*|" +
-                "PBM (*.pbm)|*.pbm|" +
-                "PGM (*.pgm)|*.pgm|" +
-                "PPM (*.ppm)|*.ppm|" +
-                "PBN bin (*.pbm)|*.pbm|" +
-                "PGM bin (*.pgm)|*.pgm|" +
-                "PPM bin (*.ppm)|*.ppm";
-
-            return (dlg.ShowDialog() == true) ? (dlg.FileName) : ("");
-        }
-
-        private void SaveCanvas()
-        {
-            ChangeDrawingMode(DrawingMode.None);
-            BitmapSource canvasBitmap = GetCanvasBitmap();
-
-            (int fileType, string filePath) = GetFileNameAndExtension();
-
-            if (String.IsNullOrEmpty(filePath)) return;
-
-            if(fileType == 1)                
-                SaveToJPG(filePath, canvasBitmap);
-            else if(fileType < 8)
-                SaveToP(fileType, filePath, canvasBitmap);
-            else
-            {
-                SaveToJPG(filePath.Substring(0, filePath.Length - 3) + "jpg", canvasBitmap);
-                SaveToP(2, filePath.Substring(0, filePath.Length - 3) + "pbm", canvasBitmap);
-                SaveToP(3, filePath.Substring(0, filePath.Length - 3) + "pgm", canvasBitmap);
-                SaveToP(4, filePath.Substring(0, filePath.Length - 3) + "ppm", canvasBitmap);
-                SaveToP(5, filePath.Substring(0, filePath.Length - 4) + "bin.pbm", canvasBitmap);
-                SaveToP(6, filePath.Substring(0, filePath.Length - 4) + "bin.pgm", canvasBitmap);
-                SaveToP(7, filePath.Substring(0, filePath.Length - 4) + "bin.ppm", canvasBitmap);
-            }
-        }
-
-        private BitmapSource GetCanvasBitmap()
-        {
-            // Save the current transform and offset of the Canvas
-            var originalTransform = MainCanvas.LayoutTransform;
-            var originalOffset = new Point(Canvas.GetLeft(MainCanvas), Canvas.GetTop(MainCanvas));
-
-            ScaleTransform St = ((ScaleTransform)MainCanvas.LayoutTransform);
-            double OriginalScale = St.ScaleX;
-
-            if (OriginalScale < 1.4)
-            {
-                St.ScaleX = 1.5;
-                St.ScaleY = 1.5;
-            }
-
-            // Update layout for rendering
-            MainCanvas.LayoutTransform = null; // Temporarily remove any layout transforms
-            MainCanvas.UpdateLayout();
-            MainCanvas.Measure(new Size(MainCanvas.Width, MainCanvas.Height));
-            MainCanvas.Arrange(new Rect(new Size(MainCanvas.Width, MainCanvas.Height)));
-
-            // Create a render bitmap and push the canvas to it
-            RenderTargetBitmap renderBitmap = new RenderTargetBitmap(
-                (int)MainCanvas.Width,
-                (int)MainCanvas.Height,
-                96d,
-                96d,
-                PixelFormats.Pbgra32);
-            renderBitmap.Render(MainCanvas);
-            MainCanvas.UpdateLayout();
-
-            // Restore the original transform and offset of the Canvas
-            MainCanvas.LayoutTransform = originalTransform;
-
-            // Update the layout again to reflect the restored state
-            MainCanvas.UpdateLayout();
-            St.ScaleX = OriginalScale;
-            St.ScaleY = OriginalScale;
-
-
-            return renderBitmap;
-        }
-
-        private (int, string) GetFileNameAndExtension()
-        {
-            // Wybierz ścieżkę i nazwę pliku do zapisania
-            Microsoft.Win32.SaveFileDialog dlg = new Microsoft.Win32.SaveFileDialog();
-            dlg.FileName = "PaintImage"; // Nazwa domyślna
-            dlg.DefaultExt = ".jpg"; // Rozszerzenie domyślne
-            // Filtry rozszerzeń
-            dlg.Filter =
-                "JPEG (*.jpg)|*.jpg|" +
-                "PBM (*.pbm)|*.pbm|" +
-                "PGM (*.pgm)|*.pgm|" +
-                "PPM (*.ppm)|*.ppm|" +
-                "PBN bin (*.pbm)|*.pbm|" +
-                "PGM bin (*.pgm)|*.pgm|" +
-                "PPM bin (*.ppm)|*.ppm|" +
-                "save in all (*.*)|*.";
-
-            // Wyświetl okno dialogowe i zapisz plik, jeśli użytkownik kliknie "Zapisz"
-            return (dlg.ShowDialog() == true) ? (dlg.FilterIndex, dlg.FileName) : (0,"");
-        }
-
-        private void SaveToJPG(string filePath, BitmapSource canvasBitmap)
-        {
-            using (FileStream fs = File.Open(filePath, FileMode.Create))
-            {
-                // Kod zapisywania pliku pozostaje bez zmian
-                BitmapEncoder jpgEncoder = new JpegBitmapEncoder();
-                jpgEncoder.Frames.Add(BitmapFrame.Create(canvasBitmap));
-                jpgEncoder.Save(fs);
-            }
-        }
-
-        //filetype
-        //2 = P1
-        //3 = P2
-        //4 = P3
-        //5 = P4
-        //6 = P5
-        //7 = P6
-        private void SaveToP(int fileType, string filePath, BitmapSource canvasBitmap)
-        {
-            int Px = fileType - 1;
-            int width = canvasBitmap.PixelWidth;
-            int height = canvasBitmap.PixelHeight;
-            PixelFormat format = canvasBitmap.Format;
-            int bytesPerPixel = format.BitsPerPixel / 8; //bytesPerPixel = 4, RGBA
-            int stride = width * bytesPerPixel; // szerokość w bajtach
-            byte[] pixelColors = new byte[height * stride]; //pixele jakno kolejne kolory kolejnych pixeli
-
-            canvasBitmap.CopyPixels(pixelColors, stride, 0);
-
-            bool isBW = (Px == 1 || Px == 4);
-            bool isGrayScale = (Px == 2 || Px == 5);
-            bool isColored = (Px == 3 || Px == 6);
-            bool isBinary = (Px >= 4 && Px <= 6);
-
-            //used for P4
-            int bytesPerRow = (int)Math.Ceiling((decimal)width / 8);
-
-            // The output values in bytes
-            int byteCount = isColored ? (height * width * 3) : 
-                            (Px == 4) ? (height * bytesPerRow) : 
-                            height * width;
-
-            byte[] imageContent = new byte[byteCount];
-            
-            byte currentByte = 0;
-            int bitIndex = 0;
-
-            // Process and write pixel data
-            for (int y = 0; y < height; y++)
-            {
-                for (int x = 0; x < width; x++)
-                {
-                    int pixelIndex = y * stride + x * bytesPerPixel;
-                    int byteIndex = (y * width + x) * ((isColored) ? 3: 1);
-
-                    // Extract the color components
-                    byte blue = pixelColors[pixelIndex];
-                    byte green = pixelColors[pixelIndex + 1];
-                    byte red = pixelColors[pixelIndex + 2];
-                    byte alpha = pixelColors[pixelIndex + 3];
-
-                    // If it is in color, there is no need for encoding
-                    if (isColored)
-                    {
-                        imageContent[byteIndex] = red;
-                        imageContent[byteIndex + 1] = green;
-                        imageContent[byteIndex + 2] = blue;
-                    }// If it is not in color (BW or grayscale) we need to encode it
-                    else if (isBW)
-                    {
-                        if (isBinary)
-                        {
-                            byte bwValue = Encode_BlackWhite(red, green, blue);
-                            
-                            currentByte |= (byte)((bwValue & 1) << (7 - bitIndex));
-                            
-                            bitIndex++;
-
-
-                            if (bitIndex == 8 || (y == height - 1 && x == width - 1) || x == width - 1) 
-                            {
-                                imageContent[y * bytesPerRow + x / 8] = currentByte;
-                                bitIndex = 0;
-                                currentByte = 0;
-                            }
-
-                        }
-                        else
-                        {
-                            imageContent[byteIndex] = Encode_BlackWhite(red, green, blue);
-                        }
-                    }
-                    else
-                    {
-                        imageContent[byteIndex] = Encode_Grayscale(red, green, blue);
-                    }
-                }
-            }
-
-
-            using (FileStream fileStream = new FileStream(filePath, FileMode.Create))
-                {
-                if (!isBinary)
-                {
-                    using (StreamWriter writer = new StreamWriter(fileStream))
-                    {
-                        // Write the Px header
-                        writer.WriteLine("P" + Px);
-                        writer.WriteLine($"{width} {height}");
-
-                        if (!isBW)
-                        {
-                            writer.WriteLine("255");
-                        }
-
-                        foreach (byte b in imageContent)
-                        {
-                            writer.WriteLine(b.ToString());
-                        }
-                    }
-                }
-                else
-                {
-                    using (BinaryWriter writer = new BinaryWriter(fileStream))
-                    {
-                        // Write ASCII header
-                        writer.Write(Encoding.ASCII.GetBytes($"P{Px}\n"));
-                        writer.Write(Encoding.ASCII.GetBytes($"{width} {height}\n"));
-                        if (!isBW) // P5 and P6 have a max value
-                        {
-                            writer.Write(Encoding.ASCII.GetBytes("255\n"));
-                        }
-                        writer.Write(imageContent);
-
-                    }
-                }
-            }
-        }
-        
-        private static byte Encode_BlackWhite(byte red, byte green, byte blue)
-        {
-            // Compute the weighted average for grayscale
-            // This formula takes into account the human eye's different sensitivities to these colors.
-            int grayscale = (int)(0.299 * red + 0.587 * green + 0.114 * blue);
-
-            // Convert to black and white using thresholding
-            int bwValue = grayscale < 180 ? 1 : 0;
-
-            return (byte)bwValue;
-        }
-
-        private static byte Encode_Grayscale(byte red, byte green, byte blue)
-        {
-            // Compute the weighted average for grayscale
-            // This formula takes into account the human eye's different sensitivities to these colors.
-            int grayscale = (int)(0.299 * red + 0.587 * green + 0.114 * blue);
-
-            return (byte)grayscale;
-        }
 
         //MouseMove
         //aktualizuje linię przy poruszaniu myszą,
@@ -845,41 +585,6 @@ namespace WPF_Paint.ViewModels
             }
         }
 
-        private void AddTextBox()
-        {
-            TextBox textBox = new TextBox
-            {
-                Width = 700,
-                Height = 300,
-                Foreground = Brushes.Black,
-                BorderBrush = Brushes.Black,
-                BorderThickness = new Thickness(1),
-                FontSize = 12,
-                AcceptsReturn = true,
-            };
-
-            // Ustaw pozycję tekstu
-            textBox.SetValue(Canvas.LeftProperty, _currentPoint.X);
-            textBox.SetValue(Canvas.TopProperty, _currentPoint.Y);
-
-            // Dodaj TextBox do Canvas
-            MainCanvas.Children.Add(textBox);
-
-            // Ustaw focus na dodanym TextBox, aby można było od razu wprowadzać tekst
-            textBox.Focus();
-
-            // Przypisz zdarzenie LostFocus do obsługi zamiany TextBox na TextBlock
-            textBox.LostFocus += TextBox_LostFocus;
-
-            // Przypisz pole tekstowe do aktywnego TextBox, aby można było później je zamienić na TextBlock
-            activeTextBox = textBox;
-        }
-
-        private void TextBox_LostFocus(object sender, RoutedEventArgs e)
-        {
-            // Zamień TextBox na TextBlock
-            ReplaceTextBoxWithTextBlock((TextBox)sender);
-        }
 
         
 
@@ -1024,6 +729,71 @@ namespace WPF_Paint.ViewModels
             }
         }
 
+
+
+        //---------------------------------------------TEXT BUTTON---------------------------------------------
+        private void TextButton_Click()
+        {
+            ChangeDrawingMode(DrawingMode.Text);
+        }
+
+        private void AddTextBox()
+        {
+            TextBox textBox = new TextBox
+            {
+                Width = 700,
+                Height = 300,
+                Foreground = Brushes.Black,
+                BorderBrush = Brushes.Black,
+                BorderThickness = new Thickness(1),
+                FontSize = 12,
+                AcceptsReturn = true,
+            };
+
+            // Ustaw pozycję tekstu
+            textBox.SetValue(Canvas.LeftProperty, _currentPoint.X);
+            textBox.SetValue(Canvas.TopProperty, _currentPoint.Y);
+
+            // Dodaj TextBox do Canvas
+            MainCanvas.Children.Add(textBox);
+
+            // Ustaw focus na dodanym TextBox, aby można było od razu wprowadzać tekst
+            textBox.Focus();
+
+            // Przypisz zdarzenie LostFocus do obsługi zamiany TextBox na TextBlock
+            textBox.LostFocus += TextBox_LostFocus;
+
+            // Przypisz pole tekstowe do aktywnego TextBox, aby można było później je zamienić na TextBlock
+            activeTextBox = textBox;
+        }
+
+        private void TextBox_LostFocus(object sender, RoutedEventArgs e)
+        {
+            // Zamień TextBox na TextBlock
+            ReplaceTextBoxWithTextBlock((TextBox)sender);
+        }
+
+        private void ReplaceTextBoxWithTextBlock(TextBox textBox)
+        {
+            TextBlock textBlock = new TextBlock
+            {
+                Width = textBox.Width,
+                Height = textBox.Height,
+                Foreground = Brushes.Black,
+                FontSize = 12,
+                Text = textBox.Text
+            };
+
+            // Ustaw pozycję tekstu
+            textBlock.SetValue(Canvas.LeftProperty, Canvas.GetLeft(textBox));
+            textBlock.SetValue(Canvas.TopProperty, Canvas.GetTop(textBox));
+
+            // Usuń TextBox i dodaj TextBlock
+            MainCanvas.Children.Remove(textBox);
+            MainCanvas.Children.Add(textBlock);
+        }
+
+        //---------------------------------------------FILRY---------------------------------------------
         private void ApplyFilter(int filterType)
         {
             if (_mainCanvas != null)
@@ -1313,6 +1083,327 @@ namespace WPF_Paint.ViewModels
                     _mainCanvas.Children.Add(modifiedImage);
                 }
             }
+        }
+
+
+
+        //-----------------------------------------------ZAPIS ODCZYT PLIKÓW---------------------------------------------
+        private void SetImageSize()
+        {
+            BitmapSource source = GetCanvasBitmap();
+            ImageSize imageSize = new ImageSize(source.PixelWidth, source.PixelHeight);
+            bool? dialogResult = imageSize.ShowDialog();
+
+            if (dialogResult != true)
+            {
+
+                MainCanvas.UpdateLayout();
+                return;
+            }
+
+            CanvasWidth = imageSize.Width;
+            CanvasHeight = imageSize.Height;
+
+
+        }
+
+        private void OpenPicture()
+        {
+            ChangeDrawingMode(DrawingMode.None);
+
+            string filePath = GetPicturePath();
+            if (String.IsNullOrEmpty(filePath)) return;
+
+            BitmapSource bitmap;
+            // Create an Image control and set the BitmapSource as its source
+            Image image = new Image();
+
+            if (System.IO.Path.GetExtension(filePath).Equals(".jpg", StringComparison.OrdinalIgnoreCase) ||
+                System.IO.Path.GetExtension(filePath).Equals(".jpeg", StringComparison.OrdinalIgnoreCase) ||
+                System.IO.Path.GetExtension(filePath).Equals(".png", StringComparison.OrdinalIgnoreCase))
+            {
+                // Load JPEG image
+                BitmapImage bitmapImage = new BitmapImage(new Uri(filePath));
+                bitmap = new WriteableBitmap(bitmapImage);
+                image.Source = bitmap;
+            }
+            else
+            {
+                Netpbm netpbm = new Netpbm(filePath);
+                image.Source = netpbm.Bitmap;
+            }
+
+            MainCanvas.Children.Clear();
+
+            CanvasWidth = image.Source.Width;
+            CanvasHeight = image.Source.Height;
+            // Add the Image control to the MainCanvas
+            MainCanvas.Children.Add(image);
+        }
+
+        private string GetPicturePath()
+        {
+            Microsoft.Win32.OpenFileDialog dlg = new Microsoft.Win32.OpenFileDialog();
+            dlg.Filter =
+                "any (*.*)|*.*|" +
+                "PBM (*.pbm)|*.pbm|" +
+                "PGM (*.pgm)|*.pgm|" +
+                "PPM (*.ppm)|*.ppm|" +
+                "PBN bin (*.pbm)|*.pbm|" +
+                "PGM bin (*.pgm)|*.pgm|" +
+                "PPM bin (*.ppm)|*.ppm";
+
+            return (dlg.ShowDialog() == true) ? (dlg.FileName) : ("");
+        }
+
+        private void SaveCanvas()
+        {
+            ChangeDrawingMode(DrawingMode.None);
+            BitmapSource canvasBitmap = GetCanvasBitmap();
+
+            (int fileType, string filePath) = GetFileNameAndExtension();
+
+            if (String.IsNullOrEmpty(filePath)) return;
+
+            if (fileType == 1)
+                SaveToJPG(filePath, canvasBitmap);
+            else if (fileType < 8)
+                SaveToP(fileType, filePath, canvasBitmap);
+            else
+            {
+                SaveToJPG(filePath.Substring(0, filePath.Length - 3) + "jpg", canvasBitmap);
+                SaveToP(2, filePath.Substring(0, filePath.Length - 3) + "pbm", canvasBitmap);
+                SaveToP(3, filePath.Substring(0, filePath.Length - 3) + "pgm", canvasBitmap);
+                SaveToP(4, filePath.Substring(0, filePath.Length - 3) + "ppm", canvasBitmap);
+                SaveToP(5, filePath.Substring(0, filePath.Length - 4) + "bin.pbm", canvasBitmap);
+                SaveToP(6, filePath.Substring(0, filePath.Length - 4) + "bin.pgm", canvasBitmap);
+                SaveToP(7, filePath.Substring(0, filePath.Length - 4) + "bin.ppm", canvasBitmap);
+            }
+        }
+
+        private BitmapSource GetCanvasBitmap()
+        {
+            // Save the current transform and offset of the Canvas
+            var originalTransform = MainCanvas.LayoutTransform;
+            var originalOffset = new Point(Canvas.GetLeft(MainCanvas), Canvas.GetTop(MainCanvas));
+
+            ScaleTransform St = ((ScaleTransform)MainCanvas.LayoutTransform);
+            double OriginalScale = St.ScaleX;
+
+            if (OriginalScale < 1.4)
+            {
+                St.ScaleX = 1.5;
+                St.ScaleY = 1.5;
+            }
+
+            // Update layout for rendering
+            MainCanvas.LayoutTransform = null; // Temporarily remove any layout transforms
+            MainCanvas.UpdateLayout();
+            MainCanvas.Measure(new Size(MainCanvas.Width, MainCanvas.Height));
+            MainCanvas.Arrange(new Rect(new Size(MainCanvas.Width, MainCanvas.Height)));
+
+            // Create a render bitmap and push the canvas to it
+            RenderTargetBitmap renderBitmap = new RenderTargetBitmap(
+                (int)MainCanvas.Width,
+                (int)MainCanvas.Height,
+                96d,
+                96d,
+                PixelFormats.Pbgra32);
+            renderBitmap.Render(MainCanvas);
+            MainCanvas.UpdateLayout();
+
+            // Restore the original transform and offset of the Canvas
+            MainCanvas.LayoutTransform = originalTransform;
+
+            // Update the layout again to reflect the restored state
+            MainCanvas.UpdateLayout();
+            St.ScaleX = OriginalScale;
+            St.ScaleY = OriginalScale;
+
+
+            return renderBitmap;
+        }
+
+        private (int, string) GetFileNameAndExtension()
+        {
+            // Wybierz ścieżkę i nazwę pliku do zapisania
+            Microsoft.Win32.SaveFileDialog dlg = new Microsoft.Win32.SaveFileDialog();
+            dlg.FileName = "PaintImage"; // Nazwa domyślna
+            dlg.DefaultExt = ".jpg"; // Rozszerzenie domyślne
+            // Filtry rozszerzeń
+            dlg.Filter =
+                "JPEG (*.jpg)|*.jpg|" +
+                "PBM (*.pbm)|*.pbm|" +
+                "PGM (*.pgm)|*.pgm|" +
+                "PPM (*.ppm)|*.ppm|" +
+                "PBN bin (*.pbm)|*.pbm|" +
+                "PGM bin (*.pgm)|*.pgm|" +
+                "PPM bin (*.ppm)|*.ppm|" +
+                "save in all (*.*)|*.";
+
+            // Wyświetl okno dialogowe i zapisz plik, jeśli użytkownik kliknie "Zapisz"
+            return (dlg.ShowDialog() == true) ? (dlg.FilterIndex, dlg.FileName) : (0, "");
+        }
+
+        private void SaveToJPG(string filePath, BitmapSource canvasBitmap)
+        {
+            using (FileStream fs = File.Open(filePath, FileMode.Create))
+            {
+                // Kod zapisywania pliku pozostaje bez zmian
+                BitmapEncoder jpgEncoder = new JpegBitmapEncoder();
+                jpgEncoder.Frames.Add(BitmapFrame.Create(canvasBitmap));
+                jpgEncoder.Save(fs);
+            }
+        }
+
+        //filetype
+        //2 = P1
+        //3 = P2
+        //4 = P3
+        //5 = P4
+        //6 = P5
+        //7 = P6
+        private void SaveToP(int fileType, string filePath, BitmapSource canvasBitmap)
+        {
+            int Px = fileType - 1;
+            int width = canvasBitmap.PixelWidth;
+            int height = canvasBitmap.PixelHeight;
+            PixelFormat format = canvasBitmap.Format;
+            int bytesPerPixel = format.BitsPerPixel / 8; //bytesPerPixel = 4, RGBA
+            int stride = width * bytesPerPixel; // szerokość w bajtach
+            byte[] pixelColors = new byte[height * stride]; //pixele jakno kolejne kolory kolejnych pixeli
+
+            canvasBitmap.CopyPixels(pixelColors, stride, 0);
+
+            bool isBW = (Px == 1 || Px == 4);
+            bool isGrayScale = (Px == 2 || Px == 5);
+            bool isColored = (Px == 3 || Px == 6);
+            bool isBinary = (Px >= 4 && Px <= 6);
+
+            //used for P4
+            int bytesPerRow = (int)Math.Ceiling((decimal)width / 8);
+
+            // The output values in bytes
+            int byteCount = isColored ? (height * width * 3) :
+                            (Px == 4) ? (height * bytesPerRow) :
+                            height * width;
+
+            byte[] imageContent = new byte[byteCount];
+
+            byte currentByte = 0;
+            int bitIndex = 0;
+
+            // Process and write pixel data
+            for (int y = 0; y < height; y++)
+            {
+                for (int x = 0; x < width; x++)
+                {
+                    int pixelIndex = y * stride + x * bytesPerPixel;
+                    int byteIndex = (y * width + x) * ((isColored) ? 3 : 1);
+
+                    // Extract the color components
+                    byte blue = pixelColors[pixelIndex];
+                    byte green = pixelColors[pixelIndex + 1];
+                    byte red = pixelColors[pixelIndex + 2];
+                    byte alpha = pixelColors[pixelIndex + 3];
+
+                    // If it is in color, there is no need for encoding
+                    if (isColored)
+                    {
+                        imageContent[byteIndex] = red;
+                        imageContent[byteIndex + 1] = green;
+                        imageContent[byteIndex + 2] = blue;
+                    }// If it is not in color (BW or grayscale) we need to encode it
+                    else if (isBW)
+                    {
+                        if (isBinary)
+                        {
+                            byte bwValue = Encode_BlackWhite(red, green, blue);
+
+                            currentByte |= (byte)((bwValue & 1) << (7 - bitIndex));
+
+                            bitIndex++;
+
+
+                            if (bitIndex == 8 || (y == height - 1 && x == width - 1) || x == width - 1)
+                            {
+                                imageContent[y * bytesPerRow + x / 8] = currentByte;
+                                bitIndex = 0;
+                                currentByte = 0;
+                            }
+
+                        }
+                        else
+                        {
+                            imageContent[byteIndex] = Encode_BlackWhite(red, green, blue);
+                        }
+                    }
+                    else
+                    {
+                        imageContent[byteIndex] = Encode_Grayscale(red, green, blue);
+                    }
+                }
+            }
+
+
+            using (FileStream fileStream = new FileStream(filePath, FileMode.Create))
+            {
+                if (!isBinary)
+                {
+                    using (StreamWriter writer = new StreamWriter(fileStream))
+                    {
+                        // Write the Px header
+                        writer.WriteLine("P" + Px);
+                        writer.WriteLine($"{width} {height}");
+
+                        if (!isBW)
+                        {
+                            writer.WriteLine("255");
+                        }
+
+                        foreach (byte b in imageContent)
+                        {
+                            writer.WriteLine(b.ToString());
+                        }
+                    }
+                }
+                else
+                {
+                    using (BinaryWriter writer = new BinaryWriter(fileStream))
+                    {
+                        // Write ASCII header
+                        writer.Write(Encoding.ASCII.GetBytes($"P{Px}\n"));
+                        writer.Write(Encoding.ASCII.GetBytes($"{width} {height}\n"));
+                        if (!isBW) // P5 and P6 have a max value
+                        {
+                            writer.Write(Encoding.ASCII.GetBytes("255\n"));
+                        }
+                        writer.Write(imageContent);
+
+                    }
+                }
+            }
+        }
+
+        private static byte Encode_BlackWhite(byte red, byte green, byte blue)
+        {
+            // Compute the weighted average for grayscale
+            // This formula takes into account the human eye's different sensitivities to these colors.
+            int grayscale = (int)(0.299 * red + 0.587 * green + 0.114 * blue);
+
+            // Convert to black and white using thresholding
+            int bwValue = grayscale < 180 ? 1 : 0;
+
+            return (byte)bwValue;
+        }
+
+        private static byte Encode_Grayscale(byte red, byte green, byte blue)
+        {
+            // Compute the weighted average for grayscale
+            // This formula takes into account the human eye's different sensitivities to these colors.
+            int grayscale = (int)(0.299 * red + 0.587 * green + 0.114 * blue);
+
+            return (byte)grayscale;
         }
 
     }

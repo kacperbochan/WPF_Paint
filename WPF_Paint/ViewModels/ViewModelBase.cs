@@ -437,8 +437,6 @@ namespace WPF_Paint.ViewModels
                 case DrawingMode.Polygon:
                         if (_isPolygonDrawing)
                         {
-                            //_polygonPoints.Add(point); poprawka
-
                             if (_polygonPoints.Count >= 3 && DistanceBetweenPoints(_polygonPoints.First(), _polygonPoints.Last()) < 10)
                             {
                                 // Zakończ rysowanie wielokąta

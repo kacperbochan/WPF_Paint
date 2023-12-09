@@ -408,14 +408,17 @@ namespace WPF_Paint.ViewModels
                     }
                     break;
                 case DrawingMode.Polygon:
-                    if (!_isPolygonDrawing)
+                    if (Mouse.LeftButton == MouseButtonState.Pressed)
                     {
-                        _isPolygonDrawing = true;
-                        _polygonPoints.Clear();
-                    }
+                        if (!_isPolygonDrawing)
+                        {
+                            _isPolygonDrawing = true;
+                            _polygonPoints.Clear();
+                        }
 
-                    _polygonPoints.Add(point);
-                    UpdatePolygonPreview();
+                        _polygonPoints.Add(point);
+                        UpdatePolygonPreview();
+                    }
                     break;
 
             }
@@ -433,14 +436,17 @@ namespace WPF_Paint.ViewModels
                     UpdateShape();
                     break;
                 case DrawingMode.Polygon:
-                    if (_isPolygonDrawing)
+                    if (Mouse.LeftButton == MouseButtonState.Pressed)
                     {
-                        _polygonPoints.Add(point);
-
-                        if (_polygonPoints.Count >= 3 && DistanceBetweenPoints(_polygonPoints.First(), _polygonPoints.Last()) < 10)
+                        if (_isPolygonDrawing)
                         {
-                            // Zakończ rysowanie wielokąta
-                            _isPolygonDrawing = false;
+                            _polygonPoints.Add(point);
+
+                            if (_polygonPoints.Count >= 3 && DistanceBetweenPoints(_polygonPoints.First(), _polygonPoints.Last()) < 10)
+                            {
+                                // Zakończ rysowanie wielokąta
+                                _isPolygonDrawing = false;
+                            }
                         }
                     }
                     break;

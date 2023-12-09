@@ -48,7 +48,7 @@
         </Grid.ColumnDefinitions>
 
         <!-- Canvas on the right -->
-        <ScrollViewer x:Name="MainScrollViewer" HorizontalScrollBarVisibility="Auto" VerticalScrollBarVisibility="Auto" Grid.Column="1">
+        <ScrollViewer Focusable="False" x:Name="MainScrollViewer" HorizontalScrollBarVisibility="Auto" VerticalScrollBarVisibility="Auto" Grid.Column="1">
             <Canvas x:Name="MainCanvas" Margin="-200" DataContext="{Binding MainCanvas, Mode=TwoWay}"   ClipToBounds="True"
                     Width="{Binding DataContext.CanvasWidth, RelativeSource={RelativeSource AncestorType=Window}}" 
                     Height="{Binding DataContext.CanvasHeight, RelativeSource={RelativeSource AncestorType=Window}}">

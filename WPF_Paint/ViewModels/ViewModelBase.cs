@@ -370,12 +370,16 @@ namespace WPF_Paint.ViewModels
 
 
         //-----------------------------------------------------DRAWING MODE----------------------------------------------------------
-         //------------------operacje na canvasie-----------------
+        //------------------operacje na canvasie-----------------
 
         /// <summary>
         /// Wywoływane gdy urzytkownik przyciśnie klawisz myszy nad Canvas
         /// </summary>
         /// <param name="point"></param>
+        /// 
+        private bool _isPolygonBeingMoved = false;
+        private Point _lastRightClickPoint;
+
         private void Canvas_MouseLeftButtonDown(Point point)
         {
             _isMousePressed = true;
@@ -419,6 +423,10 @@ namespace WPF_Paint.ViewModels
                         _polygonPoints.Add(point);
                         UpdatePolygonPreview();
                     }
+                    if(Mouse.RightButton == MouseButtonState.Pressed && !_isPolygonDrawing)
+                    {
+                        CheckIfClickPolygon(point);
+                    }
                     break;
 
             }
@@ -445,6 +453,10 @@ namespace WPF_Paint.ViewModels
                         }
                     break;
             }
+            if (_isPolygonBeingMoved)
+            {
+                _isPolygonBeingMoved = false;
+            }
 
 
             Mouse.Capture(null);
@@ -459,7 +471,7 @@ namespace WPF_Paint.ViewModels
 
         private void Canvas_MouseMove(Point point)
         {
-            if (_isMousePressed)
+            if (_isMousePressed && !_isPolygonBeingMoved)
             {
                 _currentPoint = point;
                 _endPosition = point;
@@ -477,6 +489,16 @@ namespace WPF_Paint.ViewModels
                     case DrawingMode.Polygon:
                         break;
                 }
+            }
+            else if (_isPolygonBeingMoved)
+            {
+                // Przesuń wielokąt o różnicę pozycji myszy
+                double deltaX = point.X - _lastRightClickPoint.X;
+                double deltaY = point.Y - _lastRightClickPoint.Y;
+
+                MovePolygon(deltaX, deltaY);
+
+                _lastRightClickPoint = point;
             }
         }
 
@@ -725,6 +747,88 @@ namespace WPF_Paint.ViewModels
 
         //----myszka i polygon----
 
+        private void CheckIfClickPolygon(Point point)
+        {
+            foreach (var polygon in _polygonsList)
+            {
+                for (int i = 1; i < polygon.Count; i++)
+                {
+                    double distanceToEdge = DistancePointToLine(point, polygon[i - 1], polygon[i]);
+                    if (distanceToEdge < 5) // Ustaw odpowiednią odległość, aby uznać kliknięcie za trafienie w krawędź
+                    {
+                        _isPolygonBeingMoved = true;
+                        _lastRightClickPoint = point;
+                        break;
+                    }
+                }
+            }
+        }
+
+
+
+        // Funkcja do obliczania odległości punktu od linii
+        private double DistancePointToLine(Point p, Point lineStart, Point lineEnd)
+        {
+            double A = p.X - lineStart.X;
+            double B = p.Y - lineStart.Y;
+            double C = lineEnd.X - lineStart.X;
+            double D = lineEnd.Y - lineStart.Y;
+
+            double dot = A * C + B * D;
+            double len_sq = C * C + D * D;
+            double param = dot / len_sq;
+
+            double xx, yy;
+
+            if (param < 0)
+            {
+                xx = lineStart.X;
+                yy = lineStart.Y;
+            }
+            else if (param > 1)
+            {
+                xx = lineEnd.X;
+                yy = lineEnd.Y;
+            }
+            else
+            {
+                xx = lineStart.X + param * C;
+                yy = lineStart.Y + param * D;
+            }
+
+            double dx = p.X - xx;
+            double dy = p.Y - yy;
+            return Math.Sqrt(dx * dx + dy * dy);
+        }
+
+
+        private void MovePolygon(double deltaX, double deltaY)
+        {
+            if (_currentDrawingMode == DrawingMode.Polygon && !_isPolygonDrawing)
+            {
+                if (_polygonsList.Count > 0)
+                {
+                    var lastPolygon = _polygonsList.Last();
+
+                    // Clear previous drawing of the last polygon
+                    foreach (var line in MainCanvas.Children.OfType<Line>().ToList())
+                    {
+                        if (lastPolygon.Contains(new Point(line.X1, line.Y1)) && lastPolygon.Contains(new Point(line.X2, line.Y2)))
+                        {
+                            MainCanvas.Children.Remove(line);
+                        }
+                    }
+
+                    // Przesuń każdy punkt wielokąta o wektor przesunięcia
+                    for (int i = 0; i < lastPolygon.Count; i++)
+                    {
+                        lastPolygon[i] = new Point(lastPolygon[i].X + deltaX, lastPolygon[i].Y + deltaY);
+                    }
+
+                    UpdatePolygonPreview();
+                }
+            }
+        }
 
 
         //---------------kształty---------------

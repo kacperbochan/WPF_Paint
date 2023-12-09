@@ -427,7 +427,6 @@ namespace WPF_Paint.ViewModels
         private void Canvas_MouseLeftButtonUp(Point point)
         {
             _isMousePressed = false;
-
             _currentPoint = point;
 
             switch (_currentDrawingMode)
@@ -436,11 +435,9 @@ namespace WPF_Paint.ViewModels
                     UpdateShape();
                     break;
                 case DrawingMode.Polygon:
-                    if (Mouse.LeftButton == MouseButtonState.Pressed)
-                    {
                         if (_isPolygonDrawing)
                         {
-                            _polygonPoints.Add(point);
+                            //_polygonPoints.Add(point); poprawka
 
                             if (_polygonPoints.Count >= 3 && DistanceBetweenPoints(_polygonPoints.First(), _polygonPoints.Last()) < 10)
                             {
@@ -448,7 +445,6 @@ namespace WPF_Paint.ViewModels
                                 _isPolygonDrawing = false;
                             }
                         }
-                    }
                     break;
             }
 
@@ -728,6 +724,9 @@ namespace WPF_Paint.ViewModels
                 }
             }
         }
+
+        //----myszka i polygon----
+
 
 
         //---------------kształty---------------

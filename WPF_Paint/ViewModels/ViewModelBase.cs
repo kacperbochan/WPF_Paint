@@ -18,6 +18,7 @@ using System.Windows.Media.Imaging;
 using System.Windows.Media.Media3D;
 using System.Windows.Shapes;
 using WPF_Paint.Models;
+using WPF_Paint.Views;
 using static WPF_Paint.Models.HelperMethods;
 
 namespace WPF_Paint.ViewModels
@@ -81,12 +82,12 @@ namespace WPF_Paint.ViewModels
             Text,
             Polygon
         }
-        private enum ShapeType 
-        { 
-            Triangle, 
-            Rectangle, 
-            Ellipse, 
-            Line 
+        private enum ShapeType
+        {
+            Triangle,
+            Rectangle,
+            Ellipse,
+            Line
         }
 
         private System.Windows.Shapes.Path _currentShape;
@@ -96,10 +97,10 @@ namespace WPF_Paint.ViewModels
         private ShapeType _currentShapeType, _nextShapeType = ShapeType.Ellipse;
         private bool _isMousePressed = false;
 
-        public ICommand MouseLeftDownCommand  { get; }
+        public ICommand MouseLeftDownCommand { get; }
         public ICommand MouseUpCommand { get; }
         public ICommand MouseMoveCommand { get; }
-        
+
         public ICommand KeyDownCommand { get; }
         public ICommand KeyUpCommand { get; }
 
@@ -152,8 +153,9 @@ namespace WPF_Paint.ViewModels
         public ICommand MorphologyThiningCommand { get; }
         public ICommand MorphologyThickeningCommand { get; }
         public ICommand PolygonToolCommand { get; }
-
-
+        public ICommand VectorCommand { get;}
+        public ICommand RotateCommand { get;  }
+        public ICommand ScaleCommand { get; }
 
         public event PropertyChangedEventHandler? PropertyChanged;
 
@@ -172,6 +174,9 @@ namespace WPF_Paint.ViewModels
             DrawCommand = new RelayCommand(DrawButton_Click);
             TextCommand = new RelayCommand(TextButton_Click);
             PolygonToolCommand = new RelayCommand(PolygonButton_Click);
+            VectorCommand = new RelayCommand(SetVectorMove);
+            RotateCommand = new RelayCommand(RotateButton_Click);
+            ScaleCommand = new RelayCommand(SetPolygonScale);
 
             ImageCommand = new RelayCommand(SetImageSize);
             OpenCommand = new RelayCommand(OpenPicture);
@@ -509,6 +514,7 @@ namespace WPF_Paint.ViewModels
 
         private List<Point> _polygonPoints = new List<Point>();
         private bool _isPolygonDrawing = false;
+        private List<List<Point>> _polygonsList = new List<List<Point>>();
 
         private void UpdatePolygonPreview()
         {
@@ -516,10 +522,10 @@ namespace WPF_Paint.ViewModels
             if (_polygonPoints.Count >= 3 && DistanceBetweenPoints(_polygonPoints.First(), _polygonPoints.Last()) < 10)
             {
                 _polygonPoints[_polygonPoints.Count - 1] = _polygonPoints.First();
-
+                _polygonsList.Add(_polygonPoints);
             }
 
-            // Rysuj linie łączące zaokrąglone punkty wielokąta
+            // Rysuj linie łączące punkty wielokąta
             for (int i = 1; i < _polygonPoints.Count; i++)
             {
                 Line line = new Line
@@ -534,6 +540,189 @@ namespace WPF_Paint.ViewModels
                 MainCanvas.Children.Add(line);
             }
         }
+
+        //--------przesuwanie polygonu---------
+        private Point _translationVector = new Point(0, 0); // Domyślny wektor przesunięcia
+        private void SetVectorMove()
+        {
+            BitmapSource source = GetCanvasBitmap();
+            VectorMove translationVector = new VectorMove(0, 0);
+            bool? dialogResult = translationVector.ShowDialog();
+
+            if (dialogResult != true)
+            {
+
+                MainCanvas.UpdateLayout();
+                return;
+            }
+
+            _translationVector = new Point(translationVector.X, translationVector.Y);
+            ApplyTranslation();
+        }
+
+        private void ApplyTranslation()
+        {
+
+            if (_currentDrawingMode == DrawingMode.Polygon && !_isPolygonDrawing)
+            {
+                if (_polygonsList.Count > 0)
+                {
+                    var lastPolygon = _polygonsList.Last();
+
+                    // Clear previous drawing of the last polygon
+                    foreach (var line in MainCanvas.Children.OfType<Line>().ToList())
+                    {
+                        if (lastPolygon.Contains(new Point(line.X1, line.Y1)) && lastPolygon.Contains(new Point(line.X2, line.Y2)))
+                        {
+                            MainCanvas.Children.Remove(line);
+                        }
+                    }
+
+
+                    // Przesuń każdy punkt wielokąta o wektor przesunięcia
+                    for (int i = 0; i < lastPolygon.Count; i++)
+                    {
+                        lastPolygon[i] = new Point(lastPolygon[i].X + _translationVector.X, lastPolygon[i].Y + _translationVector.Y);
+                    }
+
+                    UpdatePolygonPreview();
+                }
+
+            }
+        }
+        //--------obracanie polygonu---------
+        private void RotateButton_Click()
+        {
+            // Pobierz parametry obrotu od użytkownika
+            RotateMove rotateMoveDialog = new RotateMove(0, 0, 0);
+            bool? dialogResult = rotateMoveDialog.ShowDialog();
+
+            if (dialogResult == true)
+            {
+                int angle = rotateMoveDialog.Angle;
+                Point userPoint = new Point(rotateMoveDialog.X, rotateMoveDialog.Y);
+
+
+                // Obróć każdy punkt wielokąta względem środka figury
+                if (_currentDrawingMode == DrawingMode.Polygon && !_isPolygonDrawing)
+                {
+                    if (_polygonsList.Count > 0)
+                    {
+                        var lastPolygon = _polygonsList.Last();
+
+                        foreach (var line in MainCanvas.Children.OfType<Line>().ToList())
+                        {
+                            if (lastPolygon.Contains(new Point(line.X1, line.Y1)) && lastPolygon.Contains(new Point(line.X2, line.Y2)))
+                            {
+                                MainCanvas.Children.Remove(line);
+                            }
+                        }
+
+                        // Znajdź środek figury
+                        Point centerOfFigure = CalculateCenterOfFigure(lastPolygon);
+                        //wylicz punkt obrotu
+                        Point pivotPoint = new Point(userPoint.X + centerOfFigure.X, userPoint.Y + centerOfFigure.Y);
+                        // Obróć każdy punkt wielokąta względem środka figury + punkt od użytkownika
+                        for (int i = 0; i < lastPolygon.Count; i++)
+                        {
+                            lastPolygon[i] = RotatePoint(lastPolygon[i], pivotPoint, angle);
+                        }
+
+                        UpdatePolygonPreview();
+                    }
+                }
+            }
+        }
+
+        private Point CalculateCenterOfFigure(List<Point> polygon)
+        {
+            double totalX = 0;
+            double totalY = 0;
+
+            foreach (var point in polygon)
+            {
+                totalX += point.X;
+                totalY += point.Y;
+            }
+
+            double centerX = totalX / polygon.Count;
+            double centerY = totalY / polygon.Count;
+
+            return new Point(centerX, centerY);
+        }
+
+        private Point RotatePoint(Point point, Point center, double angle)
+        {
+            double angleInRadians = angle * (Math.PI / 180.0);
+            double cosTheta = Math.Cos(angleInRadians);
+            double sinTheta = Math.Sin(angleInRadians);
+
+            double xRelativeToCenter = point.X - center.X;
+            double yRelativeToCenter = point.Y - center.Y;
+
+            double xRotated = cosTheta * xRelativeToCenter - sinTheta * yRelativeToCenter + center.X;
+            double yRotated = sinTheta * xRelativeToCenter + cosTheta * yRelativeToCenter + center.Y;
+
+            return new Point(xRotated, yRotated);
+        }
+
+        //-------skalowanie polugonu-----
+        private void SetPolygonScale()
+        {
+            BitmapSource source = GetCanvasBitmap();
+            ChangeScale scalingVector = new ChangeScale(0, 0, 1); // Domyślne wartości
+            bool? dialogResult = scalingVector.ShowDialog();
+
+            if (dialogResult != true)
+            {
+                MainCanvas.UpdateLayout();
+                return;
+            }
+
+            // Pobierz dane o skalowaniu
+            Point userPoint = new Point(scalingVector.X, scalingVector.Y);
+
+            double scaleFactor = scalingVector.ScaleFactor;
+
+            ApplyScaling(userPoint, scaleFactor);
+        }
+
+        private void ApplyScaling(Point userPoint, double scaleFactor)
+        {
+            if (_currentDrawingMode == DrawingMode.Polygon && !_isPolygonDrawing)
+            {
+                if (_polygonsList.Count > 0)
+                {
+                    var lastPolygon = _polygonsList.Last();
+                    // Znajdź środek figury
+                    Point centerOfFigure = CalculateCenterOfFigure(lastPolygon);
+                    //wylicz punkt 
+                    Point scaleCenter = new Point(userPoint.X + centerOfFigure.X, userPoint.Y + centerOfFigure.Y);
+
+                    // Clear previous drawing of the last polygon
+                    foreach (var line in MainCanvas.Children.OfType<Line>().ToList())
+                    {
+                        if (lastPolygon.Contains(new Point(line.X1, line.Y1)) && lastPolygon.Contains(new Point(line.X2, line.Y2)))
+                        {
+                            MainCanvas.Children.Remove(line);
+                        }
+                    }
+
+                    // Skaluj każdy punkt wielokąta względem zadanego punktu i współczynnika
+                    for (int i = 0; i < lastPolygon.Count; i++)
+                    {
+                        double deltaX = lastPolygon[i].X - scaleCenter.X;
+                        double deltaY = lastPolygon[i].Y - scaleCenter.Y;
+
+                        // Zastosuj skalowanie
+                        lastPolygon[i] = new Point(scaleCenter.X + scaleFactor * deltaX, scaleCenter.Y + scaleFactor * deltaY);
+                    }
+
+                    UpdatePolygonPreview();
+                }
+            }
+        }
+
 
         //---------------kształty---------------
         private void DrawButton_Click()

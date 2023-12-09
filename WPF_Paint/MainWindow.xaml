@@ -102,6 +102,11 @@
                     <Button Margin="0,5,0,0" Command="{Binding DrawCommand}">Rysowanie</Button>
                     <Button Margin="0,5,0,0" Command="{Binding TextCommand}">Tekst</Button>
                     <Button Margin="0,5,0,0" Command="{Binding PolygonToolCommand}">Wielokąt</Button>
+                    <Button Margin="0,5,0,0" Command="{Binding VectorCommand}" CommandParameter="{Binding ElementName=MainCanvas}" Content="Presunięcie"/>
+                    <Button Margin="0,5,0,0" Command="{Binding RotateCommand}" CommandParameter="{Binding ElementName=MainCanvas}" Content="Obrót"/>
+                    <Button Margin="0,5,0,0" Command="{Binding ScaleCommand}" CommandParameter="{Binding ElementName=MainCanvas}" Content="Skalowanie"/>
+
+
 
                     <Grid Margin="0,20,0,0">
                         <Grid.ColumnDefinitions>

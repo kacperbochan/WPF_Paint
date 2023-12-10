@@ -6,6 +6,7 @@ using System.IO;
 using System.IO.Pipes;
 using System.Linq;
 using System.Reflection;
+using System.Reflection.Metadata;
 using System.Text;
 using System.Text.RegularExpressions;
 using System.Threading.Tasks;
@@ -379,6 +380,8 @@ namespace WPF_Paint.ViewModels
         /// 
         private bool _isPolygonBeingMoved = false;
         private Point _lastRightClickPoint;
+        private bool _isResizingPolygon = false;
+        private bool _isRotatingPolygon = false;
 
         private void Canvas_MouseLeftButtonDown(Point point)
         {
@@ -423,10 +426,20 @@ namespace WPF_Paint.ViewModels
                         _polygonPoints.Add(point);
                         UpdatePolygonPreview();
                     }
-                    if(Mouse.RightButton == MouseButtonState.Pressed && !_isPolygonDrawing)
+
+                    if (Mouse.RightButton == MouseButtonState.Pressed && !_isPolygonDrawing && !Keyboard.IsKeyDown(Key.O) && !Keyboard.IsKeyDown(Key.S))
                     {
                         CheckIfClickPolygon(point);
                     }
+                    if (Mouse.RightButton == MouseButtonState.Pressed && !_isPolygonDrawing && Keyboard.IsKeyDown(Key.O))
+                    {
+                        CheckIfClickRotateHandle(point);
+                    }
+                    if (Mouse.RightButton == MouseButtonState.Pressed && !_isPolygonDrawing && Keyboard.IsKeyDown(Key.S))
+                    {
+                        CheckIfClickScaleHandle(point);
+                    }
+
                     break;
 
             }
@@ -457,6 +470,17 @@ namespace WPF_Paint.ViewModels
             {
                 _isPolygonBeingMoved = false;
             }
+            if (_isResizingPolygon)
+            {
+                // Zakończ zmianę rozmiaru figury
+                _isResizingPolygon = false;
+            }
+            if (_isRotatingPolygon)
+            {
+                // Zakończ zobracanie figury
+                _isRotatingPolygon = false;
+            }
+
 
 
             Mouse.Capture(null);
@@ -471,7 +495,7 @@ namespace WPF_Paint.ViewModels
 
         private void Canvas_MouseMove(Point point)
         {
-            if (_isMousePressed && !_isPolygonBeingMoved)
+            if (_isMousePressed && !_isPolygonBeingMoved && !_isResizingPolygon && !_isRotatingPolygon)
             {
                 _currentPoint = point;
                 _endPosition = point;
@@ -485,7 +509,6 @@ namespace WPF_Paint.ViewModels
                         // Obsługa rysowania linii
                         ContinueDrawing();
                         break;
-                    // Dodaj inne przypadki dla innych trybów rysowania
                     case DrawingMode.Polygon:
                         break;
                 }
@@ -500,6 +523,41 @@ namespace WPF_Paint.ViewModels
 
                 _lastRightClickPoint = point;
             }
+            else if (_isRotatingPolygon)
+            {
+                Point newPoint = new Point(point.X/100, point.Y/100);
+                // Aktualizuj punkt końcowy podczas zmiany rozmiaru
+                double angle = CalculateRotationAngle(newPoint, _lastRightClickPoint);
+
+                RotatePolygon(angle);
+                _lastRightClickPoint = point;
+            }
+
+            else if (_isResizingPolygon)
+            {
+                double scaleFactor = _lastRightClickPoint.Y - point.Y;
+                if (scaleFactor < 0)
+                {
+                    scaleFactor= scaleFactor*(-1);
+                    scaleFactor = MapToRange(scaleFactor, 0.5, 1);
+                }
+                else
+                {
+                    scaleFactor = MapToRange(scaleFactor, 1, 1.2);
+                }
+                ScalePolygon(scaleFactor);
+                _lastRightClickPoint = point;
+            }
+        }
+
+        static double MapToRange(double value, double minValue, double maxValue)
+        {
+            double range = maxValue - minValue;
+
+            // Użyj funkcji modulo, aby przemapować wartość do przedziału minValue do maxValue
+            double mappedValue = ((value - minValue) % range + range) % range + minValue;
+
+            return mappedValue;
         }
 
         private void Canvas_KeyDown(KeyEventArgs e)
@@ -613,6 +671,24 @@ namespace WPF_Paint.ViewModels
             }
         }
         //--------obracanie polygonu---------
+
+        private Point CalculateCenterOfFigure(List<Point> polygon)
+        {
+            double totalX = 0;
+            double totalY = 0;
+
+            foreach (var point in polygon)
+            {
+                totalX += point.X;
+                totalY += point.Y;
+            }
+
+            double centerX = totalX / polygon.Count;
+            double centerY = totalY / polygon.Count;
+
+            return new Point(centerX, centerY);
+        }
+
         private void RotateButton_Click()
         {
             // Pobierz parametry obrotu od użytkownika
@@ -654,23 +730,6 @@ namespace WPF_Paint.ViewModels
                     }
                 }
             }
-        }
-
-        private Point CalculateCenterOfFigure(List<Point> polygon)
-        {
-            double totalX = 0;
-            double totalY = 0;
-
-            foreach (var point in polygon)
-            {
-                totalX += point.X;
-                totalY += point.Y;
-            }
-
-            double centerX = totalX / polygon.Count;
-            double centerY = totalY / polygon.Count;
-
-            return new Point(centerX, centerY);
         }
 
         private Point RotatePoint(Point point, Point center, double angle)
@@ -744,28 +803,9 @@ namespace WPF_Paint.ViewModels
                 }
             }
         }
+        
 
         //----myszka i polygon----
-
-        private void CheckIfClickPolygon(Point point)
-        {
-            foreach (var polygon in _polygonsList)
-            {
-                for (int i = 1; i < polygon.Count; i++)
-                {
-                    double distanceToEdge = DistancePointToLine(point, polygon[i - 1], polygon[i]);
-                    if (distanceToEdge < 5) // Ustaw odpowiednią odległość, aby uznać kliknięcie za trafienie w krawędź
-                    {
-                        _isPolygonBeingMoved = true;
-                        _lastRightClickPoint = point;
-                        break;
-                    }
-                }
-            }
-        }
-
-
-
         // Funkcja do obliczania odległości punktu od linii
         private double DistancePointToLine(Point p, Point lineStart, Point lineEnd)
         {
@@ -802,6 +842,24 @@ namespace WPF_Paint.ViewModels
         }
 
 
+       
+        private void CheckIfClickPolygon(Point point)
+        {
+            foreach (var polygon in _polygonsList)
+            {
+                for (int i = 1; i < polygon.Count; i++)
+                {
+                    double distanceToEdge = DistancePointToLine(point, polygon[i - 1], polygon[i]);
+                    if (distanceToEdge < 5) // Ustaw odpowiednią odległość, aby uznać kliknięcie za trafienie w krawędź
+                    {
+                        _isPolygonBeingMoved = true;
+                        _lastRightClickPoint = point;
+                        break;
+                    }
+                }
+            }
+        }
+
         private void MovePolygon(double deltaX, double deltaY)
         {
             if (_currentDrawingMode == DrawingMode.Polygon && !_isPolygonDrawing)
@@ -829,9 +887,123 @@ namespace WPF_Paint.ViewModels
                 }
             }
         }
+        
+
+        private void CheckIfClickRotateHandle(Point point)
+        {
+            foreach (var polygon in _polygonsList)
+            {
+                for (int i = 1; i < polygon.Count; i++)
+                {
+                    double distanceToEdge = DistancePointToLine(point, polygon[i - 1], polygon[i]);
+                    if (distanceToEdge < 5)
+                    {
+                        _isRotatingPolygon = true;
+                        _lastRightClickPoint = point;
+                        break;
+                    }
+                }
+            }
+        }
+
+        private void RotatePolygon(double angle)
+        {
+            if (_currentDrawingMode == DrawingMode.Polygon && !_isPolygonDrawing)
+            {
+                if (_polygonsList.Count > 0)
+                {
+                    var lastPolygon = _polygonsList.Last();
+
+                    // Clear previous drawing of the last polygon
+                    foreach (var line in MainCanvas.Children.OfType<Line>().ToList())
+                    {
+                        if (lastPolygon.Contains(new Point(line.X1, line.Y1)) && lastPolygon.Contains(new Point(line.X2, line.Y2)))
+                        {
+                            MainCanvas.Children.Remove(line);
+                        }
+                    }
+
+                    // Znajdź środek figury
+                    Point centerOfFigure = CalculateCenterOfFigure(lastPolygon);
+                    // Obróć każdy punkt wielokąta względem środka figury + punkt od użytkownika
+                    for (int i = 0; i < lastPolygon.Count; i++)
+                    {
+                        lastPolygon[i] = RotatePoint(lastPolygon[i], centerOfFigure, angle);
+                    }
+
+                    UpdatePolygonPreview();
+                }
+            }
+        }
+
+        private double CalculateRotationAngle(Point startPoint, Point endPoint)
+        {
+            double angle = Math.Atan2(endPoint.Y - startPoint.Y, endPoint.X - startPoint.X);
+
+            // Zamień wynik z radianów na stopnie
+            angle *= 180 / Math.PI;
+
+            // Dostosuj kąt do przedziału [0, 360]
+            angle = (angle + 360) % 360;
+
+            return angle;
+        }
+
+        private void CheckIfClickScaleHandle(Point point)
+        {
+            foreach (var polygon in _polygonsList)
+            {
+                for (int i = 1; i < polygon.Count; i++)
+                {
+                    double distanceToEdge = DistancePointToLine(point, polygon[i - 1], polygon[i]);
+                    if (distanceToEdge < 5)
+                    {
+                        _isResizingPolygon = true;
+                        _lastRightClickPoint = point;
+                        break;
+                    }
+                }
+            }
+        }
+
+        private void ScalePolygon(double scaleFactor)
+        {
+            if (_currentDrawingMode == DrawingMode.Polygon && !_isPolygonDrawing)
+            {
+                if (_polygonsList.Count > 0)
+                {
+                    var lastPolygon = _polygonsList.Last();
+                    // Znajdź środek figury
+                    Point centerOfFigure = CalculateCenterOfFigure(lastPolygon);
+
+                    // Clear previous drawing of the last polygon
+                    foreach (var line in MainCanvas.Children.OfType<Line>().ToList())
+                    {
+                        if (lastPolygon.Contains(new Point(line.X1, line.Y1)) && lastPolygon.Contains(new Point(line.X2, line.Y2)))
+                        {
+                            MainCanvas.Children.Remove(line);
+                        }
+                    }
+
+                    // Skaluj każdy punkt wielokąta względem zadanego punktu i współczynnika
+                    for (int i = 0; i < lastPolygon.Count; i++)
+                    {
+                        double deltaX = lastPolygon[i].X - centerOfFigure.X;
+                        double deltaY = lastPolygon[i].Y - centerOfFigure.Y;
+
+                        // Zastosuj skalowanie
+                        lastPolygon[i] = new Point(centerOfFigure.X + scaleFactor * deltaX, centerOfFigure.Y + scaleFactor * deltaY);
+                    }
+
+                    UpdatePolygonPreview();
+                }
+            }
+        }
 
 
-        //---------------kształty---------------
+
+
+        //--------------------------------kształty----------------------------
         private void DrawButton_Click()
         {
             ChangeDrawingMode(DrawingMode.Draw);

@@ -79,7 +79,8 @@ namespace WPF_Paint.ViewModels
             Shape,
             Draw,
             Text,
-            Polygon
+            Polygon,
+            Bezier
         }
         private enum ShapeType 
         { 
@@ -152,6 +153,7 @@ namespace WPF_Paint.ViewModels
         public ICommand MorphologyThiningCommand { get; }
         public ICommand MorphologyThickeningCommand { get; }
         public ICommand PolygonToolCommand { get; }
+        public ICommand BezierCommand { get; }
 
 
 
@@ -172,6 +174,7 @@ namespace WPF_Paint.ViewModels
             DrawCommand = new RelayCommand(DrawButton_Click);
             TextCommand = new RelayCommand(TextButton_Click);
             PolygonToolCommand = new RelayCommand(PolygonButton_Click);
+            BezierCommand = new RelayCommand(BezierCommand_Click);
 
             ImageCommand = new RelayCommand(SetImageSize);
             OpenCommand = new RelayCommand(OpenPicture);
@@ -412,6 +415,14 @@ namespace WPF_Paint.ViewModels
                     _polygonPoints.Add(point);
                     UpdatePolygonPreview();
                     break;
+                case DrawingMode.Bezier:
+                    _bezierPointMoving = _bezier.GetClosestBezierPoint(point);
+                    if (_bezierPointMoving == -1)
+                    {
+                        _bezier.BezierPoints.Add(point);
+                    }
+                    _bezier.UpdateBezierPreview();
+                    break;
 
             }
         }
@@ -419,7 +430,6 @@ namespace WPF_Paint.ViewModels
         private void Canvas_MouseLeftButtonUp(Point point)
         {
             _isMousePressed = false;
-
             _currentPoint = point;
 
             switch (_currentDrawingMode)
@@ -438,6 +448,10 @@ namespace WPF_Paint.ViewModels
                             _isPolygonDrawing = false;
                         }
                     }
+                    break;
+                case DrawingMode.Bezier:
+                    _bezierPointMoving = -1;
+                    _bezier.UpdateBezierPreview();
                     break;
             }
 
@@ -468,6 +482,13 @@ namespace WPF_Paint.ViewModels
                         // Obsługa rysowania linii
                         ContinueDrawing();
                         break;
+                    case DrawingMode.Bezier:
+                        if (_bezierPointMoving != -1)
+                        {
+                            _bezier.BezierPoints[_bezierPointMoving] = point;
+                            _bezier.UpdateBezierPreview();
+                        }
+                        break;
                     // Dodaj inne przypadki dla innych trybów rysowania
                     case DrawingMode.Polygon:
                         break;
@@ -496,6 +517,10 @@ namespace WPF_Paint.ViewModels
                 // Zamień TextBox na TextBlock
                 ReplaceTextBoxWithTextBlock(activeTextBox);
                 activeTextBox = null;
+            }
+            if (_bezier != null)
+            {
+                _bezier.RemoveSupportNet();
             }
 
             _currentDrawingMode = newMode;
@@ -534,6 +559,21 @@ namespace WPF_Paint.ViewModels
                 MainCanvas.Children.Add(line);
             }
         }
+
+        //----------------bezier--------------
+        private void BezierCommand_Click()
+        {
+            ChangeDrawingMode(DrawingMode.Bezier);
+            _bezier = new Bezier(MainCanvas);
+
+        }
+
+        private bool _isBezierDrawing = false;
+        private Bezier _bezier;
+        private int _bezierPointMoving = -1;
+
+
+
 
         //---------------kształty---------------
         private void DrawButton_Click()

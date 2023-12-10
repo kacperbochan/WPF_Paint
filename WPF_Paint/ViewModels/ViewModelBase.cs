@@ -81,7 +81,8 @@ namespace WPF_Paint.ViewModels
             Shape,
             Draw,
             Text,
-            Polygon
+            Polygon, 
+            Point
         }
         private enum ShapeType
         {
@@ -157,6 +158,7 @@ namespace WPF_Paint.ViewModels
         public ICommand VectorCommand { get;}
         public ICommand RotateCommand { get;  }
         public ICommand ScaleCommand { get; }
+        public ICommand ChoosePointCommand { get; }
 
         public event PropertyChangedEventHandler? PropertyChanged;
 
@@ -174,10 +176,12 @@ namespace WPF_Paint.ViewModels
             LineCommand = new RelayCommand(() => ChooseShape(3));
             DrawCommand = new RelayCommand(DrawButton_Click);
             TextCommand = new RelayCommand(TextButton_Click);
+
             PolygonToolCommand = new RelayCommand(PolygonButton_Click);
             VectorCommand = new RelayCommand(SetVectorMove);
             RotateCommand = new RelayCommand(RotateButton_Click);
             ScaleCommand = new RelayCommand(SetPolygonScale);
+            ChoosePointCommand = new RelayCommand(ChoosePointButton_Click);
 
             ImageCommand = new RelayCommand(SetImageSize);
             OpenCommand = new RelayCommand(OpenPicture);
@@ -382,6 +386,7 @@ namespace WPF_Paint.ViewModels
         private Point _lastRightClickPoint;
         private bool _isResizingPolygon = false;
         private bool _isRotatingPolygon = false;
+        private Point _chosenPointByUser = new Point(0,0);
 
         private void Canvas_MouseLeftButtonDown(Point point)
         {
@@ -413,6 +418,9 @@ namespace WPF_Paint.ViewModels
                         // Dodaj nowy TextBox
                         AddTextBox();
                     }
+                    break;
+                case DrawingMode.Point:
+                    _chosenPointByUser = point;
                     break;
                 case DrawingMode.Polygon:
                     if (Mouse.LeftButton == MouseButtonState.Pressed)
@@ -923,12 +931,17 @@ namespace WPF_Paint.ViewModels
                         }
                     }
 
-                    // Znajdź środek figury
-                    Point centerOfFigure = CalculateCenterOfFigure(lastPolygon);
+                    //Jeżeli użytkownik nie wybrał punktu
+                    if (_chosenPointByUser.X == 0 && _chosenPointByUser.Y == 0)
+                    {
+                        // Znajdź środek figury
+                        _chosenPointByUser = CalculateCenterOfFigure(lastPolygon);
+                    }
+                    
                     // Obróć każdy punkt wielokąta względem środka figury + punkt od użytkownika
                     for (int i = 0; i < lastPolygon.Count; i++)
                     {
-                        lastPolygon[i] = RotatePoint(lastPolygon[i], centerOfFigure, angle);
+                        lastPolygon[i] = RotatePoint(lastPolygon[i], _chosenPointByUser, angle);
                     }
 
                     UpdatePolygonPreview();
@@ -973,8 +986,13 @@ namespace WPF_Paint.ViewModels
                 if (_polygonsList.Count > 0)
                 {
                     var lastPolygon = _polygonsList.Last();
-                    // Znajdź środek figury
-                    Point centerOfFigure = CalculateCenterOfFigure(lastPolygon);
+
+                    //Jeżeli użytkownik nie wybrał punktu
+                    if (_chosenPointByUser.X == 0 && _chosenPointByUser.Y == 0)
+                    {
+                        // Znajdź środek figury
+                        _chosenPointByUser = CalculateCenterOfFigure(lastPolygon);
+                    }
 
                     // Clear previous drawing of the last polygon
                     foreach (var line in MainCanvas.Children.OfType<Line>().ToList())
@@ -988,11 +1006,11 @@ namespace WPF_Paint.ViewModels
                     // Skaluj każdy punkt wielokąta względem zadanego punktu i współczynnika
                     for (int i = 0; i < lastPolygon.Count; i++)
                     {
-                        double deltaX = lastPolygon[i].X - centerOfFigure.X;
-                        double deltaY = lastPolygon[i].Y - centerOfFigure.Y;
+                        double deltaX = lastPolygon[i].X - _chosenPointByUser.X;
+                        double deltaY = lastPolygon[i].Y - _chosenPointByUser.Y;
 
                         // Zastosuj skalowanie
-                        lastPolygon[i] = new Point(centerOfFigure.X + scaleFactor * deltaX, centerOfFigure.Y + scaleFactor * deltaY);
+                        lastPolygon[i] = new Point(_chosenPointByUser.X + scaleFactor * deltaX, _chosenPointByUser.Y + scaleFactor * deltaY);
                     }
 
                     UpdatePolygonPreview();
@@ -1000,7 +1018,10 @@ namespace WPF_Paint.ViewModels
             }
         }
 
-
+        private void ChoosePointButton_Click()
+        {
+            ChangeDrawingMode(DrawingMode.Point);
+        }
 
 
         //--------------------------------kształty----------------------------

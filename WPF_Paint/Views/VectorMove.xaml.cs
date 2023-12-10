@@ -10,41 +10,40 @@ using System.Windows.Documents;
 using System.Windows.Input;
 using System.Windows.Media;
 using System.Windows.Media.Imaging;
+using System.Windows.Media.Media3D;
 using System.Windows.Shapes;
-using WPF_Paint.ViewModels;
 
-namespace WPF_Paint
+namespace WPF_Paint.Views
 {
     /// <summary>
-    /// Interaction logic for ColorSelector.xaml
+    /// Logika interakcji dla klasy VectorMove.xaml
     /// </summary>
-    public partial class ImageSize : Window
+    public partial class VectorMove : Window
     {
-        public int Width=3;
-        public int Height=3;
+        public int X = 3;
+        public int Y = 3;
 
-        public ImageSize(int width, int height)
+        public VectorMove(int x, int y)
         {
             InitializeComponent();
-            WidthTextBox.Text = width.ToString();
-            HeightTextBox.Text = height.ToString();
+            XTextBox.Text = x.ToString();
+            YTextBox.Text = y.ToString();
         }
-
         private void AcceptButton_Click(object sender, RoutedEventArgs e)
         {
             int result;
-            if (int.TryParse(WidthTextBox.Text, out result) && result >= 0) 
+            if (int.TryParse(XTextBox.Text, out result))
             {
-                Width = result;
+                X = result;
             }
             else
             {
                 MessageBox.Show("Please enter a valid number (Width).");
                 return;
             }
-            if (int.TryParse(HeightTextBox.Text, out result) && result >= 0)
+            if (int.TryParse(YTextBox.Text, out result))
             {
-                Height = result;
+                Y = result;
             }
             else
             {
@@ -56,6 +55,5 @@ namespace WPF_Paint
             // Zamknij okno
             this.Close();
         }
-
     }
 }

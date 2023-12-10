@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.ComponentModel;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
@@ -12,17 +13,37 @@ namespace WPF_Paint.Models
 {
     public class Bezier
     {
-        public  List<Point> BezierPoints = new List<Point>();
+        private  List<ObservablePoint> _bezierPoints = new List<ObservablePoint>();
+        public List<ObservablePoint> BezierPoints
+        {
+            get { return _bezierPoints; }
+            set
+            {
+                _bezierPoints = value;
+            }
+        }
+
         private List<Line> supportLines = new List<Line>();
         private Path _bezierPath;
         private Canvas _canvas;
 
-        public Bezier(Canvas canvas)
+        // You can create an event for notifying about changes
+        public event Action PointsChanged;
+
+        // Call this method when points are added or removed
+        public void NotifyPointsChanged()
+        {
+            PointsChanged?.Invoke();
+        }
+
+        public Bezier(){}
+
+        public void SetMainCanvas(Canvas canvas)
         {
             _canvas = canvas;
         }
 
-        private double DistanceBetweenPoints(Point point1, Point point2)
+        private double DistanceBetweenPoints(Point point1, ObservablePoint point2)
         {
             double deltaX = point2.X - point1.X;
             double deltaY = point2.Y - point1.Y;
@@ -57,7 +78,7 @@ namespace WPF_Paint.Models
             return result;
         }
 
-        private Point CalculateBezierPoint(double t, List<Point> points)
+        private Point CalculateBezierPoint(double t, List<ObservablePoint> points)
         {
             int n = points.Count - 1;
             double x = 0;
@@ -89,7 +110,7 @@ namespace WPF_Paint.Models
                 else
                 {
                     // Create new line and add to canvas and list
-                    line = new Line { Stroke = Brushes.Black };
+                    line = new Line { Stroke = new SolidColorBrush(ColorSettings.BorderColor) };
                     supportLines.Add(line);
                     _canvas.Children.Add(line);
                 }
@@ -106,7 +127,7 @@ namespace WPF_Paint.Models
             DrawSupportNet();
 
             PathFigure pathFigure = new PathFigure();
-            pathFigure.StartPoint = BezierPoints[0]; // Start at the first point
+            pathFigure.StartPoint = new Point(BezierPoints[0].X,BezierPoints[0].Y) ; // Start at the first point
 
             PathGeometry pathGeometry = new PathGeometry();
             PolyLineSegment polyLine = new PolyLineSegment();
@@ -125,7 +146,7 @@ namespace WPF_Paint.Models
             {
                 _bezierPath = new System.Windows.Shapes.Path
                 {
-                    Stroke = Brushes.Red,
+                    Stroke = new SolidColorBrush(ColorSettings.FillColor),
                     StrokeThickness = 2,
                     Data = pathGeometry
                 };
@@ -136,12 +157,20 @@ namespace WPF_Paint.Models
             {
                 _bezierPath.Data = pathGeometry;
             }
+            NotifyPointsChanged();
         }
 
         public void RemoveSupportNet()
         {
             for(int i=0; i<supportLines.Count; i++)
                 _canvas.Children.Remove(supportLines[i]);
+        }
+
+        public void ClearData()
+        {
+            BezierPoints.Clear();
+            supportLines.Clear();
+            NotifyPointsChanged();
         }
     }
 }

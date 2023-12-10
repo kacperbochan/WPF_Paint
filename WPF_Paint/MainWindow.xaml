@@ -9,6 +9,7 @@
         Title="Paint Premium" Height="450" Width="800" Background="LightSlateGray">
     <Window.Resources>
         <local1:RGBToSolidColorBrushConverter x:Key="RGBToBrushConverter"/>
+        <local1:BooleanToVisibilityConverter x:Key="BooleanToVisibilityConverter"/>
         <Style x:Key="ColorButtonStyle" TargetType="Button">
             <Setter Property="Width" Value="20"/>
             <Setter Property="Height" Value="20"/>
@@ -45,10 +46,11 @@
         <Grid.ColumnDefinitions>
             <ColumnDefinition Width="90"/>
             <ColumnDefinition Width="*"/>
+            <ColumnDefinition Width="Auto" MinWidth="160"/>
         </Grid.ColumnDefinitions>
 
         <!-- Canvas on the right -->
-        <ScrollViewer x:Name="MainScrollViewer" HorizontalScrollBarVisibility="Auto" VerticalScrollBarVisibility="Auto" Grid.Column="1">
+        <ScrollViewer Focusable="False" x:Name="MainScrollViewer" HorizontalScrollBarVisibility="Auto" VerticalScrollBarVisibility="Auto" Grid.Column="1">
             <Canvas x:Name="MainCanvas" Margin="-200" DataContext="{Binding MainCanvas, Mode=TwoWay}"   ClipToBounds="True"
                     Width="{Binding DataContext.CanvasWidth, RelativeSource={RelativeSource AncestorType=Window}}" 
                     Height="{Binding DataContext.CanvasHeight, RelativeSource={RelativeSource AncestorType=Window}}">
@@ -188,6 +190,70 @@
                 </StackPanel>
             </ToolBar>
         </ToolBarTray>
+        <Grid Grid.Column="2" Background="AliceBlue" Visibility="{Binding IsBezierPanelVisible, Converter={StaticResource BooleanToVisibilityConverter}}">
+            <Grid.RowDefinitions>
+                <RowDefinition Height="Auto"></RowDefinition>
+                <RowDefinition Height="*"></RowDefinition>
+                <RowDefinition Height="100"></RowDefinition>
+            </Grid.RowDefinitions>
+
+            <Label Grid.Row="0"  FontWeight="Bold" FontSize="14" >Bezier</Label>
+            <ScrollViewer Focusable="False" Grid.Row="1" VerticalScrollBarVisibility="Auto">
+                <ItemsControl ItemsSource="{Binding BezierPoints}">
+                    <ItemsControl.ItemTemplate>
+                        <DataTemplate>
+                            <Grid Margin="5">
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="70" />
+                                    <ColumnDefinition Width="70" />
+                                </Grid.ColumnDefinitions>
+                                <Grid.RowDefinitions>
+                                    <RowDefinition Height="Auto"/>
+                                    <RowDefinition Height="Auto"/>
+                                    <RowDefinition Height="Auto"/>
+                                    <RowDefinition Height="Auto"/>
+                                </Grid.RowDefinitions>
+
+                                <!-- Separator Line -->
+                                <Rectangle Fill="Black" Height="1" Grid.Column="0" Grid.Row="0" Grid.ColumnSpan="2" VerticalAlignment="Center" />
+
+                                <!-- Id -->
+                                <!--<TextBlock Text="Id:" Grid.Column="0" Grid.Row="1" Margin="5"/>
+                                <TextBlock Text="{Binding Index, UpdateSourceTrigger=PropertyChanged}" Grid.Column="1" Grid.Row="1" Margin="5"/>-->
+                                
+                                <!-- X Coordinate -->
+                                <TextBlock Text="X:" Grid.Column="0" Grid.Row="2" Margin="5"/>
+                                <TextBox Text="{Binding X, UpdateSourceTrigger=PropertyChanged, Mode=TwoWay}" Grid.Column="0" Grid.Row="3" Margin="5"/>
+
+                                <!-- Y Coordinate -->
+                                <TextBlock Text="Y:" Grid.Column="1" Grid.Row="2" Margin="5"/>
+                                <TextBox Text="{Binding Y, UpdateSourceTrigger=PropertyChanged, Mode=TwoWay}" Grid.Column="1" Grid.Row="3" Margin="5"/>
+
+                                </Grid>
+                            </DataTemplate>
+                        </ItemsControl.ItemTemplate>
+                        <ItemsControl.ItemsPanel>
+                            <ItemsPanelTemplate>
+                                <StackPanel />
+                            </ItemsPanelTemplate>
+                        </ItemsControl.ItemsPanel>
+                    </ItemsControl>
+            </ScrollViewer>
+            <Grid Grid.Row="2">
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="*"/>
+                    <ColumnDefinition Width="100"/>
+                    <ColumnDefinition Width="*"/>
+                </Grid.ColumnDefinitions>
+                <Grid.RowDefinitions>
+                    <RowDefinition Height="*"/>
+                    <RowDefinition Height="30"/>
+                    <RowDefinition Height="*"/>
+                </Grid.RowDefinitions>
+                <Button Command="{Binding AddBezierPointCommand}" CommandParameter="{Binding ElementName=MainCanvas}"  Grid.Column="1" Grid.Row="1" Margin="5" Content="Dodaj"/>
+            </Grid>
+            
+        </Grid>
     </Grid>
 
 </Window>

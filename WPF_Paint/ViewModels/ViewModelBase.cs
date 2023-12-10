@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Collections.ObjectModel;
 using System.ComponentModel;
 using System.Diagnostics;
 using System.IO;
@@ -72,6 +73,18 @@ namespace WPF_Paint.ViewModels
                 OnPropertyChanged(nameof(CanvasHeight));
             }
         }
+
+        private bool _isBezierPanelVisible = false;
+        public bool IsBezierPanelVisible
+        {
+            get => _isBezierPanelVisible;
+            set
+            {
+                _isBezierPanelVisible = value;
+                OnPropertyChanged(nameof(IsBezierPanelVisible));
+            }
+        }
+        public ObservableCollection<ObservablePoint> BezierPoints { get; set; }
 
         private enum DrawingMode
         {
@@ -154,13 +167,24 @@ namespace WPF_Paint.ViewModels
         public ICommand MorphologyThickeningCommand { get; }
         public ICommand PolygonToolCommand { get; }
         public ICommand BezierCommand { get; }
-
+        public ICommand AddBezierPointCommand { get; }
 
 
         public event PropertyChangedEventHandler? PropertyChanged;
 
         public ViewModelBase()
         {
+            _bezier = new Bezier();
+            BezierPoints = new ObservableCollection<ObservablePoint>(
+                _bezier.BezierPoints.Select((point, index) => new ObservablePoint(point.X,point.Y)));
+
+            foreach (var point in BezierPoints)
+            {
+                point.PropertyChanged += OnPointPropertyChanged;
+            }
+
+            _bezier.PointsChanged += OnBezierPointsChanged;
+
             MouseLeftDownCommand = new RelayCommand<Point>(Canvas_MouseLeftButtonDown); 
             MouseUpCommand = new RelayCommand<Point>(Canvas_MouseLeftButtonUp);
             MouseMoveCommand = new RelayCommand<Point>(Canvas_MouseMove);
@@ -175,6 +199,7 @@ namespace WPF_Paint.ViewModels
             TextCommand = new RelayCommand(TextButton_Click);
             PolygonToolCommand = new RelayCommand(PolygonButton_Click);
             BezierCommand = new RelayCommand(BezierCommand_Click);
+            AddBezierPointCommand = new RelayCommand(AddBezierPoint);
 
             ImageCommand = new RelayCommand(SetImageSize);
             OpenCommand = new RelayCommand(OpenPicture);
@@ -419,7 +444,7 @@ namespace WPF_Paint.ViewModels
                     _bezierPointMoving = _bezier.GetClosestBezierPoint(point);
                     if (_bezierPointMoving == -1)
                     {
-                        _bezier.BezierPoints.Add(point);
+                        _bezier.BezierPoints.Add(new ObservablePoint(point.X,point.Y));
                     }
                     _bezier.UpdateBezierPreview();
                     break;
@@ -485,7 +510,7 @@ namespace WPF_Paint.ViewModels
                     case DrawingMode.Bezier:
                         if (_bezierPointMoving != -1)
                         {
-                            _bezier.BezierPoints[_bezierPointMoving] = point;
+                            _bezier.BezierPoints[_bezierPointMoving] = new ObservablePoint(point.X,point.Y);
                             _bezier.UpdateBezierPreview();
                         }
                         break;
@@ -518,10 +543,16 @@ namespace WPF_Paint.ViewModels
                 ReplaceTextBoxWithTextBlock(activeTextBox);
                 activeTextBox = null;
             }
-            if (_bezier != null)
+            if (_currentDrawingMode == DrawingMode.Bezier)
             {
                 _bezier.RemoveSupportNet();
+                IsBezierPanelVisible = !IsBezierPanelVisible;
             }
+            if (newMode == DrawingMode.Bezier)
+            {
+                IsBezierPanelVisible = !IsBezierPanelVisible;
+            }
+            
 
             _currentDrawingMode = newMode;
         }
@@ -564,9 +595,42 @@ namespace WPF_Paint.ViewModels
         private void BezierCommand_Click()
         {
             ChangeDrawingMode(DrawingMode.Bezier);
-            _bezier = new Bezier(MainCanvas);
-
+            _bezier.SetMainCanvas(MainCanvas);
+            _bezier.ClearData();
         }
+
+        private void OnPointPropertyChanged(object sender, PropertyChangedEventArgs e)
+        {
+            var changedPoint = sender as ObservablePoint;
+            if (changedPoint != null)
+            {
+                // Find the index of the changed point in the collection
+                int index = _bezier.BezierPoints.IndexOf(changedPoint);
+
+                _bezier.BezierPoints[index] = changedPoint;
+                _bezier.UpdateBezierPreview();
+            }
+        }
+
+        private void OnBezierPointsChanged()
+        {
+            BezierPoints.Clear();
+            foreach (var point in _bezier.BezierPoints)
+            {
+                BezierPoints.Add(point);
+
+                point.PropertyChanged += OnPointPropertyChanged;
+
+            }
+        }
+
+        private void AddBezierPoint()
+        {
+            BezierPoints.Clear();
+            _bezier.BezierPoints.Add(new ObservablePoint(CanvasWidth / 2, CanvasHeight / 2));
+            _bezier.UpdateBezierPreview();
+        }
+
 
         private bool _isBezierDrawing = false;
         private Bezier _bezier;

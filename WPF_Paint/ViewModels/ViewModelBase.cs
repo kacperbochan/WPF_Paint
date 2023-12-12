@@ -161,6 +161,7 @@ namespace WPF_Paint.ViewModels
         public ICommand BinarizationOtsuCommand { get; }
         public ICommand BinarizationNiblackCommand { get; }
         public ICommand BinarizationSauvolaCommand { get; }
+        public ICommand BinarizationPansalkarCommand { get; }
         public ICommand BinarizationBernsensCommand { get; }
         public ICommand ColorBitmapWindowCommand { get; }
 
@@ -244,7 +245,8 @@ namespace WPF_Paint.ViewModels
             BinarizationOtsuCommand = new RelayCommand(() => BinarizationSelector(3));
             BinarizationNiblackCommand = new RelayCommand(() => BinarizationSelector(4));
             BinarizationSauvolaCommand = new RelayCommand(() => BinarizationSelector(5));
-            BinarizationBernsensCommand = new RelayCommand(() => BinarizationSelector(6));
+            BinarizationPansalkarCommand = new RelayCommand(() => BinarizationSelector(6));
+            BinarizationBernsensCommand = new RelayCommand(() => BinarizationSelector(7));
             ColorBitmapWindowCommand = new RelayCommand(() => AnalisysSelector(0));
 
             MorphologyDilatationCommand = new RelayCommand(() => MorphologySelector(0));
@@ -293,6 +295,9 @@ namespace WPF_Paint.ViewModels
                     binarization = new BinarizationSauvolaView(binarizationHelper);
                     break;
                 case 6:
+                    binarization = new BinarizationPansalkarView(binarizationHelper);
+                    break;
+                case 7:
                     binarization = new BinarizationBernsensView(binarizationHelper);
                     break;
                 default:

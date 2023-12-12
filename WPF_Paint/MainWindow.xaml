@@ -168,6 +168,7 @@
                                 <MenuItem Header="Otsu" Command="{Binding BinarizationOtsuCommand}" CommandParameter="{Binding ElementName=MainCanvas}" />
                                 <MenuItem Header="Niblack" Command="{Binding BinarizationNiblackCommand}" CommandParameter="{Binding ElementName=MainCanvas}" />
                                 <MenuItem Header="Sauvola" Command="{Binding BinarizationSauvolaCommand}" CommandParameter="{Binding ElementName=MainCanvas}" />
+                                <MenuItem Header="Pansalkar" Command="{Binding BinarizationPansalkarCommand}" CommandParameter="{Binding ElementName=MainCanvas}" />
                                 <MenuItem Header="Bernsen" Command="{Binding BinarizationBernsensCommand}" CommandParameter="{Binding ElementName=MainCanvas}" />
                             </MenuItem>
                             <MenuItem Header="Morfologiczne">

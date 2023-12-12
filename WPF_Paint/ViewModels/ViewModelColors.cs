@@ -204,6 +204,11 @@ namespace WPF_Paint.ViewModels
                 int r = (int)Math.Round(_r);
                 int g = (int)Math.Round(_g);
                 int b = (int)Math.Round(_b);
+
+                RedValue = r.ToString();
+                GreenValue = g.ToString();
+                BlueValue = b.ToString();
+
                 // Convert RGB to HSV
                 RgbToHsv(r, g, b, out double h, out double s, out double v);
                 HueValue = h.ToString("F0");
@@ -234,6 +239,11 @@ namespace WPF_Paint.ViewModels
 
             if (double.TryParse(_hueValue, out double h) && double.TryParse(_saturationValue, out double s) && double.TryParse(_valueColor, out double v))
             {
+
+                HueValue = Math.Round(h).ToString("F0");
+                SaturationValue = Math.Round(s).ToString("F0");
+                ValueColor = Math.Round(v).ToString("F0");
+
                 // Convert HSV to RGB
                 HsvToRgb(h, s / 100, v / 100, out int r, out int g, out int b);
                 RedValue = r.ToString("F0");
@@ -264,6 +274,11 @@ namespace WPF_Paint.ViewModels
 
             if (double.TryParse(_cyanValue, out double c) && double.TryParse(_magentaValue, out double m) && double.TryParse(_yellowValue, out double y) && double.TryParse(_blackValue, out double k))
             {
+                CyanValue = Math.Round(c).ToString("F0");
+                MagentaValue = Math.Round(m).ToString("F0");
+                YellowValue = Math.Round(y).ToString("F0");
+                BlackValue = Math.Round(k).ToString("F0");
+
                 // Convert CMYK to RGB
                 CmykToRgb(c / 100, m / 100, y / 100, k / 100, out int r, out int g, out int b);
                 RedValue = r.ToString("F0");

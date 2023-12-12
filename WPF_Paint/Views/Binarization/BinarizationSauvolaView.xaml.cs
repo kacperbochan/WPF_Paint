@@ -1,33 +1,22 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 using System.Windows;
-using System.Windows.Controls;
-using System.Windows.Data;
-using System.Windows.Documents;
-using System.Windows.Input;
-using System.Windows.Media;
-using System.Windows.Media.Imaging;
-using System.Windows.Shapes;
 using WPF_Paint.Models;
-using WPF_Paint.ViewModels;
 
 namespace WPF_Paint
 {
     /// <summary>
     /// Interaction logic for ColorSelector.xaml
     /// </summary>
-    public partial class BinarizationNiblackView : Window
+    public partial class BinarizationSauvolaView : Window
     {
         private BinarizationHelper _binarizationHelper;
         private byte _radius = 0;
         private byte[] _bitmapBuffer;
         private double[] _meanBuffer, _stddevBuffer;
         private double _k = -0.2;
+        private int R = 128;
 
-        public BinarizationNiblackView(BinarizationHelper binarizationHelper)
+        public BinarizationSauvolaView(BinarizationHelper binarizationHelper)
         {
             _binarizationHelper = binarizationHelper;
             _bitmapBuffer = new byte[_binarizationHelper.GrayScale.Length];
@@ -58,6 +47,16 @@ namespace WPF_Paint
             if (Math.Round(e.NewValue,1) == _k) return;
 
             _k = Math.Round(e.NewValue,1);
+
+            CalculateBitmap();
+            _binarizationHelper.UpdateImageWithByteMap(_bitmapBuffer);
+        }
+
+        private void RSlider_ValueChanged(object sender, RoutedPropertyChangedEventArgs<double> e)
+        {
+            if ((byte)Math.Round(e.NewValue) == R) return;
+
+            R = (byte)Math.Round(e.NewValue,0);
 
             CalculateBitmap();
             _binarizationHelper.UpdateImageWithByteMap(_bitmapBuffer);
@@ -121,9 +120,12 @@ namespace WPF_Paint
 
         private void CalculateBitmap()
         {
-            for (int i = 0; i < _bitmapBuffer.Length; i++)
-                _bitmapBuffer[i] = (byte)((_binarizationHelper.GrayScale[i]>(byte)(_meanBuffer[i] + _k * _stddevBuffer[i]))?255:0);
+            int threshold;
+            for (int i = 0; i < _bitmapBuffer.Length; i++) {
+                threshold = (byte)(_meanBuffer[i] * (1 + _k * (_stddevBuffer[i] / R - 1)));
+                _bitmapBuffer[i] = (byte)(_binarizationHelper.GrayScale[i] > threshold ? 255 : 0);
+            }
         }
-        
+
     }
 }

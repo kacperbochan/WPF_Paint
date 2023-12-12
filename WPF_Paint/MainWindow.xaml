@@ -167,6 +167,7 @@
                                 <MenuItem Header="Selekcja iteratywna średniej" Command="{Binding BinarizationMedianCommand}" CommandParameter="{Binding ElementName=MainCanvas}" />
                                 <MenuItem Header="Otsu" Command="{Binding BinarizationOtsuCommand}" CommandParameter="{Binding ElementName=MainCanvas}" />
                                 <MenuItem Header="Niblack" Command="{Binding BinarizationNiblackCommand}" CommandParameter="{Binding ElementName=MainCanvas}" />
+                                <MenuItem Header="Sauvola" Command="{Binding BinarizationSauvolaCommand}" CommandParameter="{Binding ElementName=MainCanvas}" />
                                 <MenuItem Header="Bernsen" Command="{Binding BinarizationBernsensCommand}" CommandParameter="{Binding ElementName=MainCanvas}" />
                             </MenuItem>
                             <MenuItem Header="Morfologiczne">

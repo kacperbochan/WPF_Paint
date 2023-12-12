@@ -12,6 +12,9 @@
   </ItemGroup>
 
   <ItemGroup>
+    <Compile Update="Views\Binarization\BinarizationSauvolaView.xaml.cs">
+      <SubType>Code</SubType>
+    </Compile>
     <Compile Update="Views\Binarization\MorphologyView.xaml.cs">
       <SubType>Code</SubType>
     </Compile>

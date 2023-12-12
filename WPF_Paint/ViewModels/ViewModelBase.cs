@@ -160,6 +160,7 @@ namespace WPF_Paint.ViewModels
         public ICommand BinarizationMedianCommand { get; }
         public ICommand BinarizationOtsuCommand { get; }
         public ICommand BinarizationNiblackCommand { get; }
+        public ICommand BinarizationSauvolaCommand { get; }
         public ICommand BinarizationBernsensCommand { get; }
         public ICommand ColorBitmapWindowCommand { get; }
 
@@ -242,15 +243,16 @@ namespace WPF_Paint.ViewModels
             BinarizationMedianCommand = new RelayCommand(() => BinarizationSelector(2));
             BinarizationOtsuCommand = new RelayCommand(() => BinarizationSelector(3));
             BinarizationNiblackCommand = new RelayCommand(() => BinarizationSelector(4));
-            BinarizationBernsensCommand = new RelayCommand(() => BinarizationSelector(5));
+            BinarizationSauvolaCommand = new RelayCommand(() => BinarizationSelector(5));
+            BinarizationBernsensCommand = new RelayCommand(() => BinarizationSelector(6));
             ColorBitmapWindowCommand = new RelayCommand(() => AnalisysSelector(0));
 
-            MorphologyDilatationCommand = new RelayCommand(() => BinarizationSelector(6));
-            MorphologyErosionCommand = new RelayCommand(() => BinarizationSelector(7));
-            MorphologyOpeningCommand = new RelayCommand(() => BinarizationSelector(8));
-            MorphologyClosingCommand = new RelayCommand(() => BinarizationSelector(9));
-            MorphologyThiningCommand = new RelayCommand(() => BinarizationSelector(10));
-            MorphologyThickeningCommand = new RelayCommand(() => BinarizationSelector(11));
+            MorphologyDilatationCommand = new RelayCommand(() => MorphologySelector(0));
+            MorphologyErosionCommand = new RelayCommand(() => MorphologySelector(1));
+            MorphologyOpeningCommand = new RelayCommand(() => MorphologySelector(2));
+            MorphologyClosingCommand = new RelayCommand(() => MorphologySelector(3));
+            MorphologyThiningCommand = new RelayCommand(() => MorphologySelector(4));
+            MorphologyThickeningCommand = new RelayCommand(() => MorphologySelector(5));
 
             ColorSettings.StaticPropertyChanged += ColorSettings_StaticPropertyChanged;
         }
@@ -288,25 +290,10 @@ namespace WPF_Paint.ViewModels
                     binarization = new BinarizationNiblackView(binarizationHelper);
                     break;
                 case 5:
-                    binarization = new BinarizationBernsensView(binarizationHelper);
+                    binarization = new BinarizationSauvolaView(binarizationHelper);
                     break;
                 case 6:
-                    binarization = new MorphologyView(binarizationHelper,0);
-                    break;
-                case 7:
-                    binarization = new MorphologyView(binarizationHelper,1);
-                    break;
-                case 8:
-                    binarization = new MorphologyView(binarizationHelper,2);
-                    break;
-                case 9:
-                    binarization = new MorphologyView(binarizationHelper,3);
-                    break;
-                case 10:
-                    binarization = new MorphologyView(binarizationHelper,4);
-                    break;
-                case 11:
-                    binarization = new MorphologyView(binarizationHelper,5);
+                    binarization = new BinarizationBernsensView(binarizationHelper);
                     break;
                 default:
                     binarization = new BinarizationValueView(binarizationHelper);
@@ -323,8 +310,6 @@ namespace WPF_Paint.ViewModels
                 MainCanvas.Children.Add(originalImage);
             }
         }
-
-
 
         private void OpenHistogramWindow()
         {
@@ -350,6 +335,29 @@ namespace WPF_Paint.ViewModels
             MainCanvas.Children.Add(equalImage);
 
         }
+
+
+        //-------------------------------------------------MORPHOLOGY-----------------------------------------------
+        private void MorphologySelector(int binType)
+        {
+            BitmapSource source = GetCanvasBitmap();
+
+            Window binarization;
+            BinarizationHelper binarizationHelper = new BinarizationHelper(source, MainCanvas);
+            binarization = new MorphologyView(binarizationHelper, (byte)binType);
+
+            bool? dialogResult = binarization.ShowDialog();
+
+            if (dialogResult != true)
+            {
+                Image originalImage = new Image();
+                originalImage.Source = source;
+                MainCanvas.Children.Clear();
+                MainCanvas.Children.Add(originalImage);
+            }
+        }
+
+
 
 
         private void RemoveNoise()

@@ -5,6 +5,7 @@ using System.Text;
 using System.Threading.Tasks;
 using System.Windows.Media.Imaging;
 using System.Windows;
+using System.Diagnostics;
 
 namespace WPF_Paint.Models
 {
@@ -274,6 +275,107 @@ namespace WPF_Paint.Models
             bufferpixels[currentIndex + 2] = newR; // Red
             bufferpixels[currentIndex + 1] = newG; // Greens
             bufferpixels[currentIndex] = newB;     // Blue
+        }
+
+        public static void ApplyMDBUTMFFilter(byte[] pixels, int width, int height, int stride)
+        {
+            // Logika filtrowania MDBUTMF
+            Trace.WriteLine("ApplyMDBUTMFFilter");
+            byte[] outputPixels = new byte[pixels.Length];
+            Array.Copy(pixels, outputPixels, pixels.Length);
+
+            for (int y = 1; y < height - 1; y++)
+            {
+                for (int x = 1; x < width - 1; x++)
+                {
+                    int pixelIndex = y * stride + x * 4;
+
+                    if (IsNoisePixel(pixels, x, y, stride, width, height))
+                    {
+                        // Dla każdego kanału koloru (B, G, R)
+                        for (int i = 0; i < 3; i++)
+                        {
+                            List<byte> neighborhood = GetNeighborhood(pixels, x, y, stride, i);
+                            byte medianValue = GetMedian(neighborhood);
+                            outputPixels[pixelIndex + i] = medianValue;
+                        }
+                    }
+                    else
+                    {
+                        // Zachowaj oryginalny piksel
+                        for (int i = 0; i < 3; i++)
+                        {
+                            outputPixels[pixelIndex + i] = pixels[pixelIndex + i];
+                        }
+                    }
+                }
+            }
+
+            Array.Copy(outputPixels, pixels, pixels.Length);
+        }
+
+        private static List<byte> GetNeighborhood(byte[] pixels, int x, int y, int stride, int channelOffset)
+        {
+            List<byte> neighborhood = new List<byte>();
+
+            for (int i = -1; i <= 1; i++)
+            {
+                for (int j = -1; j <= 1; j++)
+                {
+                    int pixelIndex = (y + i) * stride + (x + j) * 4;
+                    neighborhood.Add(pixels[pixelIndex + channelOffset]);
+                }
+            }
+
+            return neighborhood;
+        }
+
+        private static bool IsNoisePixel(byte[] pixels, int x, int y, int stride, int width, int height)
+        {
+            int pixelIndex = y * stride + x * 4;
+            byte pixelValue = pixels[pixelIndex];
+
+            // Progi do określenia, czy piksel jest znacznie jaśniejszy lub ciemniejszy od sąsiadów
+            const byte noiseThreshold = 30;
+
+            int differentNeighbors = 0;
+            int totalNeighbors = 0;
+
+            for (int i = -1; i <= 1; i++)
+            {
+                for (int j = -1; j <= 1; j++)
+                {
+                    if (i == 0 && j == 0) continue; // Pomijamy sam piksel
+
+                    int neighborX = x + j;
+                    int neighborY = y + i;
+
+                    // Sprawdzamy, czy sąsiad jest w granicach obrazu
+                    if (neighborX >= 0 && neighborX < width && neighborY >= 0 && neighborY < height)
+                    {
+                        totalNeighbors++;
+                        int neighborIndex = neighborY * stride + neighborX * 4;
+                        byte neighborValue = pixels[neighborIndex];
+
+                        // Porównujemy wartość piksela z wartością sąsiada
+                        if (Math.Abs(pixelValue - neighborValue) > noiseThreshold)
+                        {
+                            differentNeighbors++;
+                        }
+                    }
+                }
+            }
+
+            // Uznajemy piksel za szum, jeśli większość jego sąsiadów różni się od niego o próg
+            return differentNeighbors > totalNeighbors / 2;
+        }
+
+
+        private static byte GetMedian(List<byte> values)
+        {
+            values.Sort();
+            int middleIndex = values.Count / 2;
+            return values[middleIndex];
         }
     }
 }

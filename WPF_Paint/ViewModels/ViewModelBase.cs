@@ -351,6 +351,45 @@ namespace WPF_Paint.ViewModels
 
         }
 
+
+        private void RemoveNoise()
+        {
+            BitmapSource source = GetCanvasBitmap();
+            ImgHistogram histogram = new ImgHistogram(source);
+            if (histogram.IsNoiseDetected())
+            {
+                Trace.WriteLine("histogram.IsNoiseDetected()");
+                ApplyMDBUTMFFilter();
+            }
+        }
+
+        private void ApplyMDBUTMFFilter()
+        {
+            BitmapSource source = GetCanvasBitmap();
+            // Konwersja obrazu na format WriteableBitmap, aby móc modyfikować piksele
+            WriteableBitmap writableBitmap = new WriteableBitmap(source);
+
+            int width = writableBitmap.PixelWidth;
+            int height = writableBitmap.PixelHeight;
+
+            // Konwersja obrazu na format array pikseli
+            int stride = width * 4; // 4 kanały (RGBA) na piksel
+            byte[] sourcePixels = new byte[height * stride];
+            writableBitmap.CopyPixels(sourcePixels, stride, 0);
+
+            Filter.ApplyMDBUTMFFilter(sourcePixels, width, height, stride);
+
+            // Zaktualizuj WriteableBitmap z nowymi pikselami
+            writableBitmap.WritePixels(new Int32Rect(0, 0, width, height), sourcePixels, stride, 0);
+
+
+            Image modifiedImage = new Image();
+            modifiedImage.Source = writableBitmap;
+
+            _mainCanvas.Children.Clear();
+            _mainCanvas.Children.Add(modifiedImage);
+        }
+
         //-------------------------------------------------ANALYSIS-----------------------------------------------
 
         private void AnalisysSelector(int binType)
@@ -1766,6 +1805,7 @@ namespace WPF_Paint.ViewModels
             CanvasHeight = image.Source.Height;
             // Add the Image control to the MainCanvas
             MainCanvas.Children.Add(image);
+            RemoveNoise();
         }
 
         private string GetPicturePath()

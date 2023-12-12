@@ -212,5 +212,22 @@ namespace WPF_Paint.Models
             return writeableBitmap;
         }
 
+
+        public bool IsNoiseDetected()
+        {
+            // Prosta logika do wykrywania szumów "pieprz i sól"
+            const int noiseThreshold = 20; // Progowy poziom szumu do dostosowania
+            for (int i = 1; i < _histogram.Length - 1; i++)
+            {
+                if (_histogram[i] - (_histogram[i - 1] + _histogram[i + 1]) / 2 > noiseThreshold)
+                {
+                    return true;
+                }
+            }
+            return false;
+        }
+
     }
+
 }
+

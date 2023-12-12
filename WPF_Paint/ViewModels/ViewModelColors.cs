@@ -197,8 +197,13 @@ namespace WPF_Paint.ViewModels
 
             _isUpdatingColorSpaces = true; // ustaw blokadę
 
-            if (int.TryParse(_redValue, out int r) && int.TryParse(_greenValue, out int g) && int.TryParse(_blueValue, out int b))
+
+
+            if (double.TryParse(_redValue, out double _r) && double.TryParse(_greenValue, out double _g) && double.TryParse(_blueValue, out double _b))
             {
+                int r = (int)Math.Round(_r);
+                int g = (int)Math.Round(_g);
+                int b = (int)Math.Round(_b);
                 // Convert RGB to HSV
                 RgbToHsv(r, g, b, out double h, out double s, out double v);
                 HueValue = h.ToString("F0");

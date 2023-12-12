@@ -136,12 +136,12 @@
                         <MenuItem Width="70">
                             <MenuItem.Header>
                                 <StackPanel Orientation="Horizontal">
-                                    <TextBlock Text="Kolory" />
+                                    <TextBlock Text="Analiza" />
                                     <TextBlock Text=" ▼" Margin="5,0,0,0" />
                                 </StackPanel>
                             </MenuItem.Header>
                             <MenuItem Header="Histogram" Command="{Binding HistogramWindowCommand}" CommandParameter="{Binding ElementName=MainCanvas}" />
-                            <MenuItem Header="Wyrównywanie" Command="{Binding HistEqualizationCommand}" CommandParameter="{Binding ElementName=MainCanvas}" />
+                            <MenuItem Header="Tereny Koloru" Command="{Binding ColorBitmapWindowCommand}" CommandParameter="{Binding ElementName=MainCanvas}" />
                         </MenuItem>
                     </Menu>
 
@@ -177,6 +177,7 @@
                                 <MenuItem Header="Pocienianie" Command="{Binding MorphologyThiningCommand}" CommandParameter="{Binding ElementName=MainCanvas}" />
                                 <MenuItem Header="Pogrubianie" Command="{Binding MorphologyThickeningCommand}" CommandParameter="{Binding ElementName=MainCanvas}" />
                             </MenuItem>
+                            <MenuItem Header="Wyrównywanie" Command="{Binding HistEqualizationCommand}" CommandParameter="{Binding ElementName=MainCanvas}" />
                             <MenuItem Header="Uśredniający" Command="{Binding ApplyAverageFilterCommand}" CommandParameter="{Binding ElementName=MainCanvas}" />
                             <MenuItem Header="Medianowy" Command="{Binding ApplyMedianFilterCommand}" CommandParameter="{Binding ElementName=MainCanvas}" />
                             <MenuItem Header="Sobela" Command="{Binding ApplySobelEdgeDetectionCommand}" CommandParameter="{Binding ElementName=MainCanvas}" />

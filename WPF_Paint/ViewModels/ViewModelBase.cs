@@ -161,6 +161,7 @@ namespace WPF_Paint.ViewModels
         public ICommand BinarizationOtsuCommand { get; }
         public ICommand BinarizationNiblackCommand { get; }
         public ICommand BinarizationBernsensCommand { get; }
+        public ICommand ColorBitmapWindowCommand { get; }
 
         public ICommand MorphologyDilatationCommand { get; }
         public ICommand MorphologyErosionCommand { get; }
@@ -242,6 +243,7 @@ namespace WPF_Paint.ViewModels
             BinarizationOtsuCommand = new RelayCommand(() => BinarizationSelector(3));
             BinarizationNiblackCommand = new RelayCommand(() => BinarizationSelector(4));
             BinarizationBernsensCommand = new RelayCommand(() => BinarizationSelector(5));
+            ColorBitmapWindowCommand = new RelayCommand(() => AnalisysSelector(0));
 
             MorphologyDilatationCommand = new RelayCommand(() => BinarizationSelector(6));
             MorphologyErosionCommand = new RelayCommand(() => BinarizationSelector(7));
@@ -347,6 +349,35 @@ namespace WPF_Paint.ViewModels
             MainCanvas.Children.Clear();
             MainCanvas.Children.Add(equalImage);
 
+        }
+
+        //-------------------------------------------------ANALYSIS-----------------------------------------------
+
+        private void AnalisysSelector(int binType)
+        {
+            BitmapSource source = GetCanvasBitmap();
+
+            Window analysisWindow;
+            AnalysisHelper AnalysisHelper = new AnalysisHelper(source, MainCanvas);
+            switch (binType)
+            {
+                case 0:
+                    analysisWindow = new AnalysisColorDom(AnalysisHelper);
+                    break;
+                default:
+                    analysisWindow = new AnalysisColorDom(AnalysisHelper);
+                    break;
+            }
+
+            bool? dialogResult = analysisWindow.ShowDialog();
+
+            if (dialogResult != true)
+            {
+                Image originalImage = new Image();
+                originalImage.Source = source;
+                MainCanvas.Children.Clear();
+                MainCanvas.Children.Add(originalImage);
+            }
         }
 
         //-------------------------------------------------COLOR CHANGE-----------------------------------------------

@@ -36,6 +36,9 @@
     <Compile Update="Views\Binarization\BinarizationValueView.xaml.cs">
       <SubType>Code</SubType>
     </Compile>
+    <Compile Update="Views\Analisys\AnalysisColorDom.xaml.cs">
+      <SubType>Code</SubType>
+    </Compile>
     <Compile Update="Views\ImageSize.xaml.cs">
       <SubType>Code</SubType>
     </Compile>

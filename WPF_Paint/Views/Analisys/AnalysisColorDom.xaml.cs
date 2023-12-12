@@ -23,6 +23,7 @@ namespace WPF_Paint.Views
     {
         private AnalysisHelper _analisysHelper { get; set; }
         private bool finishedLoading = false;
+        private bool showBiggest = false;
 
         public AnalysisColorDom(AnalysisHelper helper)
         {
@@ -47,24 +48,21 @@ namespace WPF_Paint.Views
             int buffer = (int)Math.Round(DomSlider.Value);
             DomValue.Content = buffer.ToString();
 
-            if (RedButton.IsChecked == true)
-            {
-                _analisysHelper.SetBufferColorDom(0, buffer);
-            }
-            else if (GreenButton.IsChecked == true)
-            {
-                _analisysHelper.SetBufferColorDom(1, buffer);
-            }
-            else
-            {
-                _analisysHelper.SetBufferColorDom(2, buffer);
-            }
+            int color = (RedButton.IsChecked == true) ? 0 : (GreenButton.IsChecked == true) ? 1 : 2;
+
+            _analisysHelper.SetBufferColorDom(color, buffer, showBiggest);
 
             RedPercent.Text = Math.Round(_analisysHelper.RedPercent, 2).ToString();
             GreenPercent.Text = Math.Round(_analisysHelper.GreenPercent, 2).ToString();
             BluePercent.Text = Math.Round(_analisysHelper.BluePercent, 2).ToString();
 
             _analisysHelper.ReplaceImage();
+        }
+
+        private void ShowBiggest_Checked(object sender, RoutedEventArgs e)
+        {
+            showBiggest = !showBiggest;
+            UpdateVisualisation();
         }
     }
 }

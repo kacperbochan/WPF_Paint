@@ -13,16 +13,23 @@ namespace WPF_Paint.Models
     {
         private Canvas _canvas;
         private WriteableBitmap _writableBitmap;
+        private BinaryImageProcessor _redimageProcessor;
+        private BinaryImageProcessor _greenImageProcessor;
+        private BinaryImageProcessor _blueImageProcessor;
         private byte[] _originalPixels;
         private byte[] _bufferPixels;
-        private int _domValue = 20;
+        private int _domValue = 50;
 
         private byte[] _redDomBin;
         private byte[] _greenDomBin;
         private byte[] _blueDomBin;
         private double _redPercent; 
         private double _greenPercent; 
-        private double _bluePercent; 
+        private double _bluePercent;
+        private byte[] _biggestRed;
+        private byte[] _biggestGreen;
+        private byte[] _biggestBlue;
+        private bool computedRedBiggest = false, computedGreenBiggest = false, computedBlueBiggest = false;
 
         public double RedPercent
         {
@@ -63,11 +70,13 @@ namespace WPF_Paint.Models
 
         private void GetColorBitmaps()
         {
-            _redDomBin = new byte[Width * Height];
-            _greenDomBin = new byte[Width * Height];
-            _blueDomBin = new byte[Width * Height];
+            _redDomBin = new byte[_width * _height];
             _redPercent = 0;
+
+            _greenDomBin = new byte[_width * _height];
             _greenPercent = 0;
+
+            _blueDomBin = new byte[_width * _height];
             _bluePercent = 0;
 
             int red, green, blue;
@@ -115,34 +124,78 @@ namespace WPF_Paint.Models
             _bluePercent /= Width * Height;
         }
 
-        public void SetBufferColorDom(int color, int domValue=-1)
+        public void SetBufferColorDom(int color, int domValue=-1, bool biggest=false)
         {
             if (domValue != -1 && domValue != _domValue)
+            {
                 _domValue = domValue;
                 GetColorBitmaps();
 
-            if (_blueDomBin == null) GetColorBitmaps();
+                computedRedBiggest = false;
+                computedGreenBiggest = false;
+                computedBlueBiggest = false;
+            }
+
+            if (biggest)
+            {
+                if (color == 0 && !computedRedBiggest)
+                {
+                    _redimageProcessor = new BinaryImageProcessor(_redDomBin, _width, _height);
+                    _biggestRed = _redimageProcessor.GetLargestShape();
+                    computedRedBiggest = true;
+                }
+                else if (color == 1 && !computedGreenBiggest)
+                {
+                    _greenImageProcessor = new BinaryImageProcessor(_greenDomBin, _width, _height);
+                    _biggestGreen = _greenImageProcessor.GetLargestShape();
+                    computedGreenBiggest = true; 
+                }
+                else if (color == 2 && !computedBlueBiggest)
+                {
+                    _blueImageProcessor = new BinaryImageProcessor(_blueDomBin, _width, _height);
+                    _biggestBlue = _blueImageProcessor.GetLargestShape();
+                    computedBlueBiggest = true;
+                }
+            }
 
             int binLength = _redDomBin.Length;
-            byte[] _colorDomBin;
+            byte[] _selectionBinMap;
 
-            switch (color)
+            if (!biggest)
             {
-                case 0:
-                    _colorDomBin = _redDomBin;
-                    break;
-                case 1:
-                    _colorDomBin = _greenDomBin;
-                    break;
-                default:
-                    _colorDomBin = _blueDomBin;
-                    break;
+                switch (color)
+                {
+                    case 0:
+                        _selectionBinMap = _redDomBin;
+                        break;
+                    case 1:
+                        _selectionBinMap = _greenDomBin;
+                        break;
+                    default:
+                        _selectionBinMap = _blueDomBin;
+                        break;
+                }
+            }
+            else
+            {
+                switch (color)
+                {
+                    case 0:
+                        _selectionBinMap = _biggestRed;
+                        break;
+                    case 1:
+                        _selectionBinMap = _biggestGreen;
+                        break;
+                    default:
+                        _selectionBinMap = _biggestBlue;
+                        break;
+                }
             }
 
             for (int i = 0; i < binLength; i++)
             {
                 int bitmapId = i * 4;
-                if (_colorDomBin[i] == 1)
+                if (_selectionBinMap[i] == 1)
                 {
                     _bufferPixels[bitmapId] = _originalPixels[bitmapId];
                     _bufferPixels[bitmapId + 1] = _originalPixels[bitmapId + 1];
@@ -158,6 +211,18 @@ namespace WPF_Paint.Models
         }
 
         public void ReplaceImage()
+        {
+            _writableBitmap.WritePixels(new Int32Rect(0, 0, _width, _height), _bufferPixels, _stride, 0);
+
+            Image replacementImage = new Image();
+            replacementImage.Source = _writableBitmap;
+
+            _canvas.Children.Clear();
+            _canvas.Children.Add(replacementImage);
+
+        }
+
+        public void ReplaceImageBiggest()
         {
             _writableBitmap.WritePixels(new Int32Rect(0, 0, _width, _height), _bufferPixels, _stride, 0);
 

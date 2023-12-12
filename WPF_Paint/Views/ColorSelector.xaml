@@ -100,35 +100,35 @@
                         <Label Margin="50,10,0,0" FontWeight="Bold" FontSize="14" >HSV</Label>
                         <StackPanel Margin="10,20,0,0">
                             <Label Margin="0,10,0,0">Hue (0°-360°)</Label>
-                            <TextBox Margin="10,0,90,0" x:Name="HueTextBox" Text="{Binding HueValue}"/>
+                            <Slider Margin="10,0,10,0" Minimum="0" Maximum="360" x:Name="HueTextBox" Value="{Binding HueValue}"/>
                             <Label Margin="0,10,0,0">Saturation (0-100%)</Label>
-                            <TextBox Margin="10,0,90,0" x:Name="SaturationTextBox" Text="{Binding SaturationValue}"/>
+                            <Slider Margin="10,0,10,0" Minimum="0" Maximum="100" x:Name="SaturationTextBox" Value="{Binding SaturationValue}"/>
                             <Label Margin="0,10,0,0">Value (0-100%)</Label>
-                            <TextBox Margin="10,0,90,0" x:Name="ValueTextBox" Text="{Binding ValueColor}"/>
+                            <Slider Margin="10,0,10,0" Minimum="0" Maximum="100" x:Name="ValueTextBox" Value="{Binding ValueColor}"/>
                         </StackPanel>
                     </Grid>
                     <Grid Grid.Column="1">
                         <Label Margin="50,10,0,0" FontWeight="Bold" FontSize="14" >RGB</Label>
                         <StackPanel Margin="10,20,0,0">
                             <Label Margin="0,10,0,0">Red (0-255)</Label>
-                            <TextBox Margin="10,0,90,0" x:Name="RedTextBox" Text="{Binding RedValue}"/>
+                            <Slider Margin="10,0,10,0" Minimum="0" Maximum="255" x:Name="RedTextBox" Value="{Binding RedValue}"/>
                             <Label Margin="0,10,0,0">Green (0-255)</Label>
-                            <TextBox Margin="10,0,90,0" x:Name="GreenTextBox" Text="{Binding GreenValue}"/>
+                            <Slider Margin="10,0,10,0" Minimum="0" Maximum="255" x:Name="GreenTextBox" Value="{Binding GreenValue}"/>
                             <Label Margin="0,10,0,0">Blue (0-255)</Label>
-                            <TextBox Margin="10,0,90,0" x:Name="BlueTextBox" Text="{Binding BlueValue}"/>
+                            <Slider Margin="10,0,10,0" Minimum="0" Maximum="255" x:Name="BlueTextBox" Value="{Binding BlueValue}"/>
                         </StackPanel>
                     </Grid>
                     <Grid Grid.Column="2">
                         <Label Margin="50,10,0,0" FontWeight="Bold" FontSize="14" >CMYK</Label>
                         <StackPanel Margin="10,20,0,0">
                             <Label Margin="0,10,0,0">Cyan (0-255)</Label>
-                            <TextBox Margin="10,0,90,0" x:Name="CyanTextBox" Text="{Binding CyanValue}"/>
+                            <Slider Margin="10,0,10,0" Minimum="0" Maximum="255" x:Name="CyanTextBox" Value="{Binding CyanValue}"/>
                             <Label Margin="0,10,0,0">Magenta (0-255)</Label>
-                            <TextBox Margin="10,0,90,0" x:Name="MagentaTextBox" Text="{Binding MagentaValue}"/>
+                            <Slider Margin="10,0,10,0" Minimum="0" Maximum="255" x:Name="MagentaTextBox" Value="{Binding MagentaValue}"/>
                             <Label Margin="0,10,0,0">Yellow (0-255)</Label>
-                            <TextBox Margin="10,0,90,0" x:Name="YellowTextBox" Text="{Binding YellowValue}"/>
+                            <Slider Margin="10,0,10,0" Minimum="0" Maximum="255" x:Name="YellowTextBox" Value="{Binding YellowValue}"/>
                             <Label Margin="0,10,0,0">Black (0-255)</Label>
-                            <TextBox Margin="10,0,90,0" x:Name="BlackTextBox" Text="{Binding BlackValue}"/>
+                            <Slider Margin="10,0,10,0" Minimum="0" Maximum="255" x:Name="BlackTextBox" Value="{Binding BlackValue}"/>
                         </StackPanel>
                     </Grid>
                 </Grid>
